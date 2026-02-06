@@ -130,13 +130,21 @@ app.use(express.static(path.join(__dirname)));
 app.use('/app', express.static(path.join(__dirname, 'app')));
 
 // Avatar uploads (profile pictures). On Vercel /var/task is read-only; use /tmp (writable but ephemeral).
-const uploadsBase = process.env.VERCEL ? path.join('/tmp', 'costlyf-uploads') : path.join(__dirname, 'uploads');
-const uploadsDir = path.join(uploadsBase, 'avatars');
+let uploadsBase = process.env.VERCEL ? path.join('/tmp', 'costlyf-uploads') : path.join(__dirname, 'uploads');
+let uploadsDir = path.join(uploadsBase, 'avatars');
 try {
   if (!fs.existsSync(uploadsBase)) fs.mkdirSync(uploadsBase, { recursive: true });
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 } catch (e) {
-  console.warn('Uploads dir not created (e.g. read-only fs):', e.message);
+  console.warn('Uploads dir not created (e.g. read-only fs), falling back to /tmp:', e.message);
+  uploadsBase = path.join('/tmp', 'costlyf-uploads');
+  uploadsDir = path.join(uploadsBase, 'avatars');
+  try {
+    if (!fs.existsSync(uploadsBase)) fs.mkdirSync(uploadsBase, { recursive: true });
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  } catch (e2) {
+    console.warn('Fallback /tmp uploads dir also failed:', e2.message);
+  }
 }
 const avatarStorage = multer.diskStorage({
   destination: function (_req, _file, cb) { cb(null, uploadsDir); },
