@@ -48,11 +48,17 @@ function setLocaleCookie(res, locale) {
   res.cookie(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365, httpOnly: false, sameSite: 'lax' });
 }
 
+// Vercel serves static files from public/ only; when public/ exists (after build), use it for HTML and static paths.
+const publicDir = path.join(__dirname, 'public');
+const usePublic = fs.existsSync(publicDir);
+const staticRoot = usePublic ? publicDir : __dirname;
+const dashboardSegment = usePublic ? 'dashboard-app' : 'dashboard-build';
+
 // Serve message files
 app.get('/messages/:locale.json', function (req, res) {
   const locale = req.params.locale;
   if (!LOCALES.includes(locale)) return res.status(404).json({ error: 'Unknown locale' });
-  const file = path.join(__dirname, 'messages', locale + '.json');
+  const file = path.join(staticRoot, 'messages', locale + '.json');
   if (!fs.existsSync(file)) return res.status(404).json({ error: 'Messages not found' });
   res.type('json').sendFile(file);
 });
@@ -89,45 +95,45 @@ app.get('/join/:service', function (req, res) {
 // Locale-prefixed routes: serve same HTML (client reads locale from pathname)
 const localeRegex = '(' + LOCALES.join('|') + ')';
 app.get(new RegExp('^/' + localeRegex + '/?$'), function (req, res) {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(staticRoot, 'index.html'));
 });
 // React dashboard SPA (locale-prefixed)
 const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter'];
 dashboardPaths.forEach(function (segment) {
   app.get(new RegExp('^/' + localeRegex + '/' + segment + '/?$'), function (req, res) {
-    res.sendFile(path.join(__dirname, 'dashboard-build', 'index.html'));
+    res.sendFile(path.join(staticRoot, dashboardSegment, 'index.html'));
   });
 });
 app.get(new RegExp('^/' + localeRegex + '/join/([^/]+)/?$'), function (req, res) {
-  res.sendFile(path.join(__dirname, 'dashboard-build', 'index.html'));
+  res.sendFile(path.join(staticRoot, dashboardSegment, 'index.html'));
 });
 app.get(new RegExp('^/' + localeRegex + '/guides/?$'), function (req, res) {
-  res.sendFile(path.join(__dirname, 'app', 'guides.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'guides.html'));
 });
 app.get(new RegExp('^/' + localeRegex + '/guides/([^/]+)/?$'), function (req, res) {
-  res.sendFile(path.join(__dirname, 'app', 'guide.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'guide.html'));
 });
 app.get(new RegExp('^/' + localeRegex + '/terms/?$'), function (req, res) {
-  res.sendFile(path.join(__dirname, 'app', 'terms.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'terms.html'));
 });
 app.get(new RegExp('^/' + localeRegex + '/privacy/?$'), function (req, res) {
-  res.sendFile(path.join(__dirname, 'app', 'privacy.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'privacy.html'));
 });
 app.get(new RegExp('^/' + localeRegex + '/legal/?$'), function (req, res) {
-  res.sendFile(path.join(__dirname, 'app', 'legal.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'legal.html'));
 });
 
-// React dashboard SPA static assets (built bundle at /dashboard-app/assets/*)
-const dashboardBuild = path.join(__dirname, 'dashboard-build');
-if (fs.existsSync(dashboardBuild)) {
-  app.use('/dashboard-app', express.static(dashboardBuild));
+// React dashboard SPA static assets (built bundle at /dashboard-app/assets/*). Local dev only; Vercel serves public/.
+const dashboardBuildDir = path.join(staticRoot, dashboardSegment);
+if (fs.existsSync(dashboardBuildDir)) {
+  app.use('/dashboard-app', express.static(dashboardBuildDir));
 }
 
-// Serve main site (index.html, media/, styles.css, script.js) from project root
-app.use(express.static(path.join(__dirname)));
+// Serve main site (styles.css, media/, etc.). Local dev only; on Vercel static files are served from public/ by the platform.
+app.use(express.static(staticRoot));
 
 // Dashboard app assets (CSS, JS for legacy and shared)
-app.use('/app', express.static(path.join(__dirname, 'app')));
+app.use('/app', express.static(path.join(staticRoot, 'app')));
 
 // Avatar uploads (profile pictures). On Vercel /var/task is read-only; use /tmp (writable but ephemeral).
 let uploadsBase = process.env.VERCEL ? path.join('/tmp', 'costlyf-uploads') : path.join(__dirname, 'uploads');
@@ -161,78 +167,78 @@ app.use('/uploads', express.static(uploadsBase));
 
 // App: Home (wallet + 3 buttons only)
 app.get('/home', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'home.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'home.html'));
 });
 
 // App: Join (search, filters, subscription cards)
 app.get('/join', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'join.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'join.html'));
 });
 
 // Service marketplace (e.g. /join/netflix)
 app.get('/join/:service', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'service.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'service.html'));
 });
 
 // App: Share (placeholder)
 app.get('/share', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'share.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'share.html'));
 });
 
 // Wallet (My wallet screen)
 app.get('/wallet', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'wallet.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'wallet.html'));
 });
 
 // My offer detail (e.g. /offer or /offer#0)
 app.get('/offer', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'offer.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'offer.html'));
 });
 
 // Profile (account settings, personal info)
 app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'profile.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'profile.html'));
 });
 
 // Subscription detail (first-time or returning view by hash index)
 app.get('/subscription', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'subscription.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'subscription.html'));
 });
 
 // Help (FAQ, contact owner, contact support)
 app.get('/help', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'help.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'help.html'));
 });
 
 // Guides (sharing guides by service)
 app.get('/guides', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'guides.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'guides.html'));
 });
 app.get('/guides/:slug', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'guide.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'guide.html'));
 });
 
 // Terms & Conditions
 app.get('/terms', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'terms.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'terms.html'));
 });
 
 app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'privacy.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'privacy.html'));
 });
 
 app.get('/legal', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'legal.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'legal.html'));
 });
 
 // Charter (read and accept required before going public with share offer)
 app.get('/charter', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'charter.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'charter.html'));
 });
 
 // Inbox (list of contacts, chat on tap)
 app.get('/inbox', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'inbox.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'inbox.html'));
 });
 
 // Redirect old dashboard URL to locale-prefixed home
@@ -1458,12 +1464,12 @@ app.post('/api/auth/change-password', async (req, res) => {
 
 // Login page
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'login.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'login.html'));
 });
 
 // Sign up page
 app.get('/signup', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'signup.html'));
+  res.sendFile(path.join(staticRoot, 'app', 'signup.html'));
 });
 
 app.listen(PORT, () => {
