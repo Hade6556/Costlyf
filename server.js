@@ -129,10 +129,15 @@ app.use(express.static(path.join(__dirname)));
 // Dashboard app assets (CSS, JS for legacy and shared)
 app.use('/app', express.static(path.join(__dirname, 'app')));
 
-// Avatar uploads (profile pictures)
-const uploadsDir = path.join(__dirname, 'uploads', 'avatars');
-if (!fs.existsSync(path.join(__dirname, 'uploads'))) fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+// Avatar uploads (profile pictures). On Vercel /var/task is read-only; use /tmp (writable but ephemeral).
+const uploadsBase = process.env.VERCEL ? path.join('/tmp', 'costlyf-uploads') : path.join(__dirname, 'uploads');
+const uploadsDir = path.join(uploadsBase, 'avatars');
+try {
+  if (!fs.existsSync(uploadsBase)) fs.mkdirSync(uploadsBase, { recursive: true });
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+} catch (e) {
+  console.warn('Uploads dir not created (e.g. read-only fs):', e.message);
+}
 const avatarStorage = multer.diskStorage({
   destination: function (_req, _file, cb) { cb(null, uploadsDir); },
   filename: function (_req, file, cb) {
@@ -144,7 +149,7 @@ const uploadAvatar = multer({ storage: avatarStorage, limits: { fileSize: 5 * 10
   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/gif') return cb(null, true);
   cb(new Error('Only JPEG, PNG and GIF allowed'));
 } }).single('avatar');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsBase));
 
 // App: Home (wallet + 3 buttons only)
 app.get('/home', (req, res) => {
