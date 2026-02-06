@@ -1,0 +1,183 @@
+/* Minimal overrides; dashboard.css from server provides main styles */
+
+/* Profile avatar in bottom nav (left of "Profile" text) */
+.bottom-nav-icon--avatar {
+  padding: 0;
+}
+.bottom-nav-profile-avatar {
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+}
+.bottom-nav-profile-avatar--photo img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+}
+.bottom-nav-profile-avatar--default .profile-avatar-circle {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--circle-color, #eee);
+  overflow: hidden;
+}
+.bottom-nav-profile-avatar--default .profile-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Join page and join listing (e.g. /join, /join/youtube-premium): use full width instead of 80% */
+.dashboard-content--join .dashboard-main {
+  max-width: 100%;
+}
+@media (min-width: 768px) {
+  .dashboard-content--join .dashboard-main {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+}
+
+/* Profile: remove focus outline from trust card and nav items */
+.profile-trust-card:focus,
+button.profile-trust-card:focus,
+.profile-nav-item:focus,
+button.profile-nav-item:focus,
+a.profile-nav-item:focus,
+.profile-trust-criterion--clickable:focus {
+  outline: none;
+}
+/* Profile nav: smaller gap between icon and text */
+.profile-nav-item {
+  gap: 0.4rem;
+}
+.profile-sign-out {
+  gap: 0.4rem;
+}
+
+.dashboard-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+.dash-muted {
+  color: var(--dash-text-muted);
+  font-size: 0.9375rem;
+}
+
+/* Auth pages (login, signup) */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+.auth-logo {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+.auth-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+.auth-subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+  color: var(--dash-text-muted);
+}
+.auth-form .field {
+  margin-bottom: 1rem;
+}
+.auth-form .field-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.auth-form .field-row .field {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.auth-form label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dash-text);
+}
+.auth-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--dash-primary);
+}
+.auth-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.875rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--dash-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.auth-submit:hover {
+  background: #1d1d1f;
+}
+.auth-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.auth-error {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  display: none;
+}
+.auth-error.visible {
+  display: block;
+}
+.auth-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+}
+.auth-footer a {
+  color: var(--dash-primary);
+  font-weight: 500;
+}

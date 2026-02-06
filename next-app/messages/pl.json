@@ -1,0 +1,13 @@
+{
+  "common": {
+    "welcome": "Witamy",
+    "home": "Strona główna",
+    "about": "O nas",
+    "signIn": "Zaloguj się",
+    "signOut": "Wyloguj"
+  },
+  "home": {
+    "title": "Strona główna",
+    "description": "To jest strona główna."
+  }
+}

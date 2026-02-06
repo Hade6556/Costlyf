@@ -1,0 +1,13 @@
+{
+  "common": {
+    "welcome": "Sveiki atvykę",
+    "home": "Pradžia",
+    "about": "Apie",
+    "signIn": "Prisijungti",
+    "signOut": "Atsijungti"
+  },
+  "home": {
+    "title": "Pradžia",
+    "description": "Tai yra pradžios puslapis."
+  }
+}

@@ -1,0 +1,467 @@
+/* Share flow – multi-step UI */
+.share-main {
+  max-width: 100%;
+}
+.share-main .dashboard-main {
+  max-width: 100%;
+}
+
+.share-flow {
+  padding: 90px var(--dash-padding) var(--dash-padding);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.share-step {
+  display: block;
+}
+.share-step--hidden {
+  display: none !important;
+}
+
+.share-page-title {
+  margin: 0 0 1rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.share-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--dash-search-bg);
+  border-radius: var(--dash-radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.share-search-icon {
+  flex-shrink: 0;
+  color: var(--dash-text-muted);
+}
+.share-search-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.share-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--dash-text);
+}
+.share-search-input::placeholder {
+  color: var(--dash-text-muted);
+}
+.share-search-input:focus {
+  outline: none;
+}
+
+.share-categories {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 1.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+.share-categories::-webkit-scrollbar {
+  display: none;
+}
+.share-cat-pill {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--dash-radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--dash-pill-movies);
+  color: var(--dash-pill-movies-text);
+  transition: background 0.15s, color 0.15s;
+}
+.share-cat-pill--active {
+  background: var(--dash-primary);
+  color: #fff;
+}
+.share-cat-pill[data-cat="music"]:not(.share-cat-pill--active) {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.share-cat-pill[data-cat="security"]:not(.share-cat-pill--active) {
+  background: var(--dash-pill-security-bg);
+  color: var(--dash-pill-security-text);
+}
+.share-cat-pill[data-cat="games"]:not(.share-cat-pill--active) {
+  background: var(--dash-pill-security-bg);
+  color: var(--dash-pill-security-text);
+}
+.share-cat-pill[data-cat="productivity"]:not(.share-cat-pill--active) {
+  background: var(--dash-search-bg);
+  color: var(--dash-text);
+}
+
+.share-service-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.share-service-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dash-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.share-service-row:hover {
+  background: var(--dash-search-bg);
+}
+.share-service-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.share-service-dot--red { background: #dc2626; }
+.share-service-dot--green { background: #22c55e; }
+.share-service-dot--black { background: #1d1d1f; }
+.share-service-dot--blue { background: #2563eb; }
+.share-service-dot--orange { background: #ea580c; }
+.share-service-dot--grey { background: #6b7280; }
+.share-service-dot--dark { background: #0f0f0f; }
+.share-service-dot--yellow { background: #facc15; }
+.share-service-name {
+  flex: 1;
+}
+.share-service-chevron {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--dash-text-muted);
+}
+
+/* Step 2: How would you like to share */
+.share-back {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--dash-search-bg);
+  color: var(--dash-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: background 0.15s;
+}
+.share-back:hover {
+  background: var(--dash-text-muted);
+  color: #fff;
+}
+.share-back svg {
+  width: 24px;
+  height: 24px;
+}
+
+.share-step-title {
+  margin: 0 0 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dash-text);
+  text-align: center;
+}
+
+.share-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.share-option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border: none;
+  border-radius: var(--dash-card-radius);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+.share-option-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+.share-option-emoji {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+.share-option-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+.share-option-desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--dash-text-muted);
+  line-height: 1.4;
+}
+.share-disclaimer {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--dash-text-muted);
+  text-align: center;
+}
+
+/* Step 3: What offer */
+.share-offer-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  border: none;
+  border-radius: var(--dash-card-radius);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+.share-offer-row:last-child {
+  margin-bottom: 0;
+}
+.share-offer-row:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+.share-offer-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.share-offer-name {
+  font-size: 1.125rem;
+  color: var(--dash-text);
+}
+.share-offer-desc {
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+}
+.share-offer-meta {
+  font-size: 0.875rem;
+  color: var(--dash-text);
+}
+.share-offer-sep {
+  margin: 0 0.35rem;
+  color: var(--dash-text-muted);
+}
+.share-offer-users {
+  color: var(--dash-text-muted);
+}
+
+/* Step 4: How many slots */
+.share-slots-counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+.share-slots-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--dash-search-bg);
+  color: var(--dash-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.share-slots-btn:hover {
+  background: var(--dash-text-muted);
+  color: #fff;
+}
+.share-slots-btn--disabled,
+.share-slots-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+.share-slots-btn--disabled:hover,
+.share-slots-btn:disabled:hover {
+  background: var(--dash-search-bg);
+  color: var(--dash-text);
+}
+.share-slots-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dash-text);
+  min-width: 2ch;
+  text-align: center;
+}
+.share-slots-earnings {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  color: var(--dash-text);
+  text-align: center;
+}
+.share-slots-price {
+  color: #db2777;
+  font-weight: 700;
+}
+.share-next-btn {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 14px;
+  background: var(--dash-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: background 0.15s;
+}
+.share-next-btn:hover {
+  background: #1d1d1f;
+}
+.share-easy-box {
+  padding: 1rem;
+  background: var(--dash-search-bg);
+  border-radius: 12px;
+}
+.share-easy-title {
+  display: block;
+  color: #db2777;
+  font-size: 0.9375rem;
+  margin-bottom: 0.25rem;
+}
+.share-easy-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--dash-text);
+  line-height: 1.4;
+}
+
+/* Step 5: Confirm */
+.share-fees-box {
+  background: #f0f0f0;
+  border-radius: 15px;
+  padding: 1.25rem 1.5rem;
+  margin: 0 0 1.25rem;
+  text-align: center;
+}
+.share-fees-line {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+.share-fees-amount {
+  color: var(--dash-text);
+  font-weight: 700;
+}
+.share-fees-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--dash-text-muted);
+  line-height: 1.4;
+}
+.share-form-group {
+  margin-bottom: 1rem;
+}
+.share-form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dash-text);
+  margin-bottom: 0.35rem;
+}
+.share-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--dash-text);
+  box-sizing: border-box;
+}
+.share-input:focus {
+  outline: none;
+  border-color: var(--dash-primary);
+}
+.share-terms-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--dash-text);
+  cursor: pointer;
+}
+.share-terms-label input {
+  margin-top: 0.2rem;
+}
+.share-terms-label a {
+  color: var(--dash-primary);
+  text-decoration: underline;
+}
+@keyframes share-terms-wiggle {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.share-terms-label--wiggle {
+  animation: share-terms-wiggle 0.5s ease-in-out;
+}
+.share-create-btn {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 14px;
+  background: var(--dash-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.share-create-btn:hover {
+  background: #1d1d1f;
+}
+
+@media (min-width: 768px) {
+  .share-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}

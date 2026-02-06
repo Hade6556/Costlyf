@@ -1,0 +1,135 @@
+.charter-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 0 3rem;
+}
+
+.charter-back {
+  display: inline-block;
+  margin-top: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--dash-primary);
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.charter-back:hover {
+  text-decoration: underline;
+}
+
+.charter-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.charter-subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--dash-text-muted);
+}
+
+.charter-content {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--dash-text);
+}
+
+.charter-content h2 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.charter-content h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.charter-content p {
+  margin: 0 0 0.75rem;
+}
+
+.charter-content ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.charter-content li {
+  margin-bottom: 0.35rem;
+}
+
+.charter-accept-block {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background: var(--dash-search-bg);
+  border-radius: 12px;
+}
+
+.charter-accept-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.charter-accept-checkbox {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--dash-primary);
+}
+
+.charter-accept-text {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--dash-text);
+}
+
+.charter-accept-btn {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  border-radius: 12px;
+  background: var(--dash-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.charter-accept-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.charter-accept-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.charter-already {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.charter-error {
+  margin-top: 0.75rem;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}

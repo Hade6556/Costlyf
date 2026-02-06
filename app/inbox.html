@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CostLyf – Inbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/dashboard.css">
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="sidebar" aria-label="Navigation">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-logo"><img src="/media/iconlogo.png" alt="" class="sidebar-logo-icon"><img src="/media/logo.svg" alt="CostLyf"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <p class="sidebar-nav-heading">Main menu</p>
+        <a href="/home" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+          <span>Home</span>
+        </a>
+        <a href="/join" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+          <span>Join</span>
+        </a>
+        <a href="/share" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon sidebar-nav-icon--circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span>Share</span>
+        </a>
+        <a href="/inbox" class="sidebar-nav-item sidebar-nav-item--active">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          <span>Inbox</span>
+          <span class="inbox-unread-badge" hidden aria-label="Unread messages"></span>
+        </a>
+        <a href="/wallet" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="15" r="1.5" fill="currentColor"/></svg></span>
+          <span>Wallet</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/profile" class="sidebar-user" aria-label="Profile">
+          <span class="sidebar-user-avatar" id="sidebar-nav-avatar" aria-hidden="true"></span>
+          <span class="sidebar-user-label">Profile</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="dashboard-content">
+      <main class="dashboard-main">
+        <div class="inbox-page">
+          <!-- List view: people you have interactions with -->
+          <div class="inbox-list-view" id="inbox-list-view">
+            <h1 class="inbox-title">Inbox</h1>
+            <p class="inbox-hint">People you subscribe to or who joined your offers.</p>
+            <div class="inbox-contacts" id="inbox-contacts">
+              <div class="skeleton-cards">
+                <div class="skeleton-card"><span class="skeleton-card__avatar"></span><div class="skeleton-card__lines"><span class="skeleton-card__line skeleton-card__line--name"></span><span class="skeleton-card__line skeleton-card__line--sub"></span></div><span class="skeleton-card__chevron"></span></div>
+                <div class="skeleton-card"><span class="skeleton-card__avatar"></span><div class="skeleton-card__lines"><span class="skeleton-card__line skeleton-card__line--name"></span><span class="skeleton-card__line skeleton-card__line--sub"></span></div><span class="skeleton-card__chevron"></span></div>
+                <div class="skeleton-card"><span class="skeleton-card__avatar"></span><div class="skeleton-card__lines"><span class="skeleton-card__line skeleton-card__line--name"></span><span class="skeleton-card__line skeleton-card__line--sub"></span></div><span class="skeleton-card__chevron"></span></div>
+              </div>
+            </div>
+            <p class="inbox-empty" id="inbox-empty" hidden>No conversations yet. Join an offer or share one to start chatting.</p>
+          </div>
+
+          <!-- Chat view: shown when a contact is selected -->
+          <div class="inbox-chat-view" id="inbox-chat-view" hidden>
+            <a href="/inbox" class="subscription-back" id="inbox-chat-back">‹ Back to Inbox</a>
+            <div class="subscription-chat-wrap inbox-chat-wrap">
+              <div class="subscription-chat-header">
+                <span class="inbox-chat-header-avatar" id="inbox-chat-header-avatar" aria-hidden="true"></span>
+                <div>
+                  <span class="subscription-chat-with">Chat with <strong id="inbox-chat-name">—</strong></span>
+                  <p class="inbox-chat-subscription" id="inbox-chat-subscription" style="margin:0;font-size:0.875rem;color:var(--dash-text-muted);" hidden></p>
+                </div>
+              </div>
+              <div class="subscription-chat-messages" id="inbox-chat-messages">
+                <p class="subscription-chat-placeholder">No messages yet. Say hello.</p>
+              </div>
+              <div class="inbox-chat-actions" id="inbox-chat-actions" hidden></div>
+              <div class="subscription-chat-input-bar" id="inbox-chat-input-bar">
+                <button type="button" class="subscription-chat-attach" aria-label="Attach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+                <div class="subscription-chat-input-wrap" id="inbox-chat-input-wrap">
+                  <input type="text" class="subscription-chat-input" id="inbox-chat-input" placeholder="Just Type Something." autocomplete="off">
+                  <button type="button" class="subscription-chat-send subscription-chat-send--hidden" id="inbox-chat-send" aria-label="Send"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M20.235 5.686c.432-1.195-.726-2.353-1.921-1.92L3.709 9.048c-1.199.434-1.344 2.07-.241 2.709l4.662 2.699l4.163-4.163a1 1 0 0 1 1.414 1.414L9.544 15.87l2.7 4.662c.638 1.103 2.274.957 2.708-.241z"/></g></svg></button>
+                </div>
+                <button type="button" class="subscription-chat-emoji" id="inbox-chat-emoji-ok" aria-label="Send OK">👌</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <a href="/home" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <span>Home</span>
+      </a>
+      <a href="/join" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+        <span>Join</span>
+      </a>
+      <a href="/share" class="bottom-nav-item">
+        <span class="bottom-nav-icon bottom-nav-icon--circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>Share</span>
+      </a>
+      <a href="/inbox" class="bottom-nav-item bottom-nav-item--active">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span>Inbox</span>
+        <span class="inbox-unread-badge" hidden aria-label="Unread messages"></span>
+      </a>
+      <a href="/profile" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <span>Profile</span>
+      </a>
+    </nav>
+  </div>
+  <script src="/app/auth.js"></script>
+  <script src="/app/dashboard.js"></script>
+  <script src="/app/inbox.js"></script>
+  <script src="/app/inbox-badge.js"></script>
+</body>
+</html>

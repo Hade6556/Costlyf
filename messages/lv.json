@@ -1,0 +1,63 @@
+{
+  "common": {
+    "welcome": "Laipni lūdzam",
+    "home": "Sākums",
+    "about": "Par mums",
+    "signIn": "Pieslēgties",
+    "signUp": "Reģistrēties",
+    "guides": "Ceļveži",
+    "howItWorks": "Kā tas darbojas?",
+    "goDashboard": "Uz vadības paneli",
+    "createAccount": "Izveidot kontu"
+  },
+  "home": { "title": "Sākums", "description": "Šī ir sākumlapa." },
+  "hero": {
+    "splitTheBill": "Sadaliet abonementu izmaksas",
+    "subtitle": "Ietaupiet, pievienojoties lielākajai līdzabonementu kopienai."
+  },
+  "guides": {
+    "title": "Dalīšanās ceļveži",
+    "intro": "Uzziniet, kā dalīties ar abonementu katram pakalpojumam.",
+    "searchPlaceholder": "Meklēt rakstu...",
+    "all": "Visi",
+    "readArticle": "Lasīt rakstu",
+    "noResults": "Nav ceļvežu atbilstoši meklējumam."
+  },
+  "footer": {
+    "aboutUs": "Par mums",
+    "legal": "Juridiski",
+    "helpCenter": "Palīdzības centrs",
+    "blog": "Blogs",
+    "sharingGuides": "Dalīšanās ceļveži",
+    "terms": "Lietošanas noteikumi",
+    "privacy": "Privātuma politika",
+    "legalNotice": "Juridisks paziņojums"
+  },
+  "dashboard": {
+    "mainMenu": "Izvēlne",
+    "navHome": "Sākums",
+    "navJoin": "Pievienoties",
+    "navShare": "Dalīties",
+    "navInbox": "Ienākošie",
+    "navWallet": "Maciņš",
+    "navProfile": "Profils",
+    "profileTrustScore": "Uzticamības vērtējums",
+    "profileMyAccount": "Mans konts",
+    "profilePersonalInfo": "Personas informācija",
+    "profileMyWallet": "Mans maciņš",
+    "profilePrivacySecurity": "Privātums un drošība",
+    "profilePaymentMethod": "Maksājuma veids",
+    "profileSignOut": "Iziet",
+    "profileAvatarReassure": "Profila bilde rada uzticību.",
+    "profileFirstLastName": "Vārds un uzvārds",
+    "profileAlias": "Segvārds",
+    "profileDateOfBirth": "Dzimšanas datums",
+    "profileContactInfo": "Kontaktinformācija",
+    "profileEmailAddress": "E-pasts",
+    "profilePhone": "Tālrunis",
+    "profileDashboardLanguage": "Vadības paneļa valoda",
+    "profileLanguage": "Valoda",
+    "profileRegisteredSince": "Reģistrēts Costlyf kopš",
+    "unreadMessages": "neparlasītas ziņas"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "common": {
+    "welcome": "Willkommen",
+    "home": "Startseite",
+    "about": "Über uns",
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "guides": "Anleitungen",
+    "howItWorks": "Wie funktioniert es?",
+    "goDashboard": "Zum Dashboard",
+    "createAccount": "Konto erstellen"
+  },
+  "home": { "title": "Startseite", "description": "Dies ist die Startseite." },
+  "hero": {
+    "splitTheBill": "Teile die Kosten deiner Abos",
+    "subtitle": "Spare durch die größte Co-Abo-Community."
+  },
+  "guides": {
+    "title": "Anleitungen zum Teilen",
+    "intro": "So teilst du dein Abo pro Dienst.",
+    "searchPlaceholder": "Artikel suchen...",
+    "all": "Alle",
+    "readArticle": "Artikel lesen",
+    "noResults": "Keine Anleitungen zu deiner Suche."
+  },
+  "footer": {
+    "aboutUs": "Über uns",
+    "legal": "Rechtliches",
+    "helpCenter": "Hilfezentrum",
+    "blog": "Blog",
+    "sharingGuides": "Anleitungen zum Teilen",
+    "terms": "Nutzungsbedingungen",
+    "privacy": "Datenschutz",
+    "legalNotice": "Impressum"
+  },
+  "dashboard": {
+    "mainMenu": "Menü",
+    "navHome": "Startseite",
+    "navJoin": "Beitreten",
+    "navShare": "Teilen",
+    "navInbox": "Posteingang",
+    "navWallet": "Geldbörse",
+    "navProfile": "Profil",
+    "profileTrustScore": "Vertrauenspunktzahl",
+    "profileMyAccount": "Mein Konto",
+    "profilePersonalInfo": "Persönliche Daten",
+    "profileMyWallet": "Meine Geldbörse",
+    "profilePrivacySecurity": "Datenschutz & Sicherheit",
+    "profilePaymentMethod": "Zahlungsmethode",
+    "profileSignOut": "Abmelden",
+    "profileAvatarReassure": "Ein Profilbild schafft Vertrauen.",
+    "profileFirstLastName": "Vor- und Nachname",
+    "profileAlias": "Alias",
+    "profileDateOfBirth": "Geburtsdatum",
+    "profileContactInfo": "Kontaktdaten",
+    "profileEmailAddress": "E-Mail",
+    "profilePhone": "Telefon",
+    "profileDashboardLanguage": "Dashboard-Sprache",
+    "profileLanguage": "Sprache",
+    "profileRegisteredSince": "Bei Costlyf registriert seit",
+    "unreadMessages": "ungelesene Nachrichten"
+  }
+}

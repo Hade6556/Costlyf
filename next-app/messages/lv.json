@@ -1,0 +1,13 @@
+{
+  "common": {
+    "welcome": "Laipni lūdzam",
+    "home": "Sākums",
+    "about": "Par mums",
+    "signIn": "Pieslēgties",
+    "signOut": "Iziet"
+  },
+  "home": {
+    "title": "Sākums",
+    "description": "Šī ir sākumlapa."
+  }
+}

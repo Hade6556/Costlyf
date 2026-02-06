@@ -1,0 +1,13 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "home": "Home",
+    "about": "About",
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "home": {
+    "title": "Home",
+    "description": "This is the home page."
+  }
+}

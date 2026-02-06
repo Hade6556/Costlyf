@@ -1,0 +1,63 @@
+{
+  "common": {
+    "welcome": "Bienvenido",
+    "home": "Inicio",
+    "about": "Nosotros",
+    "signIn": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "guides": "Guías",
+    "howItWorks": "¿Cómo funciona?",
+    "goDashboard": "Ir al panel",
+    "createAccount": "Crear mi cuenta"
+  },
+  "home": { "title": "Inicio", "description": "Esta es la página de inicio." },
+  "hero": {
+    "splitTheBill": "Divide el coste de tus suscripciones",
+    "subtitle": "Ahorra uniéndote a la mayor comunidad de co-suscripciones."
+  },
+  "guides": {
+    "title": "Guías para compartir",
+    "intro": "Descubre cómo compartir tu suscripción por servicio.",
+    "searchPlaceholder": "Buscar un artículo...",
+    "all": "Todos",
+    "readArticle": "Leer el artículo",
+    "noResults": "Ninguna guía coincide con tu búsqueda."
+  },
+  "footer": {
+    "aboutUs": "Nosotros",
+    "legal": "Legal",
+    "helpCenter": "Centro de ayuda",
+    "blog": "Blog",
+    "sharingGuides": "Guías para compartir",
+    "terms": "Términos de uso",
+    "privacy": "Política de privacidad",
+    "legalNotice": "Aviso legal"
+  },
+  "dashboard": {
+    "mainMenu": "Menú",
+    "navHome": "Inicio",
+    "navJoin": "Unirse",
+    "navShare": "Compartir",
+    "navInbox": "Bandeja",
+    "navWallet": "Monedero",
+    "navProfile": "Perfil",
+    "profileTrustScore": "Puntuación de confianza",
+    "profileMyAccount": "Mi cuenta",
+    "profilePersonalInfo": "Datos personales",
+    "profileMyWallet": "Mi monedero",
+    "profilePrivacySecurity": "Privacidad y seguridad",
+    "profilePaymentMethod": "Método de pago",
+    "profileSignOut": "Cerrar sesión",
+    "profileAvatarReassure": "La foto de perfil da confianza.",
+    "profileFirstLastName": "Nombre y apellidos",
+    "profileAlias": "Alias",
+    "profileDateOfBirth": "Fecha de nacimiento",
+    "profileContactInfo": "Contacto",
+    "profileEmailAddress": "Correo electrónico",
+    "profilePhone": "Teléfono",
+    "profileDashboardLanguage": "Idioma del panel",
+    "profileLanguage": "Idioma",
+    "profileRegisteredSince": "Registrado en Costlyf desde",
+    "unreadMessages": "mensajes sin leer"
+  }
+}

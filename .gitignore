@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Environment (secrets)
+.env
+.env.local
+.env.*.local
+
+# Logs and build
+*.log
+.DS_Store
+dashboard-build/
+.next/
+dist/
+
+# User uploads (profile avatars)
+uploads/
