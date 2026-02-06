@@ -97,15 +97,22 @@ const localeRegex = '(' + LOCALES.join('|') + ')';
 app.get(new RegExp('^/' + localeRegex + '/?$'), function (req, res) {
   res.sendFile(path.join(staticRoot, 'index.html'));
 });
-// React dashboard SPA (locale-prefixed)
+// React dashboard SPA or legacy app (locale-prefixed). Fallback to app/*.html when dashboard-app is missing (e.g. Vercel build without dashboard).
+const dashboardIndexPath = path.join(staticRoot, dashboardSegment, 'index.html');
+const hasDashboardApp = fs.existsSync(dashboardIndexPath);
+const dashboardPathToLegacy = { home: 'home.html', join: 'join.html', share: 'share.html', wallet: 'wallet.html', offer: 'offer.html', profile: 'profile.html', subscription: 'subscription.html', help: 'help.html', inbox: 'inbox.html', login: 'login.html', signup: 'signup.html', charter: 'charter.html' };
 const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter'];
 dashboardPaths.forEach(function (segment) {
   app.get(new RegExp('^/' + localeRegex + '/' + segment + '/?$'), function (req, res) {
-    res.sendFile(path.join(staticRoot, dashboardSegment, 'index.html'));
+    if (hasDashboardApp) return res.sendFile(dashboardIndexPath);
+    const legacyFile = dashboardPathToLegacy[segment];
+    if (legacyFile) return res.sendFile(path.join(staticRoot, 'app', legacyFile));
+    res.sendFile(dashboardIndexPath);
   });
 });
 app.get(new RegExp('^/' + localeRegex + '/join/([^/]+)/?$'), function (req, res) {
-  res.sendFile(path.join(staticRoot, dashboardSegment, 'index.html'));
+  if (hasDashboardApp) return res.sendFile(dashboardIndexPath);
+  res.sendFile(path.join(staticRoot, 'app', 'service.html'));
 });
 app.get(new RegExp('^/' + localeRegex + '/guides/?$'), function (req, res) {
   res.sendFile(path.join(staticRoot, 'app', 'guides.html'));

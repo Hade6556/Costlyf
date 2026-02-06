@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build:dashboard": "cd dashboard-app && npm run build"
+    "build:dashboard": "cd dashboard-app && npm run build",
+    "build": "node scripts/copy-public.js && npm run build:dashboard && node scripts/copy-dashboard-to-public.js",
+    "build:public": "node scripts/copy-public.js"
   },
   "engines": {
     "node": ">=18"

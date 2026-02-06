@@ -12,6 +12,7 @@ node_modules/
 dashboard-build/
 .next/
 dist/
+public/dashboard-app/
 
 # User uploads (profile avatars)
 uploads/
