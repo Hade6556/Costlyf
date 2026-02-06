@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CostLyf – Share a subscription</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/dashboard.css">
+  <link rel="stylesheet" href="/app/share.css">
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="sidebar" aria-label="Navigation">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-logo"><img src="/media/iconlogo.png" alt="" class="sidebar-logo-icon"><img src="/media/logo.svg" alt="CostLyf"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <p class="sidebar-nav-heading">Main menu</p>
+        <a href="/home" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+          <span>Home</span>
+        </a>
+        <a href="/join" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+          <span>Join</span>
+        </a>
+        <a href="/share" class="sidebar-nav-item sidebar-nav-item--active">
+          <span class="sidebar-nav-icon sidebar-nav-icon--circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span>Share</span>
+        </a>
+        <a href="/inbox" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          <span>Inbox</span>
+        </a>
+        <a href="/wallet" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="15" r="1.5" fill="currentColor"/></svg></span>
+          <span>Wallet</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/profile" class="sidebar-user" aria-label="Profile">
+          <span class="sidebar-user-avatar" id="sidebar-nav-avatar" aria-hidden="true"></span>
+          <span class="sidebar-user-label">Profile</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="dashboard-content">
+      <main class="dashboard-main share-main">
+        <div class="share-flow">
+          <!-- Step 1: Choose service -->
+          <section class="share-step" data-step="service">
+            <h1 class="share-page-title">Share</h1>
+            <div class="share-search-wrap">
+              <span class="share-search-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              </span>
+              <input type="search" class="share-search-input" placeholder="Search" aria-label="Search for a service" id="share-search">
+            </div>
+            <nav class="share-categories" aria-label="Categories">
+              <button type="button" class="share-cat-pill share-cat-pill--active" data-cat="popular">Popular</button>
+              <button type="button" class="share-cat-pill" data-cat="movies">Movies & Series</button>
+              <button type="button" class="share-cat-pill" data-cat="music">Music</button>
+              <button type="button" class="share-cat-pill" data-cat="security">Security & VPN</button>
+              <button type="button" class="share-cat-pill" data-cat="games">Video games</button>
+              <button type="button" class="share-cat-pill" data-cat="productivity">Productivity</button>
+            </nav>
+            <ul class="share-service-list" id="share-service-list" aria-label="Services">
+              <li><button type="button" class="share-service-row" data-service="youtube-premium" data-cat="music"><span class="share-service-dot share-service-dot--red"></span><span class="share-service-name">YouTube Premium</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="netflix" data-cat="movies"><span class="share-service-dot share-service-dot--black"></span><span class="share-service-name">Netflix</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="disney" data-cat="movies"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">Disney+</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="prime-video" data-cat="movies"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">Prime Video</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="hbo-max" data-cat="movies"><span class="share-service-dot share-service-dot--dark"></span><span class="share-service-name">HBO Max</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="hulu" data-cat="movies"><span class="share-service-dot share-service-dot--green"></span><span class="share-service-name">Hulu</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="viaplay" data-cat="movies"><span class="share-service-dot share-service-dot--red"></span><span class="share-service-name">Viaplay</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="apple-tv" data-cat="movies"><span class="share-service-dot share-service-dot--grey"></span><span class="share-service-name">Apple TV+</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="spotify" data-cat="music"><span class="share-service-dot share-service-dot--green"></span><span class="share-service-name">Spotify</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="apple-music" data-cat="music"><span class="share-service-dot share-service-dot--red"></span><span class="share-service-name">Apple Music</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="deezer" data-cat="music"><span class="share-service-dot share-service-dot--orange"></span><span class="share-service-name">Deezer</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="apple-one" data-cat="music"><span class="share-service-dot share-service-dot--grey"></span><span class="share-service-name">Apple One</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="nordvpn" data-cat="security"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">NordVPN</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="mozilla-vpn" data-cat="security"><span class="share-service-dot share-service-dot--orange"></span><span class="share-service-name">Mozilla VPN</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="bitdefender" data-cat="security"><span class="share-service-dot share-service-dot--green"></span><span class="share-service-name">Bitdefender</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="purevpn" data-cat="security"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">PureVPN</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="icloud" data-cat="productivity"><span class="share-service-dot share-service-dot--grey"></span><span class="share-service-name">iCloud</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="dropbox" data-cat="productivity"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">Dropbox</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="google-one" data-cat="productivity"><span class="share-service-dot share-service-dot--red"></span><span class="share-service-name">Google One</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="office365" data-cat="productivity"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">Microsoft 365</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="gemini" data-cat="productivity"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">Gemini</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="uber" data-cat="productivity"><span class="share-service-dot share-service-dot--black"></span><span class="share-service-name">Uber One</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="snapchat" data-cat="productivity"><span class="share-service-dot share-service-dot--yellow"></span><span class="share-service-name">Snapchat+</span><span class="share-service-chevron">›</span></button></li>
+              <li><button type="button" class="share-service-row" data-service="delfi" data-cat="productivity"><span class="share-service-dot share-service-dot--blue"></span><span class="share-service-name">Delfi</span><span class="share-service-chevron">›</span></button></li>
+            </ul>
+          </section>
+
+          <!-- Step 2: How would you like to share? -->
+          <section class="share-step share-step--hidden" data-step="how">
+            <button type="button" class="share-back" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+            <h2 class="share-step-title">How would you like to share?</h2>
+            <div class="share-options">
+              <button type="button" class="share-option-card" data-type="public">
+                <span class="share-option-emoji">🌐</span>
+                <h3 class="share-option-title">Create a public share</h3>
+                <p class="share-option-desc">The offer is visible to all users. Ideal to find co-subscribers.</p>
+              </button>
+              <button type="button" class="share-option-card" data-type="private">
+                <span class="share-option-emoji">🤝</span>
+                <h3 class="share-option-title">Create a private share</h3>
+                <p class="share-option-desc">Accessible by invitation only. Ideal for sharing with friends and family.</p>
+              </button>
+            </div>
+            <p class="share-disclaimer">*This choice is not final, you can still edit it after the publication of your subscription.</p>
+          </section>
+
+          <!-- Step 3: What offer? -->
+          <section class="share-step share-step--hidden" data-step="offer">
+            <button type="button" class="share-back" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+            <h2 class="share-step-title" id="share-offer-title">What YouTube Premium offer do you want to share?</h2>
+            <button type="button" class="share-offer-row" data-offer="family">
+              <div class="share-offer-info">
+                <strong class="share-offer-name">Family</strong>
+                <span class="share-offer-desc">YouTube and YouTube Music ad-free and up to 6 profiles</span>
+                <span class="share-offer-meta">19.99€/month <span class="share-offer-sep">|</span> <span class="share-offer-users">6 users max.</span></span>
+              </div>
+              <span class="share-service-chevron">›</span>
+            </button>
+          </section>
+
+          <!-- Step 4: How many slots? -->
+          <section class="share-step share-step--hidden" data-step="slots">
+            <button type="button" class="share-back" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+            <h2 class="share-step-title">How many slots do you want to share?</h2>
+            <div class="share-slots-counter">
+              <button type="button" class="share-slots-btn" id="share-slots-minus" aria-label="Decrease">−</button>
+              <span class="share-slots-value" id="share-slots-value">5</span>
+              <button type="button" class="share-slots-btn" id="share-slots-plus" aria-label="Increase">+</button>
+            </div>
+            <p class="share-slots-earnings">You'll get back <strong class="share-slots-price" id="share-slots-price">16.65 €</strong> / month</p>
+            <button type="button" class="share-next-btn" id="share-slots-next">Next</button>
+            <div class="share-easy-box">
+              <strong class="share-easy-title">Easy!</strong>
+              <p class="share-easy-text">Number of slots available on your subscription, not counting yourself.</p>
+            </div>
+          </section>
+
+          <!-- Step 5: Connection fees, phone, terms -->
+          <section class="share-step share-step--hidden" data-step="confirm">
+            <button type="button" class="share-back" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+            <h2 class="share-step-title">Almost there</h2>
+            <div class="share-fees-box">
+              <p class="share-fees-line">Connection fee : <span class="share-fees-amount">0.99€</span></p>
+              <p class="share-fees-note">Only the first month for each co-subscriber who joined your subscription.</p>
+            </div>
+            <div class="share-form-group">
+              <label for="share-phone">Phone number</label>
+              <input type="tel" id="share-phone" class="share-input" placeholder="+33 6 12 34 56 78" inputmode="tel" pattern="[\d+]*" required>
+            </div>
+            <label class="share-terms-label">
+              <input type="checkbox" id="share-terms" required>
+              <span id="share-terms-text">I acknowledge and agree that Costlyf and <span id="share-terms-service">the service</span> are in no way related, in the context of the provision of services provided on the platform. As such, I confirm that I have read the <span id="share-terms-service-2">the service</span> Terms and Conditions of Use and agree to abide by them, and for which I am solely responsible.</span>
+            </label>
+            <button type="button" class="share-create-btn" id="share-create-btn">Create offer</button>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <a href="/home" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <span>Home</span>
+      </a>
+      <a href="/join" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+        <span>Join</span>
+      </a>
+      <a href="/share" class="bottom-nav-item bottom-nav-item--active">
+        <span class="bottom-nav-icon bottom-nav-icon--circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>Share</span>
+      </a>
+      <a href="/inbox" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span>Inbox</span>
+      </a>
+      <a href="/profile" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <span>Profile</span>
+      </a>
+    </nav>
+  </div>
+  <script src="/app/dashboard.js"></script>
+  <script src="/app/share.js"></script>
+</body>
+</html>

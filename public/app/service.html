@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CostLyf – Join</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/dashboard.css">
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="sidebar" aria-label="Navigation">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-logo"><img src="/media/iconlogo.png" alt="" class="sidebar-logo-icon"><img src="/media/logo.svg" alt="CostLyf"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <p class="sidebar-nav-heading">Main menu</p>
+        <a href="/home" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+          <span>Home</span>
+        </a>
+        <a href="/join" class="sidebar-nav-item sidebar-nav-item--active">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+          <span>Join</span>
+        </a>
+        <a href="/share" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon sidebar-nav-icon--circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span>Share</span>
+        </a>
+        <a href="/inbox" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          <span>Inbox</span>
+        </a>
+        <a href="/wallet" class="sidebar-nav-item">
+          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="15" r="1.5" fill="currentColor"/></svg></span>
+          <span>Wallet</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/profile" class="sidebar-user" aria-label="Profile">
+          <span class="sidebar-user-avatar" id="sidebar-nav-avatar" aria-hidden="true"></span>
+          <span class="sidebar-user-label">Profile</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="dashboard-content dashboard-content--service">
+      <header class="service-header">
+        <a href="/join" class="service-back" aria-label="Back to Join"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></a>
+        <div class="service-header-center">
+          <h1 class="service-title" id="service-title">Netflix</h1>
+          <p class="service-desc" id="service-desc">Watch Netflix films &amp; TV series online or stream right to your smart TV, game console, PC, Mac, mobile, tablet and more.</p>
+        </div>
+        <div class="service-header-actions">
+          <button type="button" class="service-header-btn" aria-label="Help"><img src="/media/icons/mingcute--question-2-fill.svg" alt="" width="20" height="20" class="service-header-btn-img"></button>
+        </div>
+      </header>
+
+      <div class="service-layout">
+        <aside class="service-sidebar">
+          <div class="service-filters">
+            <p class="service-filter-label">Type of <span id="service-title-filter">Netflix</span> plan:</p>
+            <div class="service-plan-pills">
+              <button type="button" class="service-plan-pill service-plan-pill--active" data-plan-filter="all">All</button>
+              <button type="button" class="service-plan-pill" data-plan-filter="standard">Standard</button>
+              <button type="button" class="service-plan-pill" data-plan-filter="premium">Premium</button>
+            </div>
+
+            <div class="service-toggle-row">
+              <span class="service-toggle-icon" aria-hidden="true"><img src="/media/icons/ic--round-verified.svg" alt="" width="24" height="24"></span>
+              <span class="service-toggle-label">Subscription verified</span>
+              <label class="service-toggle-wrap">
+                <input type="checkbox" class="service-toggle-input" id="filter-verified">
+                <span class="service-toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="service-toggle-row">
+              <span class="service-toggle-icon service-toggle-icon--bolt" aria-hidden="true"><img src="/media/icons/ic--round-bolt.svg" alt="" width="24" height="24"></span>
+              <span class="service-toggle-label">Instantly accepts</span>
+              <label class="service-toggle-wrap">
+                <input type="checkbox" class="service-toggle-input" id="filter-instant">
+                <span class="service-toggle-slider"></span>
+              </label>
+            </div>
+
+            <p class="service-filter-label">Sort by:</p>
+            <div class="service-sort-list">
+              <button type="button" class="service-sort-item service-sort-item--active" data-sort="trust">
+                <span class="service-sort-icon"><img src="/media/icons/mingcute--medal-line.svg" alt="" width="18" height="18"></span>
+                <span>Trust score</span>
+                <span class="service-sort-chevron">›</span>
+              </button>
+              <button type="button" class="service-sort-item" data-sort="response">
+                <span class="service-sort-icon"><img src="/media/icons/mingcute--history-anticlockwise-line.svg" alt="" width="18" height="18"></span>
+                <span>Response time</span>
+                <span class="service-sort-chevron">›</span>
+              </button>
+              <button type="button" class="service-sort-item" data-sort="price">
+                <span class="service-sort-icon"><img src="/media/icons/mingcute--coin-2-line.svg" alt="" width="18" height="18"></span>
+                <span>Lowest price</span>
+                <span class="service-sort-chevron">›</span>
+              </button>
+            </div>
+
+            <div class="service-become-owner">
+              <h3 class="service-become-owner-title">Become an owner!</h3>
+              <p class="service-become-owner-desc">Save money by submitting your <span id="service-title-owner">Netflix</span> subscription to this list with a few clicks.</p>
+              <p class="service-become-owner-earn">Get back up to: <strong>9.00€/month</strong></p>
+              <a href="/share" class="service-share-btn" id="service-share-btn">Share my <span id="service-title-share">Netflix</span></a>
+            </div>
+          </div>
+        </aside>
+
+        <main class="service-main">
+          <div class="service-offers-list" id="service-offers-list">
+            <div class="skeleton-cards" id="service-offers-loading" aria-hidden="false">
+              <div class="skeleton-card skeleton-card--offer"><span class="skeleton-card__avatar"></span><div class="skeleton-card__lines"><span class="skeleton-card__line skeleton-card__line--name"></span><span class="skeleton-card__line skeleton-card__line--sub"></span></div><span class="skeleton-card__chevron"></span></div>
+              <div class="skeleton-card skeleton-card--offer"><span class="skeleton-card__avatar"></span><div class="skeleton-card__lines"><span class="skeleton-card__line skeleton-card__line--name"></span><span class="skeleton-card__line skeleton-card__line--sub"></span></div><span class="skeleton-card__chevron"></span></div>
+              <div class="skeleton-card skeleton-card--offer"><span class="skeleton-card__avatar"></span><div class="skeleton-card__lines"><span class="skeleton-card__line skeleton-card__line--name"></span><span class="skeleton-card__line skeleton-card__line--sub"></span></div><span class="skeleton-card__chevron"></span></div>
+            </div>
+          </div>
+          <p class="service-offers-empty" id="service-offers-empty" hidden>No public offers for this service right now. Be the first to share!</p>
+          <nav class="service-pagination" id="service-pagination" aria-label="Pages" hidden></nav>
+        </main>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <a href="/home" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <span>Home</span>
+      </a>
+      <a href="/join" class="bottom-nav-item bottom-nav-item--active">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+        <span>Join</span>
+      </a>
+      <a href="/share" class="bottom-nav-item">
+        <span class="bottom-nav-icon bottom-nav-icon--circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>Share</span>
+      </a>
+      <a href="/inbox" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span>Inbox</span>
+      </a>
+      <a href="/profile" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <span>Profile</span>
+      </a>
+    </nav>
+
+    <div class="join-offer-overlay" id="join-offer-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="join-offer-title">
+      <div class="join-offer-backdrop" id="join-offer-backdrop"></div>
+      <div class="join-offer-modal">
+        <button type="button" class="join-offer-close" id="join-offer-close" aria-label="Close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+
+        <!-- Step 1: Offer summary -->
+        <div class="join-offer-step" id="join-offer-step-1">
+          <h2 class="join-offer-title" id="join-offer-title">Join</h2>
+          <div class="join-offer-avatar-wrap" id="join-offer-avatar-wrap">
+            <div class="join-offer-avatar" id="join-offer-avatar"><img src="/media/hero-profiles/2.png" alt="" width="80" height="80"></div>
+            <span class="join-offer-score service-offer-trust" id="join-offer-score">—</span>
+          </div>
+          <p class="join-offer-owner-name" id="join-offer-owner-name">Paulius</p>
+          <span class="join-offer-verified-badge">Verified profile <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><g fill="none" fill-rule="evenodd"><path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M21.546 5.111a1.5 1.5 0 0 1 0 2.121L10.303 18.475a1.6 1.6 0 0 1-2.263 0L2.454 12.89a1.5 1.5 0 1 1 2.121-2.121l4.596 4.596L19.424 5.111a1.5 1.5 0 0 1 2.122 0"/></g></svg></span>
+          <p class="join-offer-member-since">Member since July 2, 2025</p>
+
+          <div class="join-offer-box join-offer-box--collapsed" id="join-offer-box">
+            <button type="button" class="join-offer-box-head" id="join-offer-box-toggle" aria-label="Expand or collapse details" aria-expanded="false">
+              <span class="join-offer-service"><img src="/media/brand-logos/netflix.svg" alt="" width="24" height="24" class="join-offer-service-icon"> <strong id="join-offer-service-name">Netflix</strong></span>
+              <span class="join-offer-expand" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg></span>
+            </button>
+            <div class="join-offer-box-body" id="join-offer-box-body">
+              <div class="join-offer-box-sep"></div>
+              <p class="join-offer-plan"><span id="join-offer-plan">Premium</span> <span class="join-offer-tv">[🚫TV]</span></p>
+              <p class="join-offer-verify"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Verified invoice</p>
+              <p class="join-offer-verify"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> By sharing login details</p>
+            </div>
+          </div>
+
+          <p class="join-offer-label">Monthly participation :</p>
+          <div class="join-offer-price-row">
+            <button type="button" class="join-offer-price-wrap" id="join-offer-price-toggle" aria-label="Show price breakdown" aria-expanded="false"><span class="join-offer-price" id="join-offer-price">4.14€</span><span class="join-offer-period">/month</span> <span class="join-offer-price-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span></button>
+            <div class="join-offer-price-breakdown" id="join-offer-price-breakdown" hidden>
+              <div class="join-offer-breakdown-row">
+                <span class="join-offer-breakdown-label">Amount paid to owner</span>
+                <span class="join-offer-breakdown-value" id="join-breakdown-owner">—</span>
+              </div>
+              <div class="join-offer-breakdown-row">
+                <span class="join-offer-breakdown-label">Operating costs</span>
+                <span class="join-offer-breakdown-value" id="join-breakdown-operating">—</span>
+              </div>
+              <p class="join-offer-breakdown-heading">Operating costs include</p>
+              <ul class="join-offer-breakdown-includes">
+                <li><span class="join-offer-breakdown-icon join-offer-breakdown-icon--vat" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M5 11h14"/></svg></span>VAT</li>
+                <li><span class="join-offer-breakdown-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>Anti-fraud protection</li>
+                <li><span class="join-offer-breakdown-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>Co-subscriber guarantee</li>
+                <li><span class="join-offer-breakdown-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Profile verification</li>
+              </ul>
+            </div>
+          </div>
+          <p class="join-offer-disclaimer">No strings attached</p>
+
+          <button type="button" class="join-offer-next" id="join-offer-next">Next</button>
+        </div>
+
+        <!-- Step 2: Payment method -->
+        <div class="join-offer-step join-offer-step--hidden" id="join-offer-step-2">
+          <button type="button" class="join-offer-back" id="join-offer-back" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+          <h2 class="join-offer-title">Join</h2>
+          <p class="join-offer-subtitle">Choose the payment method :</p>
+
+          <div class="join-offer-payment-options">
+            <label class="join-offer-payment-option">
+              <input type="radio" name="join-payment-method" value="card" class="join-offer-payment-radio">
+              <span class="join-offer-payment-label">Bank card</span>
+              <span class="join-offer-payment-icon" aria-hidden="true"><svg width="32" height="24" viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="30" height="16" rx="2"/><line x1="1" y1="10" x2="31" y2="10"/></svg></span>
+            </label>
+            <label class="join-offer-payment-option">
+              <input type="radio" name="join-payment-method" value="wallet" class="join-offer-payment-radio">
+              <span class="join-offer-payment-label">Top up my Wallet</span>
+              <span class="join-offer-payment-amount">0€</span>
+            </label>
+          </div>
+
+          <p class="join-offer-legal">I expressly acknowledge that by clicking on Pay, the right of withdrawal (article L. 221-18 of the Consumer Code) is not applicable.</p>
+
+          <button type="button" class="join-offer-pay" id="join-offer-pay" disabled><span id="join-offer-pay-label">Pay 4.14€</span></button>
+        </div>
+
+        <!-- Step 3: Top up my balance (after Next with Top up my Wallet) -->
+        <div class="join-offer-step join-offer-step--hidden" id="join-offer-step-3">
+          <button type="button" class="join-offer-back" id="join-offer-back-3" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+          <h2 class="join-offer-title">Top up my balance</h2>
+          <p class="join-offer-subtitle">Enter the amount to credit to your Costlyf wallet.</p>
+
+          <div class="join-offer-topup-stepper">
+            <button type="button" class="join-offer-topup-btn" id="join-offer-topup-minus" aria-label="Decrease">−</button>
+            <span class="join-offer-topup-value" id="join-offer-topup-value">20€</span>
+            <button type="button" class="join-offer-topup-btn" id="join-offer-topup-plus" aria-label="Increase">+</button>
+          </div>
+          <p class="join-offer-topup-hint">Enter an amount between €10 and €150</p>
+
+          <div class="join-offer-topup-presets">
+            <button type="button" class="join-offer-topup-preset join-offer-topup-preset--active" data-amount="20">20€</button>
+            <button type="button" class="join-offer-topup-preset" data-amount="30">30€</button>
+            <button type="button" class="join-offer-topup-preset" data-amount="50">50€</button>
+            <button type="button" class="join-offer-topup-preset" data-amount="80">80€</button>
+          </div>
+
+          <button type="button" class="join-offer-next join-offer-next--block" id="join-offer-topup-next">Next</button>
+        </div>
+
+        <!-- Step 4: Top up my Wallet – payment (Card / Google Pay) -->
+        <div class="join-offer-step join-offer-step--hidden" id="join-offer-step-4">
+          <button type="button" class="join-offer-back" id="join-offer-back-4" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+          <h2 class="join-offer-title">Top up my Wallet</h2>
+
+          <div class="join-offer-pay-methods">
+            <label class="join-offer-pay-method join-offer-pay-method--active">
+              <input type="radio" name="join-topup-pay" value="card" class="join-offer-pay-method-radio" checked>
+              <span class="join-offer-pay-method-icon"><svg width="24" height="18" viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="30" height="16" rx="2"/><line x1="1" y1="10" x2="31" y2="10"/></svg></span>
+              <span class="join-offer-pay-method-label">Card</span>
+            </label>
+            <label class="join-offer-pay-method">
+              <input type="radio" name="join-topup-pay" value="gpay" class="join-offer-pay-method-radio">
+              <span class="join-offer-pay-method-gpay">G Pay</span>
+              <span class="join-offer-pay-method-label">Google Pay</span>
+            </label>
+          </div>
+
+          <div class="join-offer-card-form" id="join-offer-card-form">
+            <div class="join-offer-field">
+              <label for="join-card-name">Cardholder name</label>
+              <input type="text" id="join-card-name" class="join-offer-input" placeholder="Jordan Smith">
+            </div>
+            <div class="join-offer-field">
+              <label for="join-card-number">Card number</label>
+              <input type="text" id="join-card-number" class="join-offer-input" placeholder="1234 1234 1234 1234" maxlength="19">
+            </div>
+            <div class="join-offer-field-row">
+              <div class="join-offer-field">
+                <label for="join-card-expiry">Expiry date</label>
+                <input type="text" id="join-card-expiry" class="join-offer-input" placeholder="MM/YY" maxlength="5">
+              </div>
+              <div class="join-offer-field">
+                <label for="join-card-cvv">Security code</label>
+                <input type="text" id="join-card-cvv" class="join-offer-input" placeholder="CVV" maxlength="4">
+              </div>
+            </div>
+            <button type="button" class="join-offer-pay-btn" id="join-offer-topup-pay"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Pay <span id="join-offer-topup-pay-amount">20</span> €</button>
+          </div>
+
+          <button type="button" class="join-offer-next join-offer-next--block join-offer-gpay-next" id="join-offer-gpay-next">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/app/auth.js"></script>
+  <script src="/app/dashboard.js"></script>
+  <script src="/app/service.js"></script>
+</body>
+</html>
