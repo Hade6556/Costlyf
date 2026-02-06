@@ -12,6 +12,10 @@
       "destination": "/api?path=api/:path*"
     },
     {
+      "source": "/uploads/:path*",
+      "destination": "/api?path=uploads/:path*"
+    },
+    {
       "source": "/home",
       "destination": "/api?path=home"
     },

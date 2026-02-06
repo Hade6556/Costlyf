@@ -1424,7 +1424,8 @@ app.patch('/api/profile', async (req, res) => {
   }
 });
 
-// Upload profile picture (Bearer token); then PATCH profile with returned avatar_url
+// Upload profile picture (Bearer token). On Vercel use Supabase Storage (persistent); locally use /uploads.
+const AVATAR_BUCKET = 'avatars';
 app.post('/api/profile/avatar', (req, res) => {
   uploadAvatar(req, res, async function (err) {
     if (err) return res.status(400).json({ error: err.message || 'Invalid file' });
@@ -1441,7 +1442,22 @@ app.post('/api/profile/avatar', (req, res) => {
         return res.status(401).json({ error: 'Invalid or expired token' });
       }
       if (!req.file || !req.file.filename) return res.status(400).json({ error: 'No image file' });
-      const avatarUrl = '/uploads/avatars/' + req.file.filename;
+      let avatarUrl;
+      if (process.env.VERCEL && req.file.path && fs.existsSync(req.file.path)) {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const ext = path.extname(req.file.filename) || '.jpg';
+        const storagePath = user.id + '/avatar-' + Date.now() + ext;
+        const { error: uploadErr } = await supabaseAdmin.storage.from(AVATAR_BUCKET).upload(storagePath, fileBuffer, {
+          contentType: req.file.mimetype || 'image/jpeg',
+          upsert: true
+        });
+        fs.unlinkSync(req.file.path);
+        if (uploadErr) return res.status(500).json({ error: uploadErr.message || 'Storage upload failed' });
+        const { data: urlData } = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(storagePath);
+        avatarUrl = urlData.publicUrl;
+      } else {
+        avatarUrl = '/uploads/avatars/' + req.file.filename;
+      }
       await supabaseAdmin.from('profiles').update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() }).eq('id', user.id);
       return res.status(200).json({ avatar_url: avatarUrl });
     } catch (e) {
