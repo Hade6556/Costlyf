@@ -4038,6 +4038,14 @@ a.profile-trust-card {
 .profile-form-error[hidden] {
   display: none !important;
 }
+.profile-form-success {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #059669;
+}
+.profile-form-success[hidden] {
+  display: none !important;
+}
 .profile-btn {
   padding: 0.65rem 1.25rem;
   border-radius: 10px;
@@ -5318,3 +5326,57 @@ a.profile-trust-card {
   color: var(--dash-text);
   min-height: 4rem;
 }
+
+/* Wallet top-up modal */
+.wallet-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.wallet-modal[hidden] { display: none !important; }
+.wallet-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+}
+.wallet-modal-box {
+  position: relative;
+  background: var(--dash-bg);
+  border-radius: var(--dash-card-radius);
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.wallet-modal-title { margin: 0 0 0.25rem; font-size: 1.25rem; }
+.wallet-modal-desc { margin: 0 0 1rem; color: var(--dash-text-muted); font-size: 0.9rem; }
+.wallet-topup-amounts { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.wallet-topup-amount-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--dash-text-muted);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.wallet-topup-amount-btn--active { background: var(--dash-primary); color: #fff; border-color: var(--dash-primary); }
+.wallet-stripe-card-wrap {
+  min-height: 44px;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+.wallet-modal-error { color: #c00; font-size: 0.9rem; margin: 0 0 0.5rem; }
+.wallet-modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; }
+.wallet-modal-cancel { padding: 0.5rem 1rem; border: 1px solid #ccc; border-radius: 8px; background: #fff; cursor: pointer; }
+.wallet-modal-pay { padding: 0.5rem 1.25rem; border: none; border-radius: 8px; background: var(--dash-primary); color: #fff; cursor: pointer; font-weight: 500; }
+.wallet-modal-pay:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.join-offer-stripe-wrap { min-height: 44px; }
+.join-offer-stripe-error { color: #b91c1c; font-size: 0.875rem; margin: 0.25rem 0 0; }

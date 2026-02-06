@@ -90,7 +90,7 @@
               <span>Privacy &amp; security</span>
               <span class="profile-nav-chevron">›</span>
             </a>
-            <a href="#" class="profile-nav-item">
+            <a href="#payment" class="profile-nav-item" data-panel="payment">
               <span class="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
               <span>Payment method</span>
               <span class="profile-nav-chevron">›</span>
@@ -167,6 +167,17 @@
               <span class="profile-cgu-text">Signed CGU version: 1.0, 02/03/2026</span>
               <span class="profile-cgu-chevron" aria-hidden="true">›</span>
             </a>
+          </div>
+
+          <div id="profile-panel-payment" class="profile-panel" hidden>
+            <h1 class="profile-main-title">Payment method</h1>
+            <p class="profile-panel-desc">Add a card for top-ups and subscriptions.</p>
+            <div class="profile-card">
+              <div id="profile-payment-card-wrap" class="wallet-stripe-card-wrap" style="min-height:44px;"></div>
+              <p id="profile-payment-error" class="profile-form-error" role="alert" hidden></p>
+              <p id="profile-payment-success" class="profile-form-success" role="status" hidden></p>
+              <button type="button" class="profile-btn profile-btn--primary" id="profile-payment-add-card">Add card</button>
+            </div>
           </div>
 
           <div id="profile-panel-trust" class="profile-panel" hidden>

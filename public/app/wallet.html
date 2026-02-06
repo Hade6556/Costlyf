@@ -54,17 +54,37 @@
           </a>
 
           <h1 class="wallet-title">My wallet</h1>
-          <p class="wallet-balance-amount">0€</p>
+          <p class="wallet-balance-amount" id="wallet-balance-display">0€</p>
 
           <div class="wallet-actions">
-            <button type="button" class="wallet-action-btn">
+            <button type="button" class="wallet-action-btn" id="wallet-topup-btn" aria-label="Top up balance">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
               <span>Top-up</span>
             </button>
-            <button type="button" class="wallet-action-btn">
+            <button type="button" class="wallet-action-btn" id="wallet-bank-btn" aria-label="Bank transfer">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg>
               <span>Bank transfer</span>
             </button>
+          </div>
+
+          <div id="wallet-topup-modal" class="wallet-modal" hidden aria-modal="true" aria-labelledby="wallet-topup-title">
+            <div class="wallet-modal-backdrop"></div>
+            <div class="wallet-modal-box">
+              <h2 id="wallet-topup-title" class="wallet-modal-title">Top up wallet</h2>
+              <p class="wallet-modal-desc">Add funds to your balance. Choose an amount (€).</p>
+              <div class="wallet-topup-amounts">
+                <button type="button" class="wallet-topup-amount-btn" data-cents="1000">10€</button>
+                <button type="button" class="wallet-topup-amount-btn" data-cents="2000">20€</button>
+                <button type="button" class="wallet-topup-amount-btn wallet-topup-amount-btn--active" data-cents="5000">50€</button>
+                <button type="button" class="wallet-topup-amount-btn" data-cents="10000">100€</button>
+              </div>
+              <div id="wallet-stripe-card-wrap" class="wallet-stripe-card-wrap"></div>
+              <p id="wallet-topup-error" class="wallet-modal-error" role="alert" hidden></p>
+              <div class="wallet-modal-actions">
+                <button type="button" class="wallet-modal-cancel" id="wallet-topup-cancel">Cancel</button>
+                <button type="button" class="wallet-modal-pay" id="wallet-topup-pay">Pay <span id="wallet-topup-pay-amount">50</span> €</button>
+              </div>
+            </div>
           </div>
 
           <div class="wallet-card wallet-card--upcoming">
@@ -137,5 +157,6 @@
     </nav>
   </div>
   <script src="/app/dashboard.js"></script>
+  <script src="/app/wallet.js"></script>
 </body>
 </html>

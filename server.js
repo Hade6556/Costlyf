@@ -16,9 +16,47 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PU
 const supabaseAdmin = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey, { auth: { autoRefreshToken: false, persistSession: false } }) : null;
 const supabaseAuth = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, { auth: { autoRefreshToken: false, persistSession: false } }) : null;
 
-// JSON body for API
-app.use(express.json());
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const stripeCurrency = (process.env.STRIPE_CURRENCY || 'eur').toLowerCase();
+const stripe = stripeSecretKey ? require('stripe')(stripeSecretKey) : null;
+
 app.use(cookieParser());
+
+// Stripe webhook needs raw body for signature verification (must be before express.json())
+if (stripe && stripeWebhookSecret) {
+  app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, stripeWebhookSecret);
+    } catch (e) {
+      return res.status(400).send('Webhook signature verification failed');
+    }
+    if (event.type === 'payment_intent.succeeded' && event.data && event.data.object) {
+      const pi = event.data.object;
+      const purpose = (pi.metadata && pi.metadata.purpose) || '';
+      const userId = (pi.metadata && pi.metadata.user_id) || '';
+      if (purpose === 'top_up' && userId && pi.status === 'succeeded' && pi.amount_received > 0 && supabaseAdmin) {
+        supabaseAdmin.rpc('apply_balance_transaction', {
+          p_user_id: userId,
+          p_amount_cents: pi.amount_received,
+          p_type: 'top_up',
+          p_reference_type: 'stripe_payment_intent',
+          p_reference_id: pi.id,
+          p_metadata: null
+        }).then(({ error }) => {
+          if (error) console.error('Stripe webhook apply_balance_transaction error:', error.message);
+        });
+      }
+    }
+    res.sendStatus(200);
+  });
+}
+
+// JSON body for API (after webhook so webhook gets raw body)
+app.use(express.json());
 
 // --- i18n: locales and detection (priority: cookie → Accept-Language → en) ---
 const LOCALES = ['en', 'lt', 'lv', 'pl', 'es', 'de'];
@@ -695,6 +733,49 @@ async function postSystemMessageToThread(supabase, offerId, ownerId, subscriberI
     .insert({ thread_id: thread.id, sender_id: null, content, is_system: true });
   await supabase.from('chat_threads').update({ updated_at: new Date().toISOString() }).eq('id', thread.id);
 }
+
+// Create PaymentIntent for joining an offer (pay by card). Amount = offer first period (contribution_per_month).
+app.post('/api/offers/:id/slots/:slotIndex/create-payment-intent', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });
+  const offerId = req.params.id;
+  const slotIndex = parseInt(req.params.slotIndex, 10);
+  if (!offerId || !slotIndex || slotIndex < 1) return res.status(400).json({ error: 'Invalid offer or slot' });
+  try {
+    const { data: offer, error: offerErr } = await supabaseAdmin.from('offers').select('id, owner_id, price').eq('id', offerId).single();
+    if (offerErr || !offer) return res.status(404).json({ error: 'Offer not found' });
+    const { data: slot, error: slotErr } = await supabaseAdmin
+      .from('offer_slots')
+      .select('id, status')
+      .eq('offer_id', offerId)
+      .eq('slot_index', slotIndex)
+      .single();
+    if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
+    if (slot.status !== 'available') return res.status(400).json({ error: 'Slot is not available' });
+    const amountEur = Number(offer.price) != null ? Math.max(0, Number(Number(offer.price).toFixed(2))) : 0;
+    const amount_cents = Math.round(amountEur * 100) || 100; // min 1€ for Stripe
+    let { data: profile } = await supabaseAdmin.from('profiles').select('stripe_customer_id').eq('id', user.id).single();
+    let customerId = profile && profile.stripe_customer_id;
+    if (!customerId) {
+      const cust = await stripe.customers.create({ email: user.email || undefined, metadata: { user_id: user.id } });
+      customerId = cust.id;
+      await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq('id', user.id);
+    }
+    const pi = await stripe.paymentIntents.create({
+      amount: amount_cents,
+      currency: stripeCurrency,
+      customer: customerId,
+      automatic_payment_methods: { enabled: true },
+      metadata: { user_id: user.id, purpose: 'join', offer_id: offerId, slot_index: String(slotIndex) }
+    });
+    return res.status(200).json({
+      client_secret: pi.client_secret,
+      publishableKey: stripePublishableKey || undefined
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to create payment intent' });
+  }
+});
 
 // Reserve a slot (auth required). Slot must be available. Creates chat thread and system message to notify owner.
 app.post('/api/offers/:id/slots/:slotIndex/reserve', async (req, res) => {
@@ -1465,6 +1546,74 @@ app.post('/api/profile/avatar', (req, res) => {
       return res.status(500).json({ error: e.message || 'Upload failed' });
     }
   });
+});
+
+// --- Wallet & Stripe (top-up, setup payment method, balance) ---
+app.get('/api/wallet/balance', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const { data, error } = await supabaseAdmin.from('user_balances').select('balance_cents').eq('user_id', user.id).single();
+    if (error && error.code !== 'PGRST116') return res.status(500).json({ error: error.message });
+    const balance_cents = (data && data.balance_cents != null) ? data.balance_cents : 0;
+    return res.status(200).json({ balance_cents });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to get balance' });
+  }
+});
+
+app.post('/api/wallet/topup-intent', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });
+  const amount_cents = Math.min(15000, Math.max(500, parseInt(req.body && req.body.amount_cents, 10) || 500)); // €5–150
+  try {
+    let { data: profile } = await supabaseAdmin.from('profiles').select('stripe_customer_id').eq('id', user.id).single();
+    let customerId = profile && profile.stripe_customer_id;
+    if (!customerId) {
+      const cust = await stripe.customers.create({ email: user.email || undefined, metadata: { user_id: user.id } });
+      customerId = cust.id;
+      await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq('id', user.id);
+    }
+    const pi = await stripe.paymentIntents.create({
+      amount: amount_cents,
+      currency: stripeCurrency,
+      customer: customerId,
+      automatic_payment_methods: { enabled: true },
+      metadata: { user_id: user.id, purpose: 'top_up' }
+    });
+    return res.status(200).json({
+      client_secret: pi.client_secret,
+      publishableKey: stripePublishableKey || undefined
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to create payment intent' });
+  }
+});
+
+app.post('/api/wallet/setup-intent', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    let { data: profile } = await supabaseAdmin.from('profiles').select('stripe_customer_id').eq('id', user.id).single();
+    let customerId = profile && profile.stripe_customer_id;
+    if (!customerId) {
+      const cust = await stripe.customers.create({ email: user.email || undefined, metadata: { user_id: user.id } });
+      customerId = cust.id;
+      await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq('id', user.id);
+    }
+    const si = await stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      usage: 'off_session',
+      metadata: { user_id: user.id }
+    });
+    return res.status(200).json({
+      client_secret: si.client_secret,
+      publishableKey: stripePublishableKey || undefined
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to create setup intent' });
+  }
 });
 
 // Change password (Bearer token)

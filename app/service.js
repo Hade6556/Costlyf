@@ -240,6 +240,50 @@
   };
 
   var currentJoinOffer = null;
+  var joinCardIntentState = null;
+  var joinTopupIntentState = null;
+
+  function loadStripeScript() {
+    return new Promise(function (resolve) {
+      if (window.Stripe) { resolve(window.Stripe); return; }
+      var s = document.createElement('script');
+      s.src = 'https://js.stripe.com/v3/';
+      s.async = true;
+      s.onload = function () { resolve(window.Stripe); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function clearJoinStripeState() {
+    joinCardIntentState = null;
+    joinTopupIntentState = null;
+    var cardWrap = document.getElementById('join-offer-stripe-card-wrap');
+    var topupWrap = document.getElementById('join-offer-topup-stripe-wrap');
+    var err2 = document.getElementById('join-offer-stripe-error');
+    var err4 = document.getElementById('join-offer-topup-stripe-error');
+    if (cardWrap) { cardWrap.innerHTML = ''; cardWrap.style.display = 'none'; }
+    if (topupWrap) { topupWrap.innerHTML = ''; topupWrap.style.display = 'none'; }
+    if (err2) { err2.textContent = ''; err2.style.display = 'none'; }
+    if (err4) { err4.textContent = ''; err4.style.display = 'none'; }
+  }
+
+  function reserveAndRedirect() {
+    if (!currentJoinOffer || !currentJoinOffer.offerId || !currentJoinOffer.slotIndex) {
+      closeJoinOfferModal();
+      window.location.href = '/home';
+      return Promise.resolve();
+    }
+    var url = '/api/offers/' + encodeURIComponent(currentJoinOffer.offerId) + '/slots/' + currentJoinOffer.slotIndex + '/reserve';
+    return fetchWithAuth(url, { method: 'POST' })
+      .then(function (r) {
+        if (r.ok) {
+          closeJoinOfferModal();
+          window.location.href = '/offer?id=' + encodeURIComponent(currentJoinOffer.offerId);
+          return;
+        }
+        return r.json().then(function (d) { throw new Error(d.error || 'Could not reserve slot'); });
+      });
+  }
 
   function getToken() {
     if (typeof window !== 'undefined' && window.Auth && window.Auth.getToken) return window.Auth.getToken();
@@ -264,19 +308,9 @@
       alert('Please log in to join an offer.');
       return;
     }
-    var url = '/api/offers/' + encodeURIComponent(currentJoinOffer.offerId) + '/slots/' + currentJoinOffer.slotIndex + '/reserve';
-    fetchWithAuth(url, { method: 'POST' })
-      .then(function (r) {
-        if (r.ok) {
-          closeJoinOfferModal();
-          window.location.href = '/offer?id=' + encodeURIComponent(currentJoinOffer.offerId);
-          return;
-        }
-        return r.json().then(function (d) { throw new Error(d.error || 'Could not reserve slot'); });
-      })
-      .catch(function (e) {
-        alert(e.message || 'Could not join. Try again.');
-      });
+    reserveAndRedirect().catch(function (e) {
+      alert(e.message || 'Could not join. Try again.');
+    });
   }
 
   function openJoinOfferModal(offerId) {
@@ -416,6 +450,7 @@
 
   function closeJoinOfferModal() {
     if (overlay) overlay.hidden = true;
+    clearJoinStripeState();
     showJoinStep(1);
   }
 
@@ -429,6 +464,20 @@
   var TOPUP_MAX = 150;
 
   function showJoinStep(step) {
+    if (step !== 2) {
+      joinCardIntentState = null;
+      var cw = document.getElementById('join-offer-stripe-card-wrap');
+      if (cw) { cw.innerHTML = ''; cw.style.display = 'none'; }
+      var e2 = document.getElementById('join-offer-stripe-error');
+      if (e2) { e2.textContent = ''; e2.style.display = 'none'; }
+    }
+    if (step !== 4) {
+      joinTopupIntentState = null;
+      var topupWrap = document.getElementById('join-offer-topup-stripe-wrap');
+      if (topupWrap) { topupWrap.innerHTML = ''; topupWrap.style.display = 'none'; }
+      var e4 = document.getElementById('join-offer-topup-stripe-error');
+      if (e4) { e4.textContent = ''; e4.style.display = 'none'; }
+    }
     if (step1) step1.classList.toggle('join-offer-step--hidden', step !== 1);
     if (step2) step2.classList.toggle('join-offer-step--hidden', step !== 2);
     if (step3) step3.classList.toggle('join-offer-step--hidden', step !== 3);
@@ -518,8 +567,45 @@
       var checked = document.querySelector('.join-offer-payment-radio:checked');
       if (checked && checked.value === 'wallet') {
         showJoinStep(3);
-      } else if (checked && checked.value === 'card') {
-        saveSubscriptionAndGoHome();
+        return;
+      }
+      if (checked && checked.value === 'card') {
+        var cardWrap = document.getElementById('join-offer-stripe-card-wrap');
+        var errEl = document.getElementById('join-offer-stripe-error');
+        if (joinCardIntentState) {
+          payBtn.disabled = true;
+          joinCardIntentState.stripe.confirmCardPayment(joinCardIntentState.clientSecret, { payment_method: { card: joinCardIntentState.cardElement } })
+            .then(function (result) {
+              if (result.error) throw new Error(result.error.message || 'Payment failed');
+              return reserveAndRedirect();
+            })
+            .catch(function (e) {
+              if (errEl) { errEl.textContent = e.message || 'Payment failed'; errEl.style.display = 'block'; }
+            })
+            .then(function () { payBtn.disabled = false; });
+          return;
+        }
+        payBtn.disabled = true;
+        if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+        var url = '/api/offers/' + encodeURIComponent(currentJoinOffer.offerId) + '/slots/' + currentJoinOffer.slotIndex + '/create-payment-intent';
+        fetchWithAuth(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.error) throw new Error(data.error);
+            if (!data.client_secret || !data.publishableKey) throw new Error('Missing Stripe keys');
+            return loadStripeScript().then(function (Stripe) {
+              var stripe = Stripe(data.publishableKey);
+              if (cardWrap) { cardWrap.innerHTML = ''; cardWrap.style.display = 'block'; }
+              var cardElement = stripe.elements().create('card', { style: { base: { fontSize: '16px' } } });
+              cardElement.mount(cardWrap);
+              joinCardIntentState = { clientSecret: data.client_secret, stripe: stripe, cardElement: cardElement };
+              payBtn.disabled = false;
+            });
+          })
+          .catch(function (e) {
+            if (errEl) { errEl.textContent = e.message || 'Something went wrong'; errEl.style.display = 'block'; }
+            payBtn.disabled = false;
+          });
       }
     });
   }
@@ -541,7 +627,50 @@
   });
 
   var topupPayBtn = document.getElementById('join-offer-topup-pay');
-  if (topupPayBtn) topupPayBtn.addEventListener('click', saveSubscriptionAndGoHome);
+  if (topupPayBtn) {
+    topupPayBtn.addEventListener('click', function () {
+      var topupWrap = document.getElementById('join-offer-topup-stripe-wrap');
+      var errEl = document.getElementById('join-offer-topup-stripe-error');
+      if (joinTopupIntentState) {
+        topupPayBtn.disabled = true;
+        joinTopupIntentState.stripe.confirmCardPayment(joinTopupIntentState.clientSecret, { payment_method: { card: joinTopupIntentState.cardElement } })
+          .then(function (result) {
+            if (result.error) throw new Error(result.error.message || 'Payment failed');
+            return reserveAndRedirect();
+          })
+          .catch(function (e) {
+            if (errEl) { errEl.textContent = e.message || 'Payment failed'; errEl.style.display = 'block'; }
+          })
+          .then(function () { topupPayBtn.disabled = false; });
+        return;
+      }
+      topupPayBtn.disabled = true;
+      if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+      var amountCents = Math.min(15000, Math.max(500, topupAmount * 100));
+      fetchWithAuth('/api/wallet/topup-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount_cents: amountCents })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) throw new Error(data.error);
+          if (!data.client_secret || !data.publishableKey) throw new Error('Missing Stripe keys');
+          return loadStripeScript().then(function (Stripe) {
+            var stripe = Stripe(data.publishableKey);
+            if (topupWrap) { topupWrap.innerHTML = ''; topupWrap.style.display = 'block'; }
+            var cardElement = stripe.elements().create('card', { style: { base: { fontSize: '16px' } } });
+            cardElement.mount(topupWrap);
+            joinTopupIntentState = { clientSecret: data.client_secret, stripe: stripe, cardElement: cardElement };
+            topupPayBtn.disabled = false;
+          });
+        })
+        .catch(function (e) {
+          if (errEl) { errEl.textContent = e.message || 'Something went wrong'; errEl.style.display = 'block'; }
+          topupPayBtn.disabled = false;
+        });
+    });
+  }
   var gpayNextBtn = document.getElementById('join-offer-gpay-next');
   if (gpayNextBtn) gpayNextBtn.addEventListener('click', saveSubscriptionAndGoHome);
 

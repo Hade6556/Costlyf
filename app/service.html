@@ -227,6 +227,8 @@
 
           <p class="join-offer-legal">I expressly acknowledge that by clicking on Pay, the right of withdrawal (article L. 221-18 of the Consumer Code) is not applicable.</p>
 
+          <div id="join-offer-stripe-card-wrap" class="wallet-stripe-card-wrap join-offer-stripe-wrap" style="display:none; margin-top:0.75rem;"></div>
+          <p id="join-offer-stripe-error" class="join-offer-stripe-error" role="alert" style="display:none;"></p>
           <button type="button" class="join-offer-pay" id="join-offer-pay" disabled><span id="join-offer-pay-label">Pay 4.14€</span></button>
         </div>
 
@@ -272,7 +274,8 @@
           </div>
 
           <div class="join-offer-card-form" id="join-offer-card-form">
-            <div class="join-offer-field">
+            <div id="join-offer-topup-stripe-wrap" class="wallet-stripe-card-wrap join-offer-stripe-wrap" style="display:none;"></div>
+            <div class="join-offer-field" style="margin-top:0.5rem;">
               <label for="join-card-name">Cardholder name</label>
               <input type="text" id="join-card-name" class="join-offer-input" placeholder="Jordan Smith">
             </div>
@@ -290,6 +293,7 @@
                 <input type="text" id="join-card-cvv" class="join-offer-input" placeholder="CVV" maxlength="4">
               </div>
             </div>
+            <p id="join-offer-topup-stripe-error" class="join-offer-stripe-error" role="alert" style="display:none;"></p>
             <button type="button" class="join-offer-pay-btn" id="join-offer-topup-pay"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Pay <span id="join-offer-topup-pay-amount">20</span> €</button>
           </div>
 

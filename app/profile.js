@@ -139,10 +139,12 @@
     var personal = document.getElementById('profile-panel-personal');
     var privacy = document.getElementById('profile-panel-privacy');
     var trust = document.getElementById('profile-panel-trust');
+    var paymentPanel = document.getElementById('profile-panel-payment');
     var navItems = document.querySelectorAll('.profile-nav-item[data-panel]');
     var isPersonal = name === 'personal';
     var isPrivacy = name === 'privacy';
     var isTrust = name === 'trust';
+    var isPayment = name === 'payment';
     if (personal) {
       personal.hidden = !isPersonal;
       personal.classList.toggle('profile-panel--active', isPersonal);
@@ -156,10 +158,15 @@
       trust.classList.toggle('profile-panel--active', isTrust);
       if (isTrust) fillTrustScore();
     }
+    if (paymentPanel) {
+      paymentPanel.hidden = !isPayment;
+      paymentPanel.classList.toggle('profile-panel--active', isPayment);
+    }
     navItems.forEach(function (item) {
       item.classList.toggle('profile-nav-item--active', item.getAttribute('data-panel') === name);
     });
-    window.location.hash = name === 'personal' ? 'personal' : name === 'privacy' ? 'privacy' : name === 'trust' ? 'trust' : 'personal';
+    var hash = (name === 'personal' || name === 'privacy' || name === 'trust' || name === 'payment') ? name : 'personal';
+    window.location.hash = hash;
   }
 
   function fillProfileDisplay() {
@@ -298,12 +305,14 @@
     var hash = window.location.hash.slice(1);
     if (hash === 'privacy') showPanel('privacy');
     else if (hash === 'trust') showPanel('trust');
+    else if (hash === 'payment') showPanel('payment');
     else showPanel('personal');
 
     window.addEventListener('hashchange', function () {
       var h = window.location.hash.slice(1);
       if (h === 'privacy') showPanel('privacy');
       else if (h === 'trust') showPanel('trust');
+      else if (h === 'payment') showPanel('payment');
       else showPanel('personal');
     });
 
@@ -352,6 +361,61 @@
           });
       });
     }
+
+    (function initPaymentPanel() {
+      var cardWrap = document.getElementById('profile-payment-card-wrap');
+      var errEl = document.getElementById('profile-payment-error');
+      var successEl = document.getElementById('profile-payment-success');
+      var addBtn = document.getElementById('profile-payment-add-card');
+      if (!cardWrap || !addBtn) return;
+      var paymentCardElement = null;
+      var paymentStripe = null;
+      function showPaymentError(msg) {
+        if (errEl) { errEl.textContent = msg || ''; errEl.hidden = !msg; }
+        if (successEl) successEl.hidden = true;
+      }
+      function showPaymentSuccess(msg) {
+        if (successEl) { successEl.textContent = msg || 'Card added.'; successEl.hidden = false; successEl.style.color = '#059669'; }
+        if (errEl) errEl.hidden = true;
+      }
+      function loadStripeScript() {
+        return new Promise(function (resolve) {
+          if (window.Stripe) { resolve(window.Stripe); return; }
+          var s = document.createElement('script');
+          s.src = 'https://js.stripe.com/v3/';
+          s.async = true;
+          s.onload = function () { resolve(window.Stripe); };
+          document.head.appendChild(s);
+        });
+      }
+      addBtn.addEventListener('click', function () {
+        addBtn.disabled = true;
+        showPaymentError('');
+        Auth.fetchWithAuth('/api/wallet/setup-intent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.error) throw new Error(data.error);
+            if (!data.client_secret || !data.publishableKey) throw new Error('Missing Stripe keys');
+            return loadStripeScript().then(function (Stripe) {
+              paymentStripe = Stripe(data.publishableKey);
+              cardWrap.innerHTML = '';
+              paymentCardElement = paymentStripe.elements().create('card', { style: { base: { fontSize: '16px' } } });
+              paymentCardElement.mount(cardWrap);
+              return paymentStripe.confirmCardSetup(data.client_secret, { payment_method: { card: paymentCardElement } });
+            });
+          })
+          .then(function (result) {
+            if (result.error) throw new Error(result.error.message || 'Failed to add card');
+            showPaymentSuccess('Card added successfully.');
+            cardWrap.innerHTML = '';
+            paymentCardElement = null;
+          })
+          .catch(function (e) {
+            showPaymentError(e.message || 'Could not add card.');
+          })
+          .then(function () { addBtn.disabled = false; });
+      });
+    })();
 
     var avatarTrigger = document.getElementById('profile-card-avatar-trigger');
     var avatarInput = document.getElementById('profile-avatar-input');
