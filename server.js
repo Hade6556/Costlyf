@@ -1479,9 +1479,13 @@ app.get('/signup', (req, res) => {
   res.sendFile(path.join(staticRoot, 'app', 'signup.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Main site: http://localhost:${PORT}/`);
-  console.log(`Home: http://localhost:${PORT}/home`);
-  console.log(`Join: http://localhost:${PORT}/join`);
-});
+// Export for Vercel serverless (handles /home, /login, /terms, etc.). Local dev: run listen.
+module.exports = app;
+if (typeof process.env.VERCEL === 'undefined') {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Main site: http://localhost:${PORT}/`);
+    console.log(`Home: http://localhost:${PORT}/home`);
+    console.log(`Join: http://localhost:${PORT}/join`);
+  });
+}
