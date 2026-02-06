@@ -3726,6 +3726,13 @@ a.profile-trust-card {
   font-weight: 400;
   transition: background 0.15s;
   border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+button.profile-nav-item {
+  appearance: none;
 }
 .profile-nav-item:focus,
 .profile-nav-item:focus-visible {
@@ -5354,6 +5361,7 @@ a.profile-trust-card {
 }
 .wallet-modal-title { margin: 0 0 0.25rem; font-size: 1.25rem; }
 .wallet-modal-desc { margin: 0 0 1rem; color: var(--dash-text-muted); font-size: 0.9rem; }
+.wallet-modal-hint { margin: 0 0 0.5rem; color: var(--dash-text-muted); font-size: 0.8rem; }
 .wallet-topup-amounts { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .wallet-topup-amount-btn {
   padding: 0.5rem 1rem;
@@ -5377,6 +5385,22 @@ a.profile-trust-card {
 .wallet-modal-cancel { padding: 0.5rem 1rem; border: 1px solid #ccc; border-radius: 8px; background: #fff; cursor: pointer; }
 .wallet-modal-pay { padding: 0.5rem 1.25rem; border: none; border-radius: 8px; background: var(--dash-primary); color: #fff; cursor: pointer; font-weight: 500; }
 .wallet-modal-pay:disabled { opacity: 0.6; cursor: not-allowed; }
+.wallet-topup-step { display: block; }
+.wallet-topup-step--hidden { display: none !important; }
+.wallet-modal-next { padding: 0.5rem 1.25rem; border: none; border-radius: 8px; background: var(--dash-primary); color: #fff; cursor: pointer; font-weight: 500; }
+.wallet-modal-next:hover { opacity: 0.9; }
+.wallet-modal-next:disabled { opacity: 0.6; cursor: not-allowed; }
+.wallet-modal-back { padding: 0.5rem 1rem; border: 1px solid #ccc; border-radius: 8px; background: #fff; cursor: pointer; }
+.wallet-modal-actions--step1 { margin-top: 1rem; }
+.wallet-card-fields { margin-bottom: 1rem; }
+.wallet-card-field { margin-bottom: 0.75rem; }
+.wallet-card-field-row { display: flex; gap: 0.75rem; }
+.wallet-card-field-row .wallet-card-field { flex: 1; margin-bottom: 0; }
+.wallet-card-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--dash-text); margin-bottom: 0.35rem; }
+.wallet-stripe-input { min-height: 44px; padding: 0.5rem 0; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+.wallet-modal-actions--step2 { display: flex; gap: 0.75rem; margin-top: 1.25rem; }
+.wallet-modal-actions--step2 .wallet-modal-back,
+.wallet-modal-actions--step2 .wallet-modal-pay { flex: 1; width: 50%; min-height: 48px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 600; }
 
 .join-offer-stripe-wrap { min-height: 44px; }
 .join-offer-stripe-error { color: #b91c1c; font-size: 0.875rem; margin: 0.25rem 0 0; }

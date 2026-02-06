@@ -165,8 +165,10 @@
     navItems.forEach(function (item) {
       item.classList.toggle('profile-nav-item--active', item.getAttribute('data-panel') === name);
     });
-    var hash = (name === 'personal' || name === 'privacy' || name === 'trust' || name === 'payment') ? name : 'personal';
-    window.location.hash = hash;
+    var cleanUrl = window.location.pathname + window.location.search;
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', cleanUrl);
+    }
   }
 
   function fillProfileDisplay() {
@@ -275,7 +277,8 @@
     document.querySelectorAll('.profile-nav-item[data-panel]').forEach(function (item) {
       item.addEventListener('click', function (e) {
         e.preventDefault();
-        showPanel(item.getAttribute('data-panel'));
+        var panel = item.getAttribute('data-panel');
+        if (panel) showPanel(panel);
       });
     });
     var trustCardLink = document.getElementById('profile-trust-card-link');
@@ -302,23 +305,14 @@
       });
     }
 
-    var hash = window.location.hash.slice(1);
-    if (hash === 'privacy') showPanel('privacy');
-    else if (hash === 'trust') showPanel('trust');
-    else if (hash === 'payment') showPanel('payment');
-    else showPanel('personal');
+    showPanel('personal');
 
-    window.addEventListener('hashchange', function () {
-      var h = window.location.hash.slice(1);
-      if (h === 'privacy') showPanel('privacy');
-      else if (h === 'trust') showPanel('trust');
-      else if (h === 'payment') showPanel('payment');
-      else showPanel('personal');
-    });
-
-    document.getElementById('profile-panel-personal').addEventListener('click', function (e) {
-      if (e.target.closest('.profile-field-edit')) startEditMode(e.target.closest('.profile-field-edit'));
-    });
+    var personalPanel = document.getElementById('profile-panel-personal');
+    if (personalPanel) {
+      personalPanel.addEventListener('click', function (e) {
+        if (e.target.closest('.profile-field-edit')) startEditMode(e.target.closest('.profile-field-edit'));
+      });
+    }
 
     var passwordForm = document.getElementById('profile-change-password-form');
     if (passwordForm) {
@@ -370,6 +364,7 @@
       if (!cardWrap || !addBtn) return;
       var paymentCardElement = null;
       var paymentStripe = null;
+      var pendingSetupSecret = null;
       function showPaymentError(msg) {
         if (errEl) { errEl.textContent = msg || ''; errEl.hidden = !msg; }
         if (successEl) successEl.hidden = true;
@@ -389,6 +384,23 @@
         });
       }
       addBtn.addEventListener('click', function () {
+        if (pendingSetupSecret && paymentStripe && paymentCardElement) {
+          addBtn.disabled = true;
+          showPaymentError('');
+          paymentStripe.confirmCardSetup(pendingSetupSecret, { payment_method: { card: paymentCardElement } })
+            .then(function (result) {
+              if (result.error) throw new Error(result.error.message || 'Failed to add card');
+              showPaymentSuccess('Card added successfully.');
+              cardWrap.innerHTML = '';
+              paymentCardElement = null;
+              paymentStripe = null;
+              pendingSetupSecret = null;
+              addBtn.textContent = 'Add card';
+            })
+            .catch(function (e) { showPaymentError(e.message || 'Could not add card'); })
+            .then(function () { addBtn.disabled = false; });
+          return;
+        }
         addBtn.disabled = true;
         showPaymentError('');
         Auth.fetchWithAuth('/api/wallet/setup-intent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
@@ -399,21 +411,17 @@
             return loadStripeScript().then(function (Stripe) {
               paymentStripe = Stripe(data.publishableKey);
               cardWrap.innerHTML = '';
-              paymentCardElement = paymentStripe.elements().create('card', { style: { base: { fontSize: '16px' } } });
+              paymentCardElement = paymentStripe.elements().create('card', { style: { base: { fontSize: '16px' } }, disableLink: true });
               paymentCardElement.mount(cardWrap);
-              return paymentStripe.confirmCardSetup(data.client_secret, { payment_method: { card: paymentCardElement } });
+              pendingSetupSecret = data.client_secret;
+              addBtn.textContent = 'Save card';
+              addBtn.disabled = false;
             });
-          })
-          .then(function (result) {
-            if (result.error) throw new Error(result.error.message || 'Failed to add card');
-            showPaymentSuccess('Card added successfully.');
-            cardWrap.innerHTML = '';
-            paymentCardElement = null;
           })
           .catch(function (e) {
             showPaymentError(e.message || 'Could not add card.');
-          })
-          .then(function () { addBtn.disabled = false; });
+            addBtn.disabled = false;
+          });
       });
     })();
 

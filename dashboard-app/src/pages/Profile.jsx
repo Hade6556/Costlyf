@@ -94,6 +94,8 @@ function AvatarDisplay({ avatarUrl, userId, size = 'sidebar' }) {
 export default function Profile() {
   const { user, profile, trustStats, setProfile, fetchWithAuth, clearSession, loading } = useAuth()
   const navigate = useNavigate()
+  const { locale } = useI18n()
+  const currentLocale = locale || (typeof window !== 'undefined' && window.location.pathname.split('/')[1]) || 'en'
   const [panel, setPanel] = useState('personal')
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState(false)
@@ -187,11 +189,11 @@ export default function Profile() {
               <span>{t('dashboard.profilePersonalInfo')}</span>
               <span className="profile-nav-chevron">›</span>
             </button>
-            <Link to="/wallet" className="profile-nav-item">
+            <a href={`/${currentLocale}/wallet`} className="profile-nav-item">
               <span className="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /></svg></span>
               <span>{t('dashboard.profileMyWallet')}</span>
               <span className="profile-nav-chevron">›</span>
-            </Link>
+            </a>
           </nav>
 
           <p className="profile-nav-heading">Security &amp; payments</p>
@@ -240,6 +242,7 @@ export default function Profile() {
               invoicesCount={invoicesCount}
               onNavigate={showPanel}
               navigateTo={navigate}
+              locale={currentLocale}
             />
           )}
         </div>
@@ -480,8 +483,9 @@ function PrivacyPanel({ passwordError, passwordSuccess, setPasswordError, setPas
   )
 }
 
-function TrustPanel({ trust, trustStats, invoicesCount, onNavigate, navigateTo }) {
+function TrustPanel({ trust, trustStats, invoicesCount, onNavigate, navigateTo, locale: localeProp }) {
   const { t } = useI18n()
+  const loc = localeProp || (typeof window !== 'undefined' && window.location.pathname.split('/')[1]) || 'en'
   return (
     <>
       <h1 className="profile-main-title">{t('dashboard.profileTrustScore')}</h1>
@@ -502,7 +506,7 @@ function TrustPanel({ trust, trustStats, invoicesCount, onNavigate, navigateTo }
                 if (!clickable) return
                 if (c.action === 'personal') onNavigate('personal')
                 else if (c.action === 'inbox') navigateTo('/inbox')
-                else if (c.action === 'wallet') navigateTo('/wallet')
+                else if (c.action === 'wallet') window.location.href = `/${loc}/wallet`
               }}
             >
               <span className="profile-trust-criterion-emoji" aria-hidden="true">{c.emoji}</span>

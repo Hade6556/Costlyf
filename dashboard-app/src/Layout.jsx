@@ -80,11 +80,15 @@ function BottomNavIcon({ item }) {
   )
 }
 
+// Wallet, profile, join are legacy pages (Stripe/payments). Use full-page links so server serves legacy HTML.
+const LEGACY_FULL_PAGE_PATHS = ['wallet', 'profile', 'join']
+
 export default function Layout() {
   const location = useLocation()
   const { user, profile } = useAuth()
   const { unreadCount } = useInboxUnread()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const currentLocale = locale || (typeof window !== 'undefined' && window.location.pathname.split('/')[1]) || 'en'
   // pathname is relative to basename (e.g. /join or /profile), so first segment is the route
   const segments = location.pathname.split('/').filter(Boolean)
   const current = segments[0] || 'home'
@@ -107,23 +111,32 @@ export default function Layout() {
         </div>
         <nav className="sidebar-nav">
           <p className="sidebar-nav-heading">{t('dashboard.mainMenu')}</p>
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={`/${item.path}`}
-              className={`sidebar-nav-item ${current === item.path ? 'sidebar-nav-item--active' : ''}`}
-            >
-              <span className="sidebar-nav-icon"><NavIcon item={item} /></span>
-              <span>{t(item.labelKey)}</span>
-              {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const active = current === item.path
+            const className = `sidebar-nav-item ${active ? 'sidebar-nav-item--active' : ''}`
+            if (LEGACY_FULL_PAGE_PATHS.includes(item.path)) {
+              return (
+                <a key={item.path} href={`/${currentLocale}/${item.path}`} className={className}>
+                  <span className="sidebar-nav-icon"><NavIcon item={item} /></span>
+                  <span>{t(item.labelKey)}</span>
+                  {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
+                </a>
+              )
+            }
+            return (
+              <Link key={item.path} to={`/${item.path}`} className={className}>
+                <span className="sidebar-nav-icon"><NavIcon item={item} /></span>
+                <span>{t(item.labelKey)}</span>
+                {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
+              </Link>
+            )
+          })}
         </nav>
         <div className="sidebar-footer">
-          <Link to={`/${profilePath}`} className={`sidebar-user ${current === profilePath ? 'sidebar-user--active' : ''}`} aria-label={t(profileLabelKey)}>
+          <a href={`/${currentLocale}/${profilePath}`} className={`sidebar-user ${current === profilePath ? 'sidebar-user--active' : ''}`} aria-label={t(profileLabelKey)}>
             <ProfileAvatar profile={profile} user={user} className="sidebar-user-avatar" />
             <span className="sidebar-user-label">{t(profileLabelKey)}</span>
-          </Link>
+          </a>
         </div>
       </aside>
 
@@ -134,26 +147,35 @@ export default function Layout() {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={`/${item.path}`}
-            className={`bottom-nav-item ${current === item.path ? 'bottom-nav-item--active' : ''}`}
-          >
-            <span className="bottom-nav-icon"><BottomNavIcon item={item} /></span>
-            <span>{t(item.labelKey)}</span>
-            {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
-          </Link>
-        ))}
-        <Link
-          to={`/${profilePath}`}
+        {navItems.map((item) => {
+          const active = current === item.path
+          const className = `bottom-nav-item ${active ? 'bottom-nav-item--active' : ''}`
+          if (LEGACY_FULL_PAGE_PATHS.includes(item.path)) {
+            return (
+              <a key={item.path} href={`/${currentLocale}/${item.path}`} className={className}>
+                <span className="bottom-nav-icon"><BottomNavIcon item={item} /></span>
+                <span>{t(item.labelKey)}</span>
+                {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
+              </a>
+            )
+          }
+          return (
+            <Link key={item.path} to={`/${item.path}`} className={className}>
+              <span className="bottom-nav-icon"><BottomNavIcon item={item} /></span>
+              <span>{t(item.labelKey)}</span>
+              {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
+            </Link>
+          )
+        })}
+        <a
+          href={`/${currentLocale}/${profilePath}`}
           className={`bottom-nav-item ${current === profilePath ? 'bottom-nav-item--active' : ''}`}
         >
           <span className="bottom-nav-icon bottom-nav-icon--avatar">
             <ProfileAvatar profile={profile} user={user} className="bottom-nav-profile-avatar" />
           </span>
           <span>{t(profileLabelKey)}</span>
-        </Link>
+        </a>
       </nav>
     </div>
   )

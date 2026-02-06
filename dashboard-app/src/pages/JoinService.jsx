@@ -20,7 +20,8 @@ function trustRingClass(trust) {
 }
 
 export default function JoinService() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const currentLocale = locale || (typeof window !== 'undefined' && window.location.pathname.split('/')[1]) || 'en'
   const { service: serviceSlug } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -103,9 +104,9 @@ export default function JoinService() {
   return (
     <main className="dashboard-main dashboard-content dashboard-content--service">
       <header className="service-header">
-        <Link to="/join" className="service-back" aria-label={t('dashboard.back')}>
+        <a href={`/${currentLocale}/join`} className="service-back" aria-label={t('dashboard.back')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
-        </Link>
+        </a>
         <div className="service-header-center">
           <h1 className="service-title">{meta.name}</h1>
           <p className="service-desc">{meta.description}</p>

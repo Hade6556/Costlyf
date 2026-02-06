@@ -25,8 +25,9 @@ const stripe = stripeSecretKey ? require('stripe')(stripeSecretKey) : null;
 app.use(cookieParser());
 
 // Stripe webhook needs raw body for signature verification (must be before express.json())
+// Configure endpoint in Stripe Dashboard → Developers → Webhooks → Add endpoint → Events: payment_intent.succeeded
 if (stripe && stripeWebhookSecret) {
-  app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res) => {
+  app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
     try {
@@ -39,16 +40,24 @@ if (stripe && stripeWebhookSecret) {
       const purpose = (pi.metadata && pi.metadata.purpose) || '';
       const userId = (pi.metadata && pi.metadata.user_id) || '';
       if (purpose === 'top_up' && userId && pi.status === 'succeeded' && pi.amount_received > 0 && supabaseAdmin) {
-        supabaseAdmin.rpc('apply_balance_transaction', {
-          p_user_id: userId,
-          p_amount_cents: pi.amount_received,
-          p_type: 'top_up',
-          p_reference_type: 'stripe_payment_intent',
-          p_reference_id: pi.id,
-          p_metadata: null
-        }).then(({ error }) => {
-          if (error) console.error('Stripe webhook apply_balance_transaction error:', error.message);
-        });
+        try {
+          const { data, error } = await supabaseAdmin.rpc('apply_balance_transaction', {
+            p_user_id: userId,
+            p_amount_cents: pi.amount_received,
+            p_type: 'top_up',
+            p_reference_type: 'stripe_payment_intent',
+            p_reference_id: pi.id,
+            p_metadata: null
+          });
+          if (error) {
+            console.error('Stripe webhook apply_balance_transaction error:', error.message);
+            return res.status(500).send('Balance update failed');
+          }
+          if (process.env.NODE_ENV !== 'production') console.log('Stripe top-up credited:', pi.id, 'user:', userId, 'cents:', pi.amount_received);
+        } catch (e) {
+          console.error('Stripe webhook apply_balance_transaction exception:', e);
+          return res.status(500).send('Balance update failed');
+        }
       }
     }
     res.sendStatus(200);
@@ -140,16 +149,18 @@ const dashboardIndexPath = path.join(staticRoot, dashboardSegment, 'index.html')
 const hasDashboardApp = fs.existsSync(dashboardIndexPath);
 const dashboardPathToLegacy = { home: 'home.html', join: 'join.html', share: 'share.html', wallet: 'wallet.html', offer: 'offer.html', profile: 'profile.html', subscription: 'subscription.html', help: 'help.html', inbox: 'inbox.html', login: 'login.html', signup: 'signup.html', charter: 'charter.html' };
 const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter'];
+// profile, wallet, join always use legacy app (Stripe/payment wiring lives there)
+const legacyOnlyPaths = ['profile', 'wallet', 'join'];
 dashboardPaths.forEach(function (segment) {
   app.get(new RegExp('^/' + localeRegex + '/' + segment + '/?$'), function (req, res) {
-    if (hasDashboardApp) return res.sendFile(dashboardIndexPath);
+    const useLegacy = legacyOnlyPaths.includes(segment);
+    if (!useLegacy && hasDashboardApp) return res.sendFile(dashboardIndexPath);
     const legacyFile = dashboardPathToLegacy[segment];
     if (legacyFile) return res.sendFile(path.join(staticRoot, 'app', legacyFile));
     res.sendFile(dashboardIndexPath);
   });
 });
 app.get(new RegExp('^/' + localeRegex + '/join/([^/]+)/?$'), function (req, res) {
-  if (hasDashboardApp) return res.sendFile(dashboardIndexPath);
   res.sendFile(path.join(staticRoot, 'app', 'service.html'));
 });
 app.get(new RegExp('^/' + localeRegex + '/guides/?$'), function (req, res) {

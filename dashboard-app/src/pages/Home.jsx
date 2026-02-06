@@ -24,7 +24,8 @@ function getMonthProgressColor(fractionLeft) {
 }
 
 export default function Home() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const currentLocale = locale || (typeof window !== 'undefined' && window.location.pathname.split('/')[1]) || 'en'
   const { fetchWithAuth } = useAuth()
   const [offers, setOffers] = useState([])
   const [joined, setJoined] = useState([])
@@ -46,13 +47,13 @@ export default function Home() {
 
   return (
     <section className="dashboard-home">
-      <Link to="/wallet" className="home-balance">
+      <a href={`/${currentLocale}/wallet`} className="home-balance">
         <span className="home-balance-label">{t('dashboard.homeBalance')}</span>
         <span className="home-balance-right">
           <span className="home-balance-amount">{balance}€</span>
           <span className="home-balance-chevron" aria-hidden="true">›</span>
         </span>
-      </Link>
+      </a>
 
       {offers.length > 0 && (
         <section className="my-offers" id="my-offers-section">
@@ -136,10 +137,10 @@ export default function Home() {
             <div className="home-card-illus">
               <img src="/media/home/chairs.png" alt="" className="home-card-illus-img" />
             </div>
-            <Link to="/join" className="home-pill">
+            <a href={`/${currentLocale}/join`} className="home-pill">
               <svg className="home-pill-icon home-pill-icon--svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
               <span className="home-pill-text">{t('dashboard.join')}</span>
-            </Link>
+            </a>
           </div>
         </div>
         <div className="home-card home-card--share">
