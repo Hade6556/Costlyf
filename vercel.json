@@ -3,30 +3,109 @@
   "framework": "express",
   "installCommand": "npm install && (cd dashboard-app && npm install)",
   "rewrites": [
-    { "source": "/", "destination": "/api" },
-    { "source": "/home", "destination": "/api?path=home" },
-    { "source": "/home/:rest*", "destination": "/api?path=home/:rest*" },
-    { "source": "/login", "destination": "/api?path=login" },
-    { "source": "/signup", "destination": "/api?path=signup" },
-    { "source": "/terms", "destination": "/api?path=terms" },
-    { "source": "/privacy", "destination": "/api?path=privacy" },
-    { "source": "/legal", "destination": "/api?path=legal" },
-    { "source": "/guides", "destination": "/api?path=guides" },
-    { "source": "/guides/:slug", "destination": "/api?path=guides/:slug" },
-    { "source": "/join", "destination": "/api?path=join" },
-    { "source": "/join/:service", "destination": "/api?path=join/:service" },
-    { "source": "/share", "destination": "/api?path=share" },
-    { "source": "/wallet", "destination": "/api?path=wallet" },
-    { "source": "/offer", "destination": "/api?path=offer" },
-    { "source": "/profile", "destination": "/api?path=profile" },
-    { "source": "/subscription", "destination": "/api?path=subscription" },
-    { "source": "/help", "destination": "/api?path=help" },
-    { "source": "/inbox", "destination": "/api?path=inbox" },
-    { "source": "/charter", "destination": "/api?path=charter" },
-    { "source": "/dashboard", "destination": "/api?path=dashboard" },
-    { "source": "/:locale(en|lt|lv|pl|es|de)", "destination": "/api?path=:locale" },
-    { "source": "/:locale(en|lt|lv|pl|es|de)/:segment", "destination": "/api?path=:locale/:segment" },
-    { "source": "/:locale(en|lt|lv|pl|es|de)/:segment/", "destination": "/api?path=:locale/:segment" },
-    { "source": "/:locale(en|lt|lv|pl|es|de)/:segment/:rest*", "destination": "/api?path=:locale/:segment/:rest*" }
+    {
+      "source": "/",
+      "destination": "/api"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api?path=api/:path*"
+    },
+    {
+      "source": "/home",
+      "destination": "/api?path=home"
+    },
+    {
+      "source": "/home/:rest*",
+      "destination": "/api?path=home/:rest*"
+    },
+    {
+      "source": "/login",
+      "destination": "/api?path=login"
+    },
+    {
+      "source": "/signup",
+      "destination": "/api?path=signup"
+    },
+    {
+      "source": "/terms",
+      "destination": "/api?path=terms"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/api?path=privacy"
+    },
+    {
+      "source": "/legal",
+      "destination": "/api?path=legal"
+    },
+    {
+      "source": "/guides",
+      "destination": "/api?path=guides"
+    },
+    {
+      "source": "/guides/:slug",
+      "destination": "/api?path=guides/:slug"
+    },
+    {
+      "source": "/join",
+      "destination": "/api?path=join"
+    },
+    {
+      "source": "/join/:service",
+      "destination": "/api?path=join/:service"
+    },
+    {
+      "source": "/share",
+      "destination": "/api?path=share"
+    },
+    {
+      "source": "/wallet",
+      "destination": "/api?path=wallet"
+    },
+    {
+      "source": "/offer",
+      "destination": "/api?path=offer"
+    },
+    {
+      "source": "/profile",
+      "destination": "/api?path=profile"
+    },
+    {
+      "source": "/subscription",
+      "destination": "/api?path=subscription"
+    },
+    {
+      "source": "/help",
+      "destination": "/api?path=help"
+    },
+    {
+      "source": "/inbox",
+      "destination": "/api?path=inbox"
+    },
+    {
+      "source": "/charter",
+      "destination": "/api?path=charter"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/api?path=dashboard"
+    },
+    {
+      "source": "/:locale(en|lt|lv|pl|es|de)",
+      "destination": "/api?path=:locale"
+    },
+    {
+      "source": "/:locale(en|lt|lv|pl|es|de)/:segment",
+      "destination": "/api?path=:locale/:segment"
+    },
+    {
+      "source": "/:locale(en|lt|lv|pl|es|de)/:segment/",
+      "destination": "/api?path=:locale/:segment"
+    },
+    {
+      "source": "/:locale(en|lt|lv|pl|es|de)/:segment/:rest*",
+      "destination": "/api?path=:locale/:segment/:rest*"
+    }
   ]
 }
