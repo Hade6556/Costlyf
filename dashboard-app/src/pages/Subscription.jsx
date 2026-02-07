@@ -37,7 +37,34 @@ export default function Subscription() {
         <Link to="/home" className="subscription-back">‹ {t('dashboard.backToHome')}</Link>
         <h1 className="subscription-title">{t('dashboard.mySubscriptions')}</h1>
 
-        {loading && <p className="dash-muted">{t('dashboard.loading')}</p>}
+        {loading && (
+          <div className="my-offers-list skeleton-cards" style={{ marginTop: '1rem' }} aria-hidden="true">
+            <div className="skeleton-card skeleton-card--offer">
+              <span className="skeleton-card__avatar" />
+              <div className="skeleton-card__lines">
+                <span className="skeleton-card__line skeleton-card__line--name" />
+                <span className="skeleton-card__line skeleton-card__line--sub" />
+              </div>
+              <span className="skeleton-card__chevron" />
+            </div>
+            <div className="skeleton-card skeleton-card--offer">
+              <span className="skeleton-card__avatar" />
+              <div className="skeleton-card__lines">
+                <span className="skeleton-card__line skeleton-card__line--name" />
+                <span className="skeleton-card__line skeleton-card__line--sub" />
+              </div>
+              <span className="skeleton-card__chevron" />
+            </div>
+            <div className="skeleton-card skeleton-card--offer">
+              <span className="skeleton-card__avatar" />
+              <div className="skeleton-card__lines">
+                <span className="skeleton-card__line skeleton-card__line--name" />
+                <span className="skeleton-card__line skeleton-card__line--sub" />
+              </div>
+              <span className="skeleton-card__chevron" />
+            </div>
+          </div>
+        )}
         {!loading && joined.length === 0 && (
           <p className="my-offers-empty">{t('dashboard.noSubscriptionsJoinHint')}</p>
         )}

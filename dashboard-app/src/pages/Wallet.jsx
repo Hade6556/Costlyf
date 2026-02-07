@@ -235,7 +235,13 @@ export default function Wallet() {
         </Link>
 
         <h1 className="wallet-title">{t('dashboard.walletTitle')}</h1>
-        <p className="wallet-balance-amount">{formatEuros(balanceCents)}€</p>
+        {balanceCents === null ? (
+          <div className="wallet-balance-loading" aria-hidden="true">
+            <span className="wallet-loading-shimmer wallet-loading-shimmer--balance" />
+          </div>
+        ) : (
+          <p className="wallet-balance-amount">{formatEuros(balanceCents)}€</p>
+        )}
 
         <div className="wallet-actions">
           <button type="button" className="wallet-action-btn" onClick={openTopup}>
@@ -450,8 +456,18 @@ export default function Wallet() {
               </button>
             </div>
           </div>
-          <div className={`wallet-receipt ${transactionsInMonth.length === 0 ? 'wallet-receipt--empty' : ''}`}>
-            {transactionsInMonth.length > 0 ? (
+          <div className={`wallet-receipt ${transactionsInMonth.length === 0 && balanceCents !== null ? 'wallet-receipt--empty' : ''}`}>
+            {balanceCents === null ? (
+              <div className="wallet-history-loading" aria-hidden="true">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="wallet-history-loading-row">
+                    <span className="wallet-loading-shimmer wallet-loading-shimmer--date" />
+                    <span className="wallet-loading-shimmer wallet-loading-shimmer--label" />
+                    <span className="wallet-loading-shimmer wallet-loading-shimmer--amount" />
+                  </div>
+                ))}
+              </div>
+            ) : transactionsInMonth.length > 0 ? (
               <div className="wallet-history-list wallet-history-list--has-items">
                 {transactionsInMonth.map((tx) => (
                   <div key={tx.id} className="wallet-history-item">
