@@ -1,0 +1,126 @@
+/* Payment method page: fix layout so inputs and Stripe elements are not squished */
+
+.payment-method-page .profile-layout {
+  max-width: 100%;
+}
+
+.payment-method-page .profile-main {
+  max-width: 560px;
+  width: 100%;
+}
+
+/* Stack card sections vertically; give full width to form content */
+.payment-method-page .profile-card {
+  display: block;
+  padding: 1.25rem 1.5rem;
+}
+
+.payment-method-page .profile-card-title {
+  margin: 0 0 0.35rem;
+}
+
+.payment-method-page .profile-card-text {
+  margin: 0 0 1rem;
+  flex: none;
+}
+
+/* Form block: full width, no shrink */
+.payment-method-page .payment-method-form {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Stripe card element containers: full width so iframes render properly */
+.payment-method-page .wallet-card-fields,
+.payment-method-page .wallet-card-field {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Stripe mount points and inputs: full width so nothing is squished */
+.payment-method-page .wallet-card-field .subscription-chat-input {
+  width: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Stripe mounts an iframe inside the div; ensure the mount point has size */
+.payment-method-page .wallet-card-field > div {
+  width: 100%;
+  min-width: 200px;
+  min-height: 44px;
+}
+
+.payment-method-page .wallet-card-field .subscription-chat-input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+/* Expiry + CVC row: equal flex but don't shrink below minimum */
+.payment-method-page .wallet-card-field-row {
+  display: flex;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.payment-method-page .wallet-card-field-row > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment-method-page .wallet-card-field-row .subscription-chat-input,
+.payment-method-page .wallet-card-field-row > div > div {
+  width: 100% !important;
+  min-width: 0;
+}
+
+/* IBAN and account holder inputs */
+.payment-method-page .profile-form-field {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.payment-method-page .profile-form-field label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+.payment-method-page .profile-form-field input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.payment-method-page .profile-form-field input:focus {
+  outline: none;
+  border-color: #1d1d1f;
+  background: #fff;
+}
+
+/* Buttons: comfortable size */
+.payment-method-page .profile-btn--primary {
+  margin-top: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+}

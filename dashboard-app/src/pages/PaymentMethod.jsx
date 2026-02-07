@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
+import './PaymentMethod.css'
 
 function loadStripeScript() {
   if (window.Stripe) return Promise.resolve(window.Stripe)
@@ -143,9 +144,9 @@ export default function PaymentMethod() {
   }
 
   return (
-    <main className="dashboard-main dashboard-content dashboard-content--profile">
+    <main className="dashboard-main dashboard-content dashboard-content--profile payment-method-page">
       <div className="profile-layout">
-        <div className="profile-main" style={{ maxWidth: '100%' }}>
+        <div className="profile-main">
           <Link to="/profile" className="profile-nav-item" style={{ display: 'inline-flex', marginBottom: '1rem' }}>
             <span className="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></span>
             <span>Back to profile</span>
@@ -158,20 +159,20 @@ export default function PaymentMethod() {
             <h2 className="profile-card-title">Card for top-ups</h2>
             <p className="profile-card-text">Add or update the card used when you top up your wallet.</p>
             {cardSecret && cardPublishableKey ? (
-              <>
+              <div className="payment-method-form">
                 <div className="wallet-card-fields" style={{ marginBottom: '1rem' }}>
                   <div className="wallet-card-field">
                     <label className="wallet-card-label">Card number</label>
-                    <div ref={cardNumberRef} className="subscription-chat-input" style={{ padding: '10px', minHeight: '40px' }} />
+                    <div ref={cardNumberRef} className="subscription-chat-input" style={{ padding: '10px 12px', minHeight: '44px' }} />
                   </div>
-                  <div className="wallet-card-field" style={{ display: 'flex', gap: '0.5rem' }}>
-                    <div style={{ flex: 1 }}>
+                  <div className="wallet-card-field wallet-card-field-row">
+                    <div>
                       <label className="wallet-card-label">Expiry</label>
-                      <div ref={cardExpiryRef} className="subscription-chat-input" style={{ padding: '10px', minHeight: '40px' }} />
+                      <div ref={cardExpiryRef} className="subscription-chat-input" style={{ padding: '10px 12px', minHeight: '44px' }} />
                     </div>
-                    <div style={{ flex: 1 }}>
+                    <div>
                       <label className="wallet-card-label">CVC</label>
-                      <div ref={cardCvcRef} className="subscription-chat-input" style={{ padding: '10px', minHeight: '40px' }} />
+                      <div ref={cardCvcRef} className="subscription-chat-input" style={{ padding: '10px 12px', minHeight: '44px' }} />
                     </div>
                   </div>
                 </div>
@@ -180,7 +181,7 @@ export default function PaymentMethod() {
                 <button type="button" className="profile-btn profile-btn--primary" onClick={saveCard} disabled={cardSaving}>
                   {cardSaving ? 'Saving…' : 'Save card'}
                 </button>
-              </>
+              </div>
             ) : (
               <p className="dash-muted">Loading payment form…</p>
             )}
@@ -190,42 +191,40 @@ export default function PaymentMethod() {
             <h2 className="profile-card-title">Bank account (IBAN) for withdrawals</h2>
             <p className="profile-card-text">Withdrawals from your wallet are sent to this account. Admin will confirm each withdrawal (e.g. via Stripe) before the transfer.</p>
             {withdrawDetails && withdrawDetails.has_iban && (
-              <p className="profile-card-text" style={{ marginBottom: '0.5rem' }}>
+              <p className="profile-card-text" style={{ marginBottom: '0.75rem' }}>
                 Saved: ****{withdrawDetails.iban_last4 || '····'}
                 {withdrawDetails.account_holder ? ` — ${withdrawDetails.account_holder}` : ''}
               </p>
             )}
-            <div className="profile-form-field" style={{ marginBottom: '0.75rem' }}>
-              <label htmlFor="payment-iban">IBAN</label>
-              <input
-                id="payment-iban"
-                type="text"
-                placeholder="e.g. FR76 1234 5678 9012 3456 7890 123"
-                value={iban}
-                onChange={(e) => setIban(e.target.value)}
-                className="subscription-chat-input"
-                style={{ width: '100%', padding: '10px', boxSizing: 'border-box' }}
-                autoComplete="off"
-              />
+            <div className="payment-method-form">
+              <div className="profile-form-field" style={{ marginBottom: '0.75rem' }}>
+                <label htmlFor="payment-iban">IBAN</label>
+                <input
+                  id="payment-iban"
+                  type="text"
+                  placeholder="e.g. FR76 1234 5678 9012 3456 7890 123"
+                  value={iban}
+                  onChange={(e) => setIban(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="profile-form-field" style={{ marginBottom: '0.75rem' }}>
+                <label htmlFor="payment-account-holder">Account holder name</label>
+                <input
+                  id="payment-account-holder"
+                  type="text"
+                  placeholder="Name on the bank account"
+                  value={accountHolder}
+                  onChange={(e) => setAccountHolder(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              {bankError && <p className="profile-form-error" role="alert">{bankError}</p>}
+              {bankSuccess && <p className="profile-form-error" style={{ color: '#059669' }}>Bank details saved.</p>}
+              <button type="button" className="profile-btn profile-btn--primary" onClick={saveBank} disabled={bankSaving}>
+                {bankSaving ? 'Saving…' : 'Save bank details'}
+              </button>
             </div>
-            <div className="profile-form-field" style={{ marginBottom: '0.75rem' }}>
-              <label htmlFor="payment-account-holder">Account holder name</label>
-              <input
-                id="payment-account-holder"
-                type="text"
-                placeholder="Name on the bank account"
-                value={accountHolder}
-                onChange={(e) => setAccountHolder(e.target.value)}
-                className="subscription-chat-input"
-                style={{ width: '100%', padding: '10px', boxSizing: 'border-box' }}
-                autoComplete="off"
-              />
-            </div>
-            {bankError && <p className="profile-form-error" role="alert">{bankError}</p>}
-            {bankSuccess && <p className="profile-form-error" style={{ color: '#059669' }}>Bank details saved.</p>}
-            <button type="button" className="profile-btn profile-btn--primary" onClick={saveBank} disabled={bankSaving}>
-              {bankSaving ? 'Saving…' : 'Save bank details'}
-            </button>
           </div>
         </div>
       </div>
