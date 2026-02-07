@@ -74,7 +74,7 @@ a.profile-nav-item:focus,
   font-size: 0.9375rem;
 }
 
-/* Home: profile at top left (avatar circle + nickname), links to /profile */
+/* Home: profile at top left (avatar circle + nickname), mobile only; links to /profile */
 .home-profile {
   display: flex;
   align-items: center;
@@ -82,10 +82,16 @@ a.profile-nav-item:focus,
   width: 100%;
   max-width: var(--home-block-width, 520px);
   align-self: flex-start;
-  margin-top: 0.5rem;
+  margin-top: 1.25rem;
   margin-bottom: -0.25rem;
   text-decoration: none;
   color: inherit;
+}
+
+@media (min-width: 768px) {
+  .home-profile {
+    display: none;
+  }
 }
 
 .home-profile:hover .home-profile-name {

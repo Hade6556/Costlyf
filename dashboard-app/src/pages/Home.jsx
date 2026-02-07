@@ -99,7 +99,8 @@ export default function Home() {
         </span>
       </Link>
 
-      <section className="my-offers" id="my-offers-section">
+      {(loadingOffers || offers.length > 0) && (
+        <section className="my-offers" id="my-offers-section">
           <h2 className="my-offers-title">{t('dashboard.myOffers')}</h2>
           {loadingOffers ? (
             <div className="my-offers-list skeleton-cards" aria-hidden="true">
@@ -114,94 +115,96 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : offers.length > 0 ? (
-          <div className="my-offers-list" id="my-offers-list">
-            {offers.map((offer) => {
-              const logo = LOGO_MAP[offer.service] || '/media/logo.svg'
-              const filled = offer.seats_taken || 0
-              const total = offer.max_slots || 1
-              const visLabel = (offer.visibility || 'private') === 'public' ? t('dashboard.public') : t('dashboard.private')
-              return (
-                <Link key={offer.id} to={`/offer?id=${encodeURIComponent(offer.id)}`} className="my-offer-card">
-                  <img src={logo} alt="" className="my-offer-logo" />
-                  <div className="my-offer-info">
-                    <span className="my-offer-name">{offer.service_name || offer.service || 'Offer'}</span>
-                    <div className="my-offer-slots">
-                      {Array.from({ length: total }).map((_, i) => (
-                        <span key={i} className={`my-offer-slot ${i < filled ? 'my-offer-slot--filled' : ''}`} aria-hidden="true">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill={i < filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                        </span>
-                      ))}
+          ) : (
+            <div className="my-offers-list" id="my-offers-list">
+              {offers.map((offer) => {
+                const logo = LOGO_MAP[offer.service] || '/media/logo.svg'
+                const filled = offer.seats_taken || 0
+                const total = offer.max_slots || 1
+                const visLabel = (offer.visibility || 'private') === 'public' ? t('dashboard.public') : t('dashboard.private')
+                return (
+                  <Link key={offer.id} to={`/offer?id=${encodeURIComponent(offer.id)}`} className="my-offer-card">
+                    <img src={logo} alt="" className="my-offer-logo" />
+                    <div className="my-offer-info">
+                      <span className="my-offer-name">{offer.service_name || offer.service || 'Offer'}</span>
+                      <div className="my-offer-slots">
+                        {Array.from({ length: total }).map((_, i) => (
+                          <span key={i} className={`my-offer-slot ${i < filled ? 'my-offer-slot--filled' : ''}`} aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill={i < filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <span className="my-offer-tag">
-                    {visLabel}
-                    {(offer.visibility || 'private') === 'public' ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                    )}
-                  </span>
-                  <span className="my-offer-chevron">›</span>
-                </Link>
-              )
-            })}
-          </div>
-          ) : null}
+                    <span className="my-offer-tag">
+                      {visLabel}
+                      {(offer.visibility || 'private') === 'public' ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                      )}
+                    </span>
+                    <span className="my-offer-chevron">›</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </section>
+      )}
 
-      <section className="my-offers my-subscriptions" id="my-subscriptions-section">
-        <h2 className="my-offers-title">{t('dashboard.mySubscriptions')}</h2>
-        {loadingJoined ? (
-          <div className="my-offers-list skeleton-cards" aria-hidden="true">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton-card skeleton-card--offer">
-                <span className="skeleton-card__avatar" />
-                <div className="skeleton-card__lines">
-                  <span className="skeleton-card__line skeleton-card__line--name" />
-                  <span className="skeleton-card__line skeleton-card__line--sub" />
-                </div>
-                <span className="skeleton-card__circle" />
-                <span className="skeleton-card__chevron" />
-              </div>
-            ))}
-          </div>
-        ) : (
-        <div className="my-offers-list" id="my-subscriptions-list">
-          {joined.length === 0 && <p className="my-offers-empty">{t('dashboard.noSubscriptionsYet')}</p>}
-          {joined.length > 0 && joined.map((sub) => {
-            const logo = LOGO_MAP[sub.service] || '/media/logo.svg'
-            const daysLeft = typeof sub.days_left === 'number' ? Math.max(0, sub.days_left) : 0
-            const isTaken = sub.my_slot_status === 'taken'
-            const statusLine = isTaken ? t('dashboard.activeDaysLeft', { n: daysLeft }) : t('dashboard.pending')
-            const maxDays = 30
-            const fractionLeft = Math.min(1, daysLeft / maxDays)
-            const progressColor = getMonthProgressColor(fractionLeft)
-            const circumference = 2 * Math.PI * 18
-            const strokeDash = circumference * fractionLeft
-            return (
-              <Link key={sub.id} to={`/offer?id=${encodeURIComponent(sub.id)}`} className="my-offer-card">
-                <img src={logo} alt="" className="my-offer-logo" />
-                <div className="my-offer-info">
-                  <span className="my-offer-name">{sub.service_name || sub.service || 'Subscription'}</span>
-                  <span className="my-sub-status">{statusLine}</span>
-                </div>
-                <div className="my-sub-days" aria-label={`${daysLeft} days left`}>
-                  <div className="my-sub-days-wheel" style={{ '--sub-progress-color': progressColor, '--sub-stroke-dash': strokeDash, '--sub-stroke-circumference': circumference }}>
-                    <svg className="my-sub-days-svg" viewBox="0 0 40 40" aria-hidden="true">
-                      <circle className="my-sub-days-bg" cx="20" cy="20" r="18" fill="none" strokeWidth="3" />
-                      <circle className="my-sub-days-fill" cx="20" cy="20" r="18" fill="none" strokeWidth="3" stroke="var(--sub-progress-color)" strokeDasharray={`${strokeDash} ${circumference}`} strokeDashoffset="0" transform="rotate(-90 20 20)" />
-                    </svg>
-                    <span className="my-sub-days-num" style={{ color: progressColor }}>{daysLeft}</span>
+      {(loadingJoined || joined.length > 0) && (
+        <section className="my-offers my-subscriptions" id="my-subscriptions-section">
+          <h2 className="my-offers-title">{t('dashboard.mySubscriptions')}</h2>
+          {loadingJoined ? (
+            <div className="my-offers-list skeleton-cards" aria-hidden="true">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="skeleton-card skeleton-card--offer">
+                  <span className="skeleton-card__avatar" />
+                  <div className="skeleton-card__lines">
+                    <span className="skeleton-card__line skeleton-card__line--name" />
+                    <span className="skeleton-card__line skeleton-card__line--sub" />
                   </div>
+                  <span className="skeleton-card__circle" />
+                  <span className="skeleton-card__chevron" />
                 </div>
-                <span className="my-offer-chevron">›</span>
-              </Link>
-            )
-          })}
-        </div>
-        )}
-      </section>
+              ))}
+            </div>
+          ) : (
+            <div className="my-offers-list" id="my-subscriptions-list">
+              {joined.map((sub) => {
+                const logo = LOGO_MAP[sub.service] || '/media/logo.svg'
+                const daysLeft = typeof sub.days_left === 'number' ? Math.max(0, sub.days_left) : 0
+                const isTaken = sub.my_slot_status === 'taken'
+                const statusLine = isTaken ? t('dashboard.activeDaysLeft', { n: daysLeft }) : t('dashboard.pending')
+                const maxDays = 30
+                const fractionLeft = Math.min(1, daysLeft / maxDays)
+                const progressColor = getMonthProgressColor(fractionLeft)
+                const circumference = 2 * Math.PI * 18
+                const strokeDash = circumference * fractionLeft
+                return (
+                  <Link key={sub.id} to={`/offer?id=${encodeURIComponent(sub.id)}`} className="my-offer-card">
+                    <img src={logo} alt="" className="my-offer-logo" />
+                    <div className="my-offer-info">
+                      <span className="my-offer-name">{sub.service_name || sub.service || 'Subscription'}</span>
+                      <span className="my-sub-status">{statusLine}</span>
+                    </div>
+                    <div className="my-sub-days" aria-label={`${daysLeft} days left`}>
+                      <div className="my-sub-days-wheel" style={{ '--sub-progress-color': progressColor, '--sub-stroke-dash': strokeDash, '--sub-stroke-circumference': circumference }}>
+                        <svg className="my-sub-days-svg" viewBox="0 0 40 40" aria-hidden="true">
+                          <circle className="my-sub-days-bg" cx="20" cy="20" r="18" fill="none" strokeWidth="3" />
+                          <circle className="my-sub-days-fill" cx="20" cy="20" r="18" fill="none" strokeWidth="3" stroke="var(--sub-progress-color)" strokeDasharray={`${strokeDash} ${circumference}`} strokeDashoffset="0" transform="rotate(-90 20 20)" />
+                        </svg>
+                        <span className="my-sub-days-num" style={{ color: progressColor }}>{daysLeft}</span>
+                      </div>
+                    </div>
+                    <span className="my-offer-chevron">›</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="home-cards">
         <div className="home-card home-card--join">
