@@ -39,30 +39,17 @@ export default function Subscription() {
 
         {loading && (
           <div className="my-offers-list skeleton-cards" style={{ marginTop: '1rem' }} aria-hidden="true">
-            <div className="skeleton-card skeleton-card--offer">
-              <span className="skeleton-card__avatar" />
-              <div className="skeleton-card__lines">
-                <span className="skeleton-card__line skeleton-card__line--name" />
-                <span className="skeleton-card__line skeleton-card__line--sub" />
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton-card skeleton-card--offer">
+                <span className="skeleton-card__avatar" />
+                <div className="skeleton-card__lines">
+                  <span className="skeleton-card__line skeleton-card__line--name" />
+                  <span className="skeleton-card__line skeleton-card__line--sub" />
+                </div>
+                <span className="skeleton-card__circle" />
+                <span className="skeleton-card__chevron" />
               </div>
-              <span className="skeleton-card__chevron" />
-            </div>
-            <div className="skeleton-card skeleton-card--offer">
-              <span className="skeleton-card__avatar" />
-              <div className="skeleton-card__lines">
-                <span className="skeleton-card__line skeleton-card__line--name" />
-                <span className="skeleton-card__line skeleton-card__line--sub" />
-              </div>
-              <span className="skeleton-card__chevron" />
-            </div>
-            <div className="skeleton-card skeleton-card--offer">
-              <span className="skeleton-card__avatar" />
-              <div className="skeleton-card__lines">
-                <span className="skeleton-card__line skeleton-card__line--name" />
-                <span className="skeleton-card__line skeleton-card__line--sub" />
-              </div>
-              <span className="skeleton-card__chevron" />
-            </div>
+            ))}
           </div>
         )}
         {!loading && joined.length === 0 && (

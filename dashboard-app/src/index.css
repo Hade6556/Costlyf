@@ -251,3 +251,83 @@ a.profile-nav-item:focus,
   width: 100%;
   max-width: 100%;
 }
+
+/* Skeleton cards – polishing shimmer for my-offers / my-subscriptions loading */
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.skeleton-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--dash-card-bg, #fff);
+  border-radius: var(--dash-card-radius, 16px);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+  min-height: 72px;
+}
+.skeleton-card--offer {
+  padding: 1rem 1.25rem;
+  gap: 1rem;
+  min-height: 88px;
+}
+.skeleton-card__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #e8e8ed 0%, #f0f0f5 35%, #e8e8ed 50%, #e8e8ed 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-card__lines {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.skeleton-card__line {
+  height: 14px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e8e8ed 0%, #f0f0f5 35%, #e8e8ed 50%, #e8e8ed 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-card__line--name {
+  width: 45%;
+  max-width: 140px;
+}
+.skeleton-card__line--sub {
+  width: 70%;
+  max-width: 180px;
+}
+.skeleton-card__line:nth-of-type(1) { animation-delay: 0s; }
+.skeleton-card__line:nth-of-type(2) { animation-delay: 0.08s; }
+.skeleton-card__circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #e8e8ed 0%, #f0f0f5 35%, #e8e8ed 50%, #e8e8ed 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  animation-delay: 0.1s;
+}
+.skeleton-card__chevron {
+  width: 12px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #e8e8ed 0%, #f0f0f5 35%, #e8e8ed 50%, #e8e8ed 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  animation-delay: 0.15s;
+}
+.my-offers-list.skeleton-cards { margin-top: 0; }

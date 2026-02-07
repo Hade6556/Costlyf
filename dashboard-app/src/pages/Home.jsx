@@ -34,19 +34,25 @@ export default function Home() {
   const [offers, setOffers] = useState([])
   const [joined, setJoined] = useState([])
   const [balanceCents, setBalanceCents] = useState(null)
+  const [loadingOffers, setLoadingOffers] = useState(true)
+  const [loadingJoined, setLoadingJoined] = useState(true)
 
   useEffect(() => {
+    setLoadingOffers(true)
     fetchWithAuth('/api/offers/mine', {})
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setOffers(Array.isArray(data) ? data : []))
       .catch(() => setOffers([]))
+      .finally(() => setLoadingOffers(false))
   }, [fetchWithAuth])
 
   useEffect(() => {
+    setLoadingJoined(true)
     fetchWithAuth('/api/offers/joined', {})
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setJoined(Array.isArray(data) ? data : []))
       .catch(() => setJoined([]))
+      .finally(() => setLoadingJoined(false))
   }, [fetchWithAuth])
 
   useEffect(() => {
@@ -66,9 +72,22 @@ export default function Home() {
         </span>
       </Link>
 
-      {offers.length > 0 && (
-        <section className="my-offers" id="my-offers-section">
+      <section className="my-offers" id="my-offers-section">
           <h2 className="my-offers-title">{t('dashboard.myOffers')}</h2>
+          {loadingOffers ? (
+            <div className="my-offers-list skeleton-cards" aria-hidden="true">
+              {[1, 2].map((i) => (
+                <div key={i} className="skeleton-card skeleton-card--offer">
+                  <span className="skeleton-card__avatar" />
+                  <div className="skeleton-card__lines">
+                    <span className="skeleton-card__line skeleton-card__line--name" />
+                    <span className="skeleton-card__line skeleton-card__line--sub" />
+                  </div>
+                  <span className="skeleton-card__chevron" />
+                </div>
+              ))}
+            </div>
+          ) : offers.length > 0 ? (
           <div className="my-offers-list" id="my-offers-list">
             {offers.map((offer) => {
               const logo = LOGO_MAP[offer.service] || '/media/logo.svg'
@@ -101,11 +120,26 @@ export default function Home() {
               )
             })}
           </div>
+          ) : null}
         </section>
-      )}
 
       <section className="my-offers my-subscriptions" id="my-subscriptions-section">
         <h2 className="my-offers-title">{t('dashboard.mySubscriptions')}</h2>
+        {loadingJoined ? (
+          <div className="my-offers-list skeleton-cards" aria-hidden="true">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton-card skeleton-card--offer">
+                <span className="skeleton-card__avatar" />
+                <div className="skeleton-card__lines">
+                  <span className="skeleton-card__line skeleton-card__line--name" />
+                  <span className="skeleton-card__line skeleton-card__line--sub" />
+                </div>
+                <span className="skeleton-card__circle" />
+                <span className="skeleton-card__chevron" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="my-offers-list" id="my-subscriptions-list">
           {joined.length === 0 && <p className="my-offers-empty">{t('dashboard.noSubscriptionsYet')}</p>}
           {joined.length > 0 && joined.map((sub) => {
@@ -139,6 +173,7 @@ export default function Home() {
             )
           })}
         </div>
+        )}
       </section>
 
       <div className="home-cards">
