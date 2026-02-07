@@ -104,9 +104,9 @@ export default function JoinService() {
   return (
     <main className="dashboard-main dashboard-content dashboard-content--service">
       <header className="service-header">
-        <a href={`/${currentLocale}/join`} className="service-back" aria-label={t('dashboard.back')}>
+        <Link to="/join" className="service-back" aria-label={t('dashboard.back')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
-        </a>
+        </Link>
         <div className="service-header-center">
           <h1 className="service-title">{meta.name}</h1>
           <p className="service-desc">{meta.description}</p>

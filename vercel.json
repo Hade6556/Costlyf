@@ -16,6 +16,10 @@
       "destination": "/api?path=uploads/:path*"
     },
     {
+      "source": "/dashboard-app/:path*",
+      "destination": "/api?path=dashboard-app/:path*"
+    },
+    {
       "source": "/home",
       "destination": "/api?path=home"
     },
