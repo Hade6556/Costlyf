@@ -22,6 +22,8 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import PaymentMethod from './pages/PaymentMethod'
 import AdminWithdrawals from './pages/AdminWithdrawals'
+import StaticPage from './pages/StaticPage'
+import NotFound from './pages/NotFound'
 import { I18nProvider } from './contexts/I18nContext'
 
 // English only: no locale in URL, routes at /home, /join, etc.
@@ -53,6 +55,12 @@ const router = createBrowserRouter(
         { path: 'forgot-password', element: <ForgotPassword /> },
         { path: 'reset-password', element: <ResetPassword /> },
         { path: 'charter', element: <Charter /> },
+        { path: 'terms', element: <StaticPage title="Terms of use" /> },
+        { path: 'privacy', element: <StaticPage title="Privacy policy" /> },
+        { path: 'legal', element: <StaticPage title="Legal" /> },
+        { path: 'guides', element: <StaticPage title="Guides" /> },
+        { path: 'guides/:slug', element: <StaticPage title="Guide" /> },
+        { path: '*', element: <NotFound /> },
       ],
     },
   ],

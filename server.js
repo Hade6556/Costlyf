@@ -73,7 +73,7 @@ const usePublic = fs.existsSync(publicDir);
 const staticRoot = usePublic ? publicDir : __dirname;
 const dashboardSegment = usePublic ? 'dashboard-app' : 'dashboard-build';
 
-// Serve English messages only (for dashboard and any legacy i18n)
+// Serve English messages (dashboard i18n)
 app.get('/messages/en.json', function (req, res) {
   const file = path.join(staticRoot, 'messages', 'en.json');
   if (!fs.existsSync(file)) return res.status(404).json({ error: 'Not found' });
@@ -82,83 +82,51 @@ app.get('/messages/en.json', function (req, res) {
 
 const dashboardIndexPath = path.join(staticRoot, dashboardSegment, 'index.html');
 const hasDashboardApp = fs.existsSync(dashboardIndexPath);
-const dashboardPathToLegacy = { home: 'home.html', join: 'join.html', share: 'share.html', wallet: 'wallet.html', offer: 'offer.html', profile: 'profile.html', subscription: 'subscription.html', help: 'help.html', inbox: 'inbox.html', login: 'login.html', signup: 'signup.html', charter: 'charter.html', 'forgot-password': 'login.html', 'reset-password': 'login.html' };
-const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter', 'forgot-password', 'reset-password'];
+const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter', 'forgot-password', 'reset-password', 'terms', 'privacy', 'legal', 'guides'];
+
+function sendDashboard(req, res) {
+  if (hasDashboardApp) {
+    res.set('Cache-Control', 'no-cache, max-age=0');
+    return res.sendFile(dashboardIndexPath);
+  }
+  res.sendFile(dashboardIndexPath);
+}
 
 // Landing page
 app.get('/', function (req, res) {
   res.sendFile(path.join(staticRoot, 'index.html'));
 });
 
-// App routes: React dashboard or legacy HTML
+// App routes: React dashboard SPA
 dashboardPaths.forEach(function (segment) {
-  app.get('/' + segment, function (req, res) {
-    if (hasDashboardApp) {
-      res.set('Cache-Control', 'no-cache, max-age=0');
-      return res.sendFile(dashboardIndexPath);
-    }
-    const legacyFile = dashboardPathToLegacy[segment];
-    if (legacyFile) return res.sendFile(path.join(staticRoot, 'app', legacyFile));
-    res.sendFile(dashboardIndexPath);
-  });
+  app.get('/' + segment, sendDashboard);
   app.get('/' + segment + '/', function (req, res) {
     const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
     res.redirect(302, '/' + segment + q);
   });
 });
-app.get('/join/:service', function (req, res) {
-  if (hasDashboardApp) {
-    res.set('Cache-Control', 'no-cache, max-age=0');
-    return res.sendFile(dashboardIndexPath);
-  }
-  res.sendFile(path.join(staticRoot, 'app', 'service.html'));
-});
-// Dashboard SPA sub-routes (profile/payment-method, admin/withdrawals)
-app.get('/profile/payment-method', function (req, res) {
-  if (hasDashboardApp) {
-    res.set('Cache-Control', 'no-cache, max-age=0');
-    return res.sendFile(dashboardIndexPath);
-  }
-  res.sendFile(dashboardIndexPath);
-});
+app.get('/join/:service', sendDashboard);
+app.get('/profile/payment-method', sendDashboard);
 app.get('/profile/payment-method/', function (req, res) {
   const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
   res.redirect(302, '/profile/payment-method' + q);
 });
-app.get('/admin/withdrawals', function (req, res) {
-  if (hasDashboardApp) {
-    res.set('Cache-Control', 'no-cache, max-age=0');
-    return res.sendFile(dashboardIndexPath);
-  }
-  res.sendFile(dashboardIndexPath);
-});
+app.get('/admin/withdrawals', sendDashboard);
 app.get('/admin/withdrawals/', function (req, res) {
   const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
   res.redirect(302, '/admin/withdrawals' + q);
 });
-app.get('/guides', function (req, res) {
-  res.sendFile(path.join(staticRoot, 'app', 'guides.html'));
-});
-app.get('/guides/', function (req, res) {
-  res.redirect(302, '/guides' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
-});
-app.get('/guides/:slug', function (req, res) {
-  res.sendFile(path.join(staticRoot, 'app', 'guide.html'));
-});
-app.get('/terms', function (req, res) {
-  res.sendFile(path.join(staticRoot, 'app', 'terms.html'));
+app.get('/guides/:slug', sendDashboard);
+app.get('/guides/:slug/', function (req, res) {
+  const slug = req.params.slug || '';
+  const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
+  res.redirect(302, '/guides/' + slug + q);
 });
 app.get('/terms/', function (req, res) {
   res.redirect(302, '/terms' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
 });
-app.get('/privacy', function (req, res) {
-  res.sendFile(path.join(staticRoot, 'app', 'privacy.html'));
-});
 app.get('/privacy/', function (req, res) {
   res.redirect(302, '/privacy' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
-});
-app.get('/legal', function (req, res) {
-  res.sendFile(path.join(staticRoot, 'app', 'legal.html'));
 });
 app.get('/legal/', function (req, res) {
   res.redirect(302, '/legal' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
@@ -172,9 +140,6 @@ if (fs.existsSync(dashboardBuildDir)) {
 
 // Serve main site (styles.css, media/, etc.). Local dev only; on Vercel static files are served from public/ by the platform.
 app.use(express.static(staticRoot));
-
-// Dashboard app assets (CSS, JS for legacy and shared)
-app.use('/app', express.static(path.join(staticRoot, 'app')));
 
 // Avatar uploads (profile pictures). On Vercel /var/task is read-only; use /tmp (writable but ephemeral).
 let uploadsBase = process.env.VERCEL ? path.join('/tmp', 'costlyf-uploads') : path.join(__dirname, 'uploads');
