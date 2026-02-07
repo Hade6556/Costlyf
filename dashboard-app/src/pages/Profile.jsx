@@ -207,7 +207,7 @@ export default function Profile() {
           </nav>
         </aside>
 
-        <div className="profile-main">
+        <div className={`profile-main ${panel === 'privacy' ? 'profile-main--privacy' : ''}`}>
           {panel === 'personal' && (
             <PersonalPanel
               profile={p}

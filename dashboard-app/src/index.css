@@ -198,3 +198,56 @@ a.profile-nav-item:focus,
   color: var(--dash-primary);
   font-weight: 500;
 }
+
+/* Privacy & Security panel: stack layout so form is not squished */
+.profile-main--privacy .profile-main-title {
+  margin: 0 0 0.35rem;
+}
+.profile-main--privacy .profile-panel-desc {
+  margin: 0 0 1.25rem;
+}
+.profile-main--privacy .profile-card {
+  display: block;
+  padding: 1.25rem 1.5rem;
+  max-width: 100%;
+}
+.profile-main--privacy .profile-card-title {
+  margin: 0 0 0.75rem;
+}
+.profile-main--privacy .profile-card-text {
+  flex: none;
+}
+.profile-main--privacy .profile-form-field {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-bottom: 1rem;
+}
+.profile-main--privacy .profile-form-field input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+.profile-main--privacy .profile-form-field input:focus {
+  outline: none;
+  border-color: var(--dash-primary, #1d1d1f);
+}
+.profile-main--privacy .profile-btn--primary {
+  margin-top: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+}
+.profile-main--privacy .profile-privacy-heading {
+  margin: 1.5rem 0 0.5rem;
+}
+.profile-main--privacy .profile-cgu-card {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
