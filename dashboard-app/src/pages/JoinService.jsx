@@ -271,15 +271,20 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const [step, setStep] = useState(1)
   const [paymentMethod, setPaymentMethod] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [balanceCents, setBalanceCents] = useState(null)
   const [boxCollapsed, setBoxCollapsed] = useState(true)
   const [breakdownOpen, setBreakdownOpen] = useState(false)
+  const [payError, setPayError] = useState('')
 
   const slots = offer.slots || []
   const available = slots.filter((s) => s.status === 'available')
   const slotIndex = available.length > 0 ? available[0].slot_index : null
   const totalPrice = offer.contribution_per_month != null ? Number(offer.contribution_per_month) : 0
+  const amountCents = Math.round(totalPrice * 100) || 0
   const priceStr = totalPrice > 0 ? totalPrice.toFixed(2) : '0.00'
   const price = totalPrice > 0 ? totalPrice.toFixed(2) + '€' : '0.00€'
+  const balanceEur = balanceCents != null ? (balanceCents / 100).toFixed(2) + '€' : '…'
+  const canPayWithWallet = balanceCents != null && balanceCents >= amountCents && amountCents > 0
   const breakdown = getPriceBreakdown(serviceSlug, offer.plan, totalPrice)
   const amountToOwner = totalPrice > 0 ? breakdown.amountToOwner.toFixed(2) : '0.00'
   const operatingCostsVal = totalPrice > 0 ? breakdown.operatingFee.toFixed(2) : '0.00'
@@ -291,9 +296,32 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const planName = offer.plan === 'Standard' || offer.plan === 'Premium' ? t('dashboard.' + (offer.plan || 'premium').toLowerCase()) : (offer.plan || 'Premium')
   const memberSince = offer.owner_created_at ? t('dashboard.memberSince', { date: new Date(offer.owner_created_at).toLocaleDateString(locale || 'en', { month: 'long', day: 'numeric', year: 'numeric' }) }) : ''
 
+  useEffect(() => {
+    if (step !== 2) return
+    setPayError('')
+    fetchWithAuth('/api/wallet/balance', {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setBalanceCents(data && data.balance_cents != null ? data.balance_cents : 0))
+      .catch(() => setBalanceCents(0))
+  }, [step, fetchWithAuth])
+
   const handlePay = () => {
-    if (paymentMethod === 'wallet') {
-      setStep(3)
+    setPayError('')
+    if (paymentMethod === 'wallet' && slotIndex != null) {
+      if (!canPayWithWallet) {
+        setStep(3)
+        return
+      }
+      setLoading(true)
+      fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/reserve-with-balance`, { method: 'POST' })
+        .then((r) => {
+          if (r.ok) {
+            onSuccess(offer.id)
+            return
+          }
+          return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
+        })
+        .catch((e) => { setPayError(e.message || 'Could not join'); setLoading(false) })
       return
     }
     if (paymentMethod === 'card' && slotIndex) {
@@ -306,9 +334,20 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           }
           return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
         })
-        .catch((e) => { alert(e.message || 'Could not join'); setLoading(false) })
+        .catch((e) => { setPayError(e.message || 'Could not join'); setLoading(false) })
     }
   }
+
+  const payButtonDisabled = !paymentMethod || loading
+  const payButtonLabel = loading
+    ? t('dashboard.joining')
+    : paymentMethod === 'card'
+      ? t('dashboard.payAmount', { amount: price })
+      : paymentMethod === 'wallet' && canPayWithWallet
+        ? t('dashboard.payAmount', { amount: price })
+        : paymentMethod === 'wallet'
+          ? t('dashboard.nextLabel')
+          : t('dashboard.nextLabel')
 
   return (
     <div className="join-offer-overlay" role="dialog" aria-modal="true" aria-labelledby="join-offer-title">
@@ -377,6 +416,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
             <button type="button" className="join-offer-back" aria-label={t('dashboard.back')} onClick={() => setStep(1)}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></button>
             <h2 className="join-offer-title">{t('dashboard.join')}</h2>
             <p className="join-offer-subtitle">{t('dashboard.choosePaymentMethod')}</p>
+            <p className="join-offer-charge">Charge: {price} {t('dashboard.eurPerMonth')}</p>
             <div className="join-offer-payment-options">
               <label className="join-offer-payment-option">
                 <input type="radio" name="join-payment-method" value="card" className="join-offer-payment-radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
@@ -385,13 +425,17 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
               </label>
               <label className="join-offer-payment-option">
                 <input type="radio" name="join-payment-method" value="wallet" className="join-offer-payment-radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} />
-                <span className="join-offer-payment-label">{t('dashboard.topUpWallet')}</span>
-                <span className="join-offer-payment-amount">0.00€</span>
+                <span className="join-offer-payment-label">{t('dashboard.payWithWallet')}</span>
+                <span className="join-offer-payment-amount">{t('dashboard.walletBalance', { amount: balanceEur })}</span>
               </label>
             </div>
+            {paymentMethod === 'wallet' && balanceCents != null && balanceCents < amountCents && (
+              <p className="join-offer-insufficient" role="alert">{t('dashboard.insufficientBalance')}</p>
+            )}
+            {payError && <p className="join-offer-insufficient" role="alert">{payError}</p>}
             <p className="join-offer-legal">{t('dashboard.payLegal')}</p>
-            <button type="button" className="join-offer-pay" disabled={!paymentMethod || loading} onClick={handlePay}>
-              <span>{loading ? t('dashboard.joining') : paymentMethod === 'card' ? t('dashboard.payAmount', { amount: price }) : t('dashboard.nextLabel')}</span>
+            <button type="button" className="join-offer-pay" disabled={payButtonDisabled} onClick={handlePay}>
+              <span>{payButtonLabel}</span>
             </button>
           </div>
         )}

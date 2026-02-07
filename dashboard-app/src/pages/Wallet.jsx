@@ -332,7 +332,15 @@ export default function Wallet() {
                 {transactionsInMonth.map((tx) => (
                   <div key={tx.id} className="wallet-history-item">
                     <span className="wallet-history-item-date">{formatTransactionDate(tx.created_at)}</span>
-                    <span className="wallet-history-item-label">{tx.type === 'top_up' ? 'Top-up' : tx.type}</span>
+                    <span className="wallet-history-item-label">
+                      {tx.type === 'top_up'
+                        ? 'Top-up'
+                        : tx.type === 'debit_join' && tx.metadata?.service_name
+                          ? t('dashboard.subscriptionJoin', { service: tx.metadata.service_name })
+                          : tx.type === 'debit_join'
+                            ? 'Subscription join'
+                            : tx.type}
+                    </span>
                     <span className="wallet-history-item-amount">
                       {tx.amount_cents >= 0 ? '+' : ''}{formatEuros(tx.amount_cents)}€
                     </span>

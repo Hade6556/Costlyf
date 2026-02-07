@@ -707,6 +707,60 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve', async (req, res) => {
   }
 });
 
+// Reserve a slot and charge the first period from wallet balance. Records debit_join in wallet history.
+app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  const offerId = req.params.id;
+  const slotIndex = parseInt(req.params.slotIndex, 10);
+  if (!offerId || !slotIndex || slotIndex < 1) return res.status(400).json({ error: 'Invalid offer or slot' });
+  try {
+    const { data: offer, error: offerErr } = await supabaseAdmin.from('offers').select('id, owner_id, service, service_name, price').eq('id', offerId).single();
+    if (offerErr || !offer) return res.status(404).json({ error: 'Offer not found' });
+    const { data: slot, error: slotErr } = await supabaseAdmin
+      .from('offer_slots')
+      .select('id, status')
+      .eq('offer_id', offerId)
+      .eq('slot_index', slotIndex)
+      .single();
+    if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
+    if (slot.status !== 'available') return res.status(400).json({ error: 'Slot is not available' });
+    const amountEur = Number(offer.price) != null ? Math.max(0, Number(Number(offer.price).toFixed(2))) : 0;
+    const amount_cents = Math.round(amountEur * 100) || 0;
+    if (amount_cents <= 0) return res.status(400).json({ error: 'Invalid offer price' });
+    const { data: balanceRow } = await supabaseAdmin.from('user_balances').select('balance_cents').eq('user_id', user.id).single();
+    const balance_cents = (balanceRow && balanceRow.balance_cents != null) ? balanceRow.balance_cents : 0;
+    if (balance_cents < amount_cents) return res.status(400).json({ error: 'Insufficient balance. Top up your wallet or pay by card.' });
+    const referenceId = offerId + '_' + slotIndex;
+    const metadata = { service_name: offer.service_name || offer.service || 'Subscription', offer_id: offerId, slot_index: slotIndex };
+    await supabaseAdmin.rpc('apply_balance_transaction', {
+      p_user_id: user.id,
+      p_amount_cents: -amount_cents,
+      p_type: 'debit_join',
+      p_reference_type: 'offer_slot',
+      p_reference_id: referenceId,
+      p_metadata: metadata
+    });
+    const { error: updateErr } = await supabaseAdmin
+      .from('offer_slots')
+      .update({ status: 'reserved', user_id: user.id, reserved_at: new Date().toISOString() })
+      .eq('id', slot.id);
+    if (updateErr) {
+      return res.status(500).json({ error: updateErr.message });
+    }
+    try {
+      await getOrCreateThreadAndNotifyJoinRequest(supabaseAdmin, offerId, offer.owner_id, user.id, JOIN_REQUEST_SYSTEM_MESSAGE);
+    } catch (e) {
+      // non-fatal
+    }
+    return res.status(200).json({ message: 'Slot reserved', amount_cents });
+  } catch (e) {
+    if (e.message && e.message.indexOf('balance would go negative') !== -1) return res.status(400).json({ error: 'Insufficient balance. Top up your wallet or pay by card.' });
+    if (e.message && e.message.indexOf('idempotency') !== -1) return res.status(409).json({ error: 'This slot was already reserved.' });
+    return res.status(500).json({ error: e.message || 'Reserve failed' });
+  }
+});
+
 // Owner accepts a reserved slot (reserved -> taken). Creates subscription record.
 app.post('/api/offers/:id/slots/:slotIndex/accept', async (req, res) => {
   const user = await getCurrentUser(req);
@@ -1497,7 +1551,7 @@ app.get('/api/wallet/transactions', async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('balance_transactions')
-      .select('id, amount_cents, type, created_at')
+      .select('id, amount_cents, type, created_at, metadata')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);
