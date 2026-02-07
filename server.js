@@ -69,8 +69,9 @@ app.use(express.json());
 
 // Vercel serves static files from public/ only; when public/ exists (after build), use it for HTML and static paths.
 const publicDir = path.join(__dirname, 'public');
-const usePublic = fs.existsSync(publicDir);
-const staticRoot = usePublic ? publicDir : __dirname;
+const publicDirCwd = path.join(process.cwd(), 'public');
+const usePublic = fs.existsSync(publicDir) || fs.existsSync(publicDirCwd);
+const staticRoot = fs.existsSync(publicDir) ? publicDir : (fs.existsSync(publicDirCwd) ? publicDirCwd : __dirname);
 const dashboardSegment = usePublic ? 'dashboard-app' : 'dashboard-build';
 
 // Serve English messages (dashboard i18n)
@@ -132,9 +133,27 @@ app.get('/legal/', function (req, res) {
   res.redirect(302, '/legal' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
 });
 
-// React dashboard SPA static assets (built bundle at /dashboard-app/assets/*). Local dev only; Vercel serves public/.
+// Dashboard SPA assets: serve with correct MIME type so browsers accept them (fixes 404/MIME errors on Vercel).
 const dashboardBuildDir = path.join(staticRoot, dashboardSegment);
-if (fs.existsSync(dashboardBuildDir)) {
+const dashboardBuildDirCwd = path.join(process.cwd(), 'public', dashboardSegment);
+function serveDashboardAsset(req, res) {
+  const rawPath = (req.path || req.url || '').split('?')[0];
+  const prefix = '/dashboard-app/assets/';
+  const assetPath = rawPath.startsWith(prefix) ? rawPath.slice(prefix.length) : '';
+  if (!assetPath || assetPath.includes('..') || path.isAbsolute(assetPath)) return res.status(404).end();
+  const mime = assetPath.endsWith('.js') ? 'application/javascript' : assetPath.endsWith('.css') ? 'text/css' : assetPath.endsWith('.map') ? 'application/json' : null;
+  const roots = [dashboardBuildDir, dashboardBuildDirCwd].filter((d) => fs.existsSync(d));
+  for (const root of roots) {
+    const filePath = path.join(root, 'assets', assetPath);
+    const dir = path.join(root, 'assets');
+    if (!filePath.startsWith(dir) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) continue;
+    if (mime) res.set('Content-Type', mime);
+    return res.sendFile(filePath);
+  }
+  res.status(404).end();
+}
+app.get(/^\/dashboard-app\/assets\/.+/, serveDashboardAsset);
+if (fs.existsSync(dashboardBuildDir) || fs.existsSync(dashboardBuildDirCwd)) {
   app.use('/dashboard-app', express.static(dashboardBuildDir));
 }
 
