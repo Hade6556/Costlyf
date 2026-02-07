@@ -38,7 +38,6 @@ function JoinModalTopupCard({
   topupError,
   setTopupError,
   onSuccess,
-  t,
 }) {
   const [payLoading, setPayLoading] = useState(false)
   useEffect(() => {
@@ -108,7 +107,7 @@ function JoinModalTopupCard({
       </div>
       {topupError && <p className="join-offer-insufficient" role="alert">{topupError}</p>}
       <button type="button" className="join-offer-pay" disabled={payLoading} onClick={handlePay}>
-        {payLoading ? '…' : t('dashboard.payAmount', { amount: (topupCents / 100).toFixed(2) + '€' })}
+        {payLoading ? '…' : `Pay ${(topupCents / 100).toFixed(2)}€`}
       </button>
     </>
   )
@@ -404,7 +403,6 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const amountCents = Math.round(totalPrice * 100) || 0
   const priceStr = totalPrice > 0 ? totalPrice.toFixed(2) : '0.00'
   const price = totalPrice > 0 ? totalPrice.toFixed(2) + '€' : '0.00€'
-  const balanceEur = balanceCents != null ? (balanceCents / 100).toFixed(2) + '€' : '…'
   const canPayWithWallet = balanceCents != null && balanceCents >= amountCents && amountCents > 0
   const breakdown = getPriceBreakdown(serviceSlug, offer.plan, totalPrice)
   const amountToOwner = totalPrice > 0 ? breakdown.amountToOwner.toFixed(2) : '0.00'
@@ -464,20 +462,18 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
 
   const payButtonDisabled = !paymentMethod || loading
   const payButtonLabel = loading
-    ? t('dashboard.joining')
+    ? 'Joining…'
     : paymentMethod === 'card'
-      ? t('dashboard.payAmount', { amount: price })
+      ? `Pay ${price}`
       : paymentMethod === 'wallet' && canPayWithWallet
-        ? t('dashboard.payAmount', { amount: price })
-        : paymentMethod === 'wallet'
-          ? t('dashboard.nextLabel')
-          : t('dashboard.nextLabel')
+        ? `Pay ${price}`
+        : 'Next'
 
   return (
     <div className="join-offer-overlay" role="dialog" aria-modal="true" aria-labelledby="join-offer-title">
       <div className="join-offer-backdrop" onClick={onClose} />
       <div className="join-offer-modal">
-        <button type="button" className="join-offer-close" onClick={onClose} aria-label={t('dashboard.close')}>
+        <button type="button" className="join-offer-close" onClick={onClose} aria-label="Close">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
 
@@ -539,25 +535,25 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           <div className="join-offer-step">
             <button type="button" className="join-offer-back" aria-label={t('dashboard.back')} onClick={() => setStep(1)}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></button>
             <h2 className="join-offer-title">{t('dashboard.join')}</h2>
-            <p className="join-offer-subtitle">{t('dashboard.choosePaymentMethod')}</p>
-            <p className="join-offer-charge">Charge: {price} {t('dashboard.eurPerMonth')}</p>
+            <p className="join-offer-subtitle">Choose the payment method:</p>
+            <p className="join-offer-charge">Charge: {price} €/month</p>
             <div className="join-offer-payment-options">
               <label className="join-offer-payment-option">
                 <input type="radio" name="join-payment-method" value="card" className="join-offer-payment-radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-                <span className="join-offer-payment-label">{t('dashboard.bankCard')}</span>
+                <span className="join-offer-payment-label">Bank card</span>
                 <span className="join-offer-payment-icon" aria-hidden="true"><svg width="32" height="24" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="30" height="16" rx="2" /><line x1="1" y1="10" x2="31" y2="10" /></svg></span>
               </label>
               <label className="join-offer-payment-option">
                 <input type="radio" name="join-payment-method" value="wallet" className="join-offer-payment-radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} />
-                <span className="join-offer-payment-label">{t('dashboard.payWithWallet')}</span>
-                <span className="join-offer-payment-amount">{t('dashboard.walletBalance', { amount: balanceEur })}</span>
+                <span className="join-offer-payment-label">Pay with Wallet</span>
+                <span className="join-offer-payment-amount">Balance: {balanceCents != null ? (balanceCents / 100).toFixed(2) + '€' : '…'}</span>
               </label>
             </div>
             {paymentMethod === 'wallet' && balanceCents != null && balanceCents < amountCents && (
-              <p className="join-offer-insufficient" role="alert">{t('dashboard.insufficientBalance')}</p>
+              <p className="join-offer-insufficient" role="alert">Insufficient balance. Top up your wallet or pay by card.</p>
             )}
             {payError && <p className="join-offer-insufficient" role="alert">{payError}</p>}
-            <p className="join-offer-legal">{t('dashboard.payLegal')}</p>
+            <p className="join-offer-legal">By clicking Pay, the right of withdrawal (article L. 221-18 of the Consumer Code) does not apply.</p>
             <button type="button" className="join-offer-pay" disabled={payButtonDisabled} onClick={handlePay}>
               <span>{payButtonLabel}</span>
             </button>
@@ -569,7 +565,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
             <button
               type="button"
               className="join-offer-back"
-              aria-label={t('dashboard.back')}
+              aria-label="Back"
               onClick={() => {
                 setTopupError('')
                 if (topupSubStep === 2) {
@@ -586,10 +582,10 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
             </button>
-            <h2 className="join-offer-title">{t('dashboard.topUpBalance')}</h2>
+            <h2 className="join-offer-title">Top up your balance</h2>
             {topupSubStep === 1 && (
               <>
-                <p className="join-offer-subtitle">{t('dashboard.insufficientBalance')} Choose amount to add (€).</p>
+                <p className="join-offer-subtitle">Insufficient balance. Choose amount to add (€):</p>
                 <div className="join-offer-topup-amounts" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
                   {TOPUP_AMOUNTS.map(({ cents, label }) => (
                     <button
@@ -622,7 +618,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                     .catch((e) => setTopupError(e.message || 'Something went wrong'))
                     .finally(() => setTopupLoading(false))
                 }}>
-                  {topupLoading ? '…' : t('dashboard.nextLabel')}
+                  {topupLoading ? '…' : 'Next'}
                 </button>
               </>
             )}
@@ -647,7 +643,6 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                   setTopupError('')
                   fetchWithAuth('/api/wallet/balance', {}).then((r) => r.ok ? r.json() : null).then((data) => setBalanceCents(data?.balance_cents ?? 0))
                 }}
-                t={t}
               />
             )}
           </div>
