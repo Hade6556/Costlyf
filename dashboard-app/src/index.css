@@ -37,6 +37,20 @@
 .dashboard-content--join .dashboard-main {
   max-width: 100%;
 }
+
+/* Join page: no carousel scroll buttons, use edge fade instead */
+.dashboard-content--join .carousel-btn {
+  display: none;
+}
+.dashboard-content--join .card-carousel {
+  gap: 0;
+  width: 100%;
+}
+/* Edge fade: ~10% of next card visible with lower opacity as scroll hint */
+.dashboard-content--join .card-scroll {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
 @media (min-width: 768px) {
   .dashboard-content--join .dashboard-main {
     max-width: 1100px;
@@ -65,7 +79,13 @@
   .dashboard-content--join .filter-pill {
     flex-shrink: 0;
   }
-  /* Wider service cards on mobile */
+  /* Carousel: full-width scroll on mobile, wider cards */
+  .dashboard-content--join .card-scroll {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
   .dashboard-content--join .card-scroll .service-card {
     flex: 0 0 200px;
   }
@@ -124,29 +144,36 @@ a.profile-nav-item:focus,
 }
 
 .home-profile-avatar {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e8e8ed;
+  box-sizing: content-box;
+}
+
+.home-profile-avatar > img,
+.home-profile-avatar > .home-profile-avatar-placeholder {
   width: 44px;
   height: 44px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--hero-color, #eee);
 }
 
-.home-profile-avatar img {
+.home-profile-avatar > img {
   display: block;
-  width: 100%;
-  height: 100%;
   object-fit: cover;
 }
 
 .home-profile-avatar-placeholder {
   display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
   background: var(--hero-color, #eee);
-  overflow: hidden;
 }
 
 .home-profile-avatar-placeholder img {
@@ -157,7 +184,7 @@ a.profile-nav-item:focus,
 }
 
 .home-profile-name {
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: var(--dash-text, #1d1d1f);
 }
