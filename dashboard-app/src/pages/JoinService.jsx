@@ -546,7 +546,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
               <label className="join-offer-payment-option">
                 <input type="radio" name="join-payment-method" value="wallet" className="join-offer-payment-radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} />
                 <span className="join-offer-payment-label">Pay with Wallet</span>
-                <span className="join-offer-payment-amount">Balance: {balanceCents != null ? (balanceCents / 100).toFixed(2) + '€' : '…'}</span>
+                <span className="join-offer-payment-amount">{balanceCents != null ? (balanceCents / 100).toFixed(2) + '€' : '…'}</span>
               </label>
             </div>
             {paymentMethod === 'wallet' && balanceCents != null && balanceCents < amountCents && (

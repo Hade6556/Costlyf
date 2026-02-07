@@ -707,7 +707,7 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve', async (req, res) => {
   }
 });
 
-// Reserve a slot and hold the first period from wallet balance (hold_join). Money is charged only after subscriber confirms details; if owner declines, money is refunded.
+// Reserve a slot and charge the first period from wallet balance immediately (debit_join).
 app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
@@ -733,14 +733,15 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, re
     if (balance_cents < amount_cents) return res.status(400).json({ error: 'Insufficient balance. Top up your wallet or pay by card.' });
     const referenceId = offerId + '_' + slotIndex;
     const metadata = { service_name: offer.service_name || offer.service || 'Subscription', offer_id: offerId, slot_index: slotIndex };
-    await supabaseAdmin.rpc('apply_balance_transaction', {
+    const { error: txErr } = await supabaseAdmin.rpc('apply_balance_transaction', {
       p_user_id: user.id,
       p_amount_cents: -amount_cents,
-      p_type: 'hold_join',
+      p_type: 'debit_join',
       p_reference_type: 'offer_slot',
       p_reference_id: referenceId,
       p_metadata: metadata
     });
+    if (txErr) throw new Error(txErr.message);
     const { error: updateErr } = await supabaseAdmin
       .from('offer_slots')
       .update({ status: 'reserved', user_id: user.id, reserved_at: new Date().toISOString() })
@@ -858,12 +859,12 @@ app.post('/api/offers/:id/slots/:slotIndex/decline', async (req, res) => {
     if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
     if (slot.status !== 'reserved') return res.status(400).json({ error: 'Slot is not reserved' });
     const declinedUserId = slot.user_id;
-    // Refund any wallet hold for this slot (join paid by balance).
+    // Refund wallet payment for this slot (join paid by balance: debit_join or hold_join).
     const refId = offerId + '_' + slotIndex;
-    const { data: holdRow } = await supabaseAdmin.from('balance_transactions').select('id, amount_cents, metadata').eq('user_id', declinedUserId).eq('reference_type', 'offer_slot').eq('reference_id', refId).eq('type', 'hold_join').maybeSingle();
-    if (holdRow && holdRow.amount_cents < 0) {
-      const refundCents = -holdRow.amount_cents;
-      const meta = holdRow.metadata || {};
+    const { data: chargeRow } = await supabaseAdmin.from('balance_transactions').select('id, amount_cents, metadata').eq('user_id', declinedUserId).eq('reference_type', 'offer_slot').eq('reference_id', refId).in('type', ['hold_join', 'debit_join']).maybeSingle();
+    if (chargeRow && chargeRow.amount_cents < 0) {
+      const refundCents = -chargeRow.amount_cents;
+      const meta = chargeRow.metadata || {};
       await supabaseAdmin.rpc('apply_balance_transaction', {
         p_user_id: declinedUserId,
         p_amount_cents: refundCents,
@@ -1662,6 +1663,51 @@ app.post('/api/wallet/setup-intent', async (req, res) => {
     });
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Failed to create setup intent' });
+  }
+});
+
+// --- 30-day payouts: credit owners (contribution - platform fee) when period ends ---
+const PLATFORM_FEE_PERCENT = 10; // 10% fee; owner receives 90%
+
+app.post('/api/cron/process-payouts', async (req, res) => {
+  const cronSecret = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET;
+  if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (!supabaseAdmin) return res.status(500).json({ error: 'Database not configured' });
+  const now = new Date().toISOString();
+  try {
+    const { data: subs, error: subsErr } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id, offer_id, slot_index, period_end, contribution_price, status')
+      .lte('period_end', now)
+      .in('status', ['active', 'canceling', 'ended']);
+    if (subsErr) return res.status(500).json({ error: subsErr.message });
+    let processed = 0;
+    for (const sub of subs || []) {
+      const refId = `payout_${sub.offer_id}_${sub.slot_index}_${sub.period_end}`;
+      const { data: existing } = await supabaseAdmin.from('balance_transactions').select('id').eq('reference_type', 'payout_30d').eq('reference_id', refId).maybeSingle();
+      if (existing) continue;
+      const { data: offer } = await supabaseAdmin.from('offers').select('owner_id, service_name').eq('id', sub.offer_id).single();
+      if (!offer || !offer.owner_id) continue;
+      const contribution_cents = Math.round(Number(sub.contribution_price) * 100) || 0;
+      if (contribution_cents <= 0) continue;
+      const payout_cents = Math.round(contribution_cents * (1 - PLATFORM_FEE_PERCENT / 100));
+      if (payout_cents <= 0) continue;
+      const metadata = { offer_id: sub.offer_id, slot_index: sub.slot_index, period_end: sub.period_end, service_name: offer.service_name || null };
+      const { error: txErr } = await supabaseAdmin.rpc('apply_balance_transaction', {
+        p_user_id: offer.owner_id,
+        p_amount_cents: payout_cents,
+        p_type: 'payout_owner',
+        p_reference_type: 'payout_30d',
+        p_reference_id: refId,
+        p_metadata: metadata
+      });
+      if (!txErr) processed += 1;
+    }
+    return res.status(200).json({ message: 'Payouts processed', processed });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Payout job failed' });
   }
 });
 
