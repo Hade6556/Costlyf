@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { InboxUnreadProvider } from './contexts/InboxUnreadContext'
 import './index.css'
@@ -11,7 +11,6 @@ import JoinService from './pages/JoinService'
 import Share from './pages/Share'
 import Wallet from './pages/Wallet'
 import Offer from './pages/Offer'
-import ProfileLayout from './pages/ProfileLayout'
 import Profile, { ProfilePersonal, ProfilePrivacy, ProfileTrust } from './pages/Profile'
 import Subscription from './pages/Subscription'
 import Help from './pages/Help'
@@ -45,17 +44,11 @@ const router = createBrowserRouter(
         { path: 'share', element: <Share /> },
         { path: 'wallet', element: <Wallet /> },
         { path: 'offer', element: <Offer /> },
-        {
-          path: 'profile',
-          element: <ProfileLayout />,
-          children: [
-            { index: true, element: <Navigate to="/profile/personal" replace /> },
-            { path: 'personal', element: <ProfilePersonal /> },
-            { path: 'privacy', element: <ProfilePrivacy /> },
-            { path: 'trust', element: <ProfileTrust /> },
-            { path: 'payment-method', element: <PaymentMethod /> },
-          ],
-        },
+        { path: 'profile', element: <Profile /> },
+        { path: 'profile/personal', element: <ProfilePersonal /> },
+        { path: 'profile/privacy', element: <ProfilePrivacy /> },
+        { path: 'profile/trust', element: <ProfileTrust /> },
+        { path: 'profile/payment-method', element: <PaymentMethod /> },
         { path: 'admin/withdrawals', element: <AdminWithdrawals /> },
         { path: 'subscription', element: <Subscription /> },
         { path: 'help', element: <Help /> },

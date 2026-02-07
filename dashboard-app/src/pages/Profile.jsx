@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
 
@@ -13,7 +13,7 @@ function getDefaultHeroIndex(userId) {
   return (Math.abs(h) % 5) + 1
 }
 
-export function formatDate(str) {
+function formatDate(str) {
   if (!str) return '—'
   try {
     const d = new Date(str)
@@ -53,7 +53,7 @@ const TRUST_CRITERIA = [
   { key: 'invoices', emoji: '📄', action: 'wallet', text: 'Check my invoices', meta: (c) => ` (${c || 0} / 1)` },
 ]
 
-export function computeTrust(profile, trustStats) {
+function computeTrust(profile, trustStats) {
   const done = {
     avatar: !!(profile?.avatar_url?.trim()),
     phone: !!(profile?.phone?.trim()),
@@ -71,7 +71,7 @@ export function computeTrust(profile, trustStats) {
   return { score, total, done }
 }
 
-export function AvatarDisplay({ avatarUrl, userId, size = 'sidebar' }) {
+function AvatarDisplay({ avatarUrl, userId, size = 'sidebar' }) {
   const isCard = size === 'card'
   const heroIndex = getDefaultHeroIndex(userId)
   const color = HERO_AVATAR_COLORS[heroIndex - 1] || HERO_AVATAR_COLORS[0]
@@ -91,39 +91,142 @@ export function AvatarDisplay({ avatarUrl, userId, size = 'sidebar' }) {
   )
 }
 
-/* Profile index: redirect to personal */
-export default function ProfileIndex() {
-  return <Navigate to="/profile/personal" replace />
+function ProfileBackBtn() {
+  const { t } = useI18n()
+  return (
+    <Link to="/profile" className="profile-back-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
+      <span>{t('dashboard.backToProfile', 'Back to profile')}</span>
+    </Link>
+  )
+}
+
+export default function Profile() {
+  const { user, profile, trustStats, setProfile, clearSession, loading } = useAuth()
+  const navigate = useNavigate()
+  const { t } = useI18n()
+
+  const trust = computeTrust(profile, trustStats)
+
+  useEffect(() => {
+    if (loading) return
+    if (!user && !profile) {
+      navigate('/login', { replace: true })
+      return
+    }
+  }, [loading, user, profile, navigate])
+
+  const handleSignOut = () => {
+    clearSession()
+    window.location.href = '/'
+  }
+
+  if (loading) {
+    return (
+      <main className="dashboard-main">
+        <p className="dash-muted">{t('common.loading')}</p>
+      </main>
+    )
+  }
+
+  const p = profile || {}
+  const username = p.alias || p.email || '—'
+  const registeredStr = p.created_at ? (t('dashboard.profileRegisteredSince') + ' ' + formatDate(p.created_at)) : '—'
+
+  return (
+    <main className="dashboard-main dashboard-content dashboard-content--profile">
+      <div className="profile-hub">
+        <div className="profile-user-block">
+          <div className="profile-avatar-wrap">
+            <AvatarDisplay avatarUrl={p.avatar_url} userId={user?.id} size="sidebar" />
+            <span className="profile-avatar-badge">{trust.score}</span>
+          </div>
+          <p className="profile-username">{username}</p>
+          <p className="profile-registered">{registeredStr}</p>
+        </div>
+
+        <Link to="/profile/trust" className="profile-hub-card profile-trust-card">
+          <div className="profile-trust-row">
+            <span className="profile-trust-icon-wrap" aria-hidden="true">
+              <span className="profile-trust-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15 8 22 9 17 14 18 21 12 18 6 21 7 14 2 9 9 8" /></svg>
+              </span>
+            </span>
+            <span className="profile-trust-label">{t('dashboard.profileTrustScore')}</span>
+            <span className="profile-trust-value">{trust.score}/{trust.total}</span>
+          </div>
+          <div className="profile-trust-bar-wrap">
+            <div className="profile-trust-bar" style={{ width: (trust.score / trust.total * 100) + '%' }} />
+          </div>
+          <span className="profile-nav-chevron profile-hub-chevron">›</span>
+        </Link>
+
+        <nav className="profile-hub-nav">
+          <Link to="/profile/personal" className="profile-hub-link">
+            <span className="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></span>
+            <span>{t('dashboard.profilePersonalInfo')}</span>
+            <span className="profile-nav-chevron">›</span>
+          </Link>
+          <Link to="/profile/privacy" className="profile-hub-link">
+            <span className="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
+            <span>{t('dashboard.profilePrivacySecurity')}</span>
+            <span className="profile-nav-chevron">›</span>
+          </Link>
+          <Link to="/profile/payment-method" className="profile-hub-link">
+            <span className="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg></span>
+            <span>{t('dashboard.profilePaymentMethod')}</span>
+            <span className="profile-nav-chevron">›</span>
+          </Link>
+        </nav>
+
+        <button type="button" className="profile-sign-out profile-hub-sign-out" onClick={handleSignOut}>
+          <span className="profile-sign-out-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg></span>
+          <span>{t('dashboard.profileSignOut')}</span>
+        </button>
+      </div>
+    </main>
+  )
 }
 
 export function ProfilePersonal() {
-  const { user, profile, setProfile, fetchWithAuth } = useAuth()
+  const { user, profile, setProfile, fetchWithAuth, loading } = useAuth()
+  const navigate = useNavigate()
   const avatarInputRef = useRef(null)
+
+  useEffect(() => {
+    if (loading) return
+    if (!user && !profile) navigate('/login', { replace: true })
+  }, [loading, user, profile, navigate])
+
   const p = profile || {}
   return (
-    <PersonalPanel
-      profile={p}
-      user={user}
-      onUpdate={(data) => setProfile((prev) => ({ ...prev, ...data }))}
-      fetchWithAuth={fetchWithAuth}
-      onTrustUpdate={() => {}}
-      avatarInputRef={avatarInputRef}
-    />
+    <div className="profile-subpage">
+      <ProfileBackBtn />
+      <div className="profile-main">
+        <PersonalPanel profile={p} user={user} onUpdate={(data) => setProfile((prev) => ({ ...prev, ...data }))} fetchWithAuth={fetchWithAuth} avatarInputRef={avatarInputRef} />
+      </div>
+    </div>
   )
 }
 
 export function ProfilePrivacy() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState(false)
-  const { fetchWithAuth } = useAuth()
+  const { user, profile, fetchWithAuth, loading } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (loading) return
+    if (!user && !profile) navigate('/login', { replace: true })
+  }, [loading, user, profile, navigate])
+
   return (
-    <PrivacyPanel
-      passwordError={passwordError}
-      passwordSuccess={passwordSuccess}
-      setPasswordError={setPasswordError}
-      setPasswordSuccess={setPasswordSuccess}
-      fetchWithAuth={fetchWithAuth}
-    />
+    <div className="profile-subpage">
+      <ProfileBackBtn />
+      <div className="profile-main profile-main--privacy">
+        <PrivacyPanel passwordError={passwordError} passwordSuccess={passwordSuccess} setPasswordError={setPasswordError} setPasswordSuccess={setPasswordSuccess} fetchWithAuth={fetchWithAuth} />
+      </div>
+    </div>
   )
 }
 
@@ -133,15 +236,14 @@ export function ProfileTrust() {
   const { locale } = useI18n()
   const trust = computeTrust(profile, trustStats)
   const invoicesCount = (trustStats?.invoices_count ?? 0) | 0
+
   return (
-    <TrustPanel
-      trust={trust}
-      trustStats={trustStats}
-      invoicesCount={invoicesCount}
-      onNavigate={(name) => navigate('/profile/' + name)}
-      navigateTo={navigate}
-      locale={locale || 'en'}
-    />
+    <div className="profile-subpage">
+      <ProfileBackBtn />
+      <div className="profile-main">
+        <TrustPanel trust={trust} trustStats={trustStats} invoicesCount={invoicesCount} onNavigate={(name) => navigate('/profile/' + name)} navigateTo={navigate} locale={locale || 'en'} />
+      </div>
+    </div>
   )
 }
 

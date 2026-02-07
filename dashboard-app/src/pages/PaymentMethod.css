@@ -1,12 +1,43 @@
-/* Payment method page: fix layout so inputs and Stripe elements are not squished */
+/* Profile subpage: standalone page with back button only (no sidebar) */
 
-.payment-method-page .profile-layout {
-  max-width: 100%;
-}
-
-.payment-method-page .profile-main {
+.profile-subpage {
   max-width: 560px;
   width: 100%;
+  padding: 0 var(--dash-padding, 1rem) 2rem;
+}
+
+.profile-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem 0;
+  color: var(--dash-text-muted, #6e6e73);
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.profile-back-btn:hover {
+  color: var(--dash-text, #1d1d1f);
+}
+
+@media (max-width: 899px) {
+  .payment-method-page .profile-subpage {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+@media (max-width: 480px) {
+  .payment-method-page .profile-subpage {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+/* Payment method page: fix layout so inputs and Stripe elements are not squished */
+
+.payment-method-page .profile-main-title {
+  margin: 0 0 0.5rem;
 }
 
 /* Stack card sections vertically; give full width to form content */
