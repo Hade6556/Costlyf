@@ -23,11 +23,13 @@ function formatTransactionDate(iso) {
   }
 }
 
-const TOPUP_AMOUNTS = [
-  { cents: 1000, label: '10€' },
+const TOPUP_MIN_CENTS = 1000   // 10€
+const TOPUP_MAX_CENTS = 15000  // 150€
+const TOPUP_PRESETS = [
   { cents: 2000, label: '20€' },
+  { cents: 3000, label: '30€' },
   { cents: 5000, label: '50€' },
-  { cents: 10000, label: '100€' },
+  { cents: 8000, label: '80€' },
 ]
 
 function loadStripeScript() {
@@ -110,7 +112,7 @@ export default function Wallet() {
   const openTopup = () => {
     setTopupOpen(true)
     setTopupStep(1)
-    setSelectedCents(5000)
+    setSelectedCents(1000)
     setTopupError('')
     setTopupSuccess('')
     clientSecretRef.current = null
@@ -262,7 +264,7 @@ export default function Wallet() {
               {withdrawalDetails?.has_iban && (
                 <>
                   <div className="wallet-topup-amounts" style={{ marginBottom: '1rem' }}>
-                    {TOPUP_AMOUNTS.filter((a) => a.cents <= (balanceCents || 0)).map(({ cents, label }) => (
+                    {TOPUP_PRESETS.filter((a) => a.cents <= (balanceCents || 0)).map(({ cents, label }) => (
                       <button
                         key={cents}
                         type="button"
@@ -333,15 +335,36 @@ export default function Wallet() {
             <div className="wallet-modal-box">
               {topupStep === 1 && (
                 <div className="wallet-topup-step">
-                  <h2 id="wallet-topup-title" className="wallet-modal-title">Top up wallet</h2>
-                  <p className="wallet-modal-desc">Add funds to your balance. Choose an amount (€).</p>
-                  <div className="wallet-topup-amounts">
-                    {TOPUP_AMOUNTS.map(({ cents, label }) => (
+                  <h2 id="wallet-topup-title" className="wallet-modal-title">Top up my balance</h2>
+                  <p className="wallet-modal-desc">Enter the amount to credit to your wallet.</p>
+                  <div className="wallet-topup-stepper">
+                    <button
+                      type="button"
+                      className="wallet-topup-stepper-btn wallet-topup-stepper-btn--minus"
+                      aria-label="Decrease amount"
+                      disabled={selectedCents <= TOPUP_MIN_CENTS}
+                      onClick={() => setSelectedCents((c) => Math.max(TOPUP_MIN_CENTS, c - 100))}
+                    >
+                      −
+                    </button>
+                    <span className="wallet-topup-stepper-value">{selectedCents / 100}€</span>
+                    <button
+                      type="button"
+                      className="wallet-topup-stepper-btn wallet-topup-stepper-btn--plus"
+                      aria-label="Increase amount"
+                      disabled={selectedCents >= TOPUP_MAX_CENTS}
+                      onClick={() => setSelectedCents((c) => Math.min(TOPUP_MAX_CENTS, c + 100))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="wallet-topup-hint">Enter an amount between €10 and €150</p>
+                  <div className="wallet-topup-presets">
+                    {TOPUP_PRESETS.map(({ cents, label }) => (
                       <button
                         key={cents}
                         type="button"
-                        className={`wallet-topup-amount-btn ${selectedCents === cents ? 'wallet-topup-amount-btn--active' : ''}`}
-                        data-cents={cents}
+                        className={`wallet-topup-preset-btn ${selectedCents === cents ? 'wallet-topup-preset-btn--active' : ''}`}
                         onClick={() => setSelectedCents(cents)}
                       >
                         {label}
@@ -350,7 +373,7 @@ export default function Wallet() {
                   </div>
                   <div className="wallet-modal-actions wallet-modal-actions--step1">
                     <button type="button" className="wallet-modal-cancel" onClick={closeTopup}>Cancel</button>
-                    <button type="button" className="wallet-modal-next" onClick={goNext} disabled={nextLoading}>{nextLoading ? '…' : 'Next'}</button>
+                    <button type="button" className="wallet-modal-next wallet-modal-next--full" onClick={goNext} disabled={nextLoading}>{nextLoading ? '…' : 'Next'}</button>
                   </div>
                 </div>
               )}
