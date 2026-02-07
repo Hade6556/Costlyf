@@ -41,6 +41,15 @@
     if (topupErrorEl) {
       topupErrorEl.textContent = msg || '';
       topupErrorEl.hidden = !msg;
+      topupErrorEl.classList.remove('wallet-modal-success');
+    }
+  }
+
+  function showSuccess(msg) {
+    if (topupErrorEl) {
+      topupErrorEl.textContent = msg || '';
+      topupErrorEl.hidden = !msg;
+      topupErrorEl.classList.add('wallet-modal-success');
     }
   }
 
@@ -72,6 +81,7 @@
 
   function openTopupModal() {
     if (!modal) return;
+    hideBankTransferMessage();
     selectedCents = 5000;
     pendingClientSecret = null;
     if (topupPayAmountEl) topupPayAmountEl.textContent = (selectedCents / 100);
@@ -143,8 +153,21 @@
     })
       .then(function (result) {
         if (result.error) throw new Error(result.error.message || 'Payment failed');
-        closeTopupModal();
-        loadBalance();
+        showError('');
+        showSuccess('Payment successful. Updating balance…');
+        var pollCount = 0;
+        var maxPolls = 6;
+        var pollMs = 500;
+        function pollBalance() {
+          loadBalance();
+          pollCount += 1;
+          if (pollCount < maxPolls) setTimeout(pollBalance, pollMs);
+          else {
+            closeTopupModal();
+            loadBalance();
+          }
+        }
+        setTimeout(pollBalance, pollMs);
         pendingClientSecret = null;
       })
       .catch(function (e) {
@@ -195,17 +218,33 @@
     loadBalance();
   }
 
+  function showBankTransferMessage() {
+    var el = document.getElementById('wallet-bank-message');
+    if (el) {
+      el.hidden = false;
+      el.setAttribute('aria-live', 'polite');
+    }
+  }
+
+  function hideBankTransferMessage() {
+    var el = document.getElementById('wallet-bank-message');
+    if (el) el.hidden = true;
+  }
+
   document.addEventListener('click', function (e) {
     var t = e.target;
-    if (t.id === 'wallet-topup-btn' || t.closest && t.closest('#wallet-topup-btn')) {
+    var isWalletPage = document.getElementById('wallet-topup-btn');
+    if (!isWalletPage) return;
+    if (t.id === 'wallet-topup-btn' || (t.closest && t.closest('#wallet-topup-btn'))) {
       e.preventDefault();
       init();
       openTopupModal();
       return;
     }
-    if (t.id === 'wallet-bank-btn' || t.closest && t.closest('#wallet-bank-btn')) {
+    if (t.id === 'wallet-bank-btn' || (t.closest && t.closest('#wallet-bank-btn'))) {
       e.preventDefault();
-      alert('Bank transfer is not available yet. Please use Top-up with a card.');
+      init();
+      showBankTransferMessage();
       return;
     }
     if (t.id === 'wallet-topup-cancel' || (t.closest && t.closest('#wallet-topup-cancel')) || (t.closest && t.closest('.wallet-modal-backdrop'))) {
@@ -233,6 +272,11 @@
       e.preventDefault();
       var cents = parseInt(amountBtn.getAttribute('data-cents'), 10);
       if (!isNaN(cents)) selectAmount(cents);
+      return;
+    }
+    if (t.id === 'wallet-bank-message-dismiss' || (t.closest && t.closest('#wallet-bank-message-dismiss'))) {
+      e.preventDefault();
+      hideBankTransferMessage();
     }
   });
 
@@ -242,4 +286,7 @@
     init();
   }
   window.addEventListener('pageshow', init);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && document.getElementById('wallet-topup-btn')) init();
+  });
 })();
