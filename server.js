@@ -149,12 +149,10 @@ const dashboardIndexPath = path.join(staticRoot, dashboardSegment, 'index.html')
 const hasDashboardApp = fs.existsSync(dashboardIndexPath);
 const dashboardPathToLegacy = { home: 'home.html', join: 'join.html', share: 'share.html', wallet: 'wallet.html', offer: 'offer.html', profile: 'profile.html', subscription: 'subscription.html', help: 'help.html', inbox: 'inbox.html', login: 'login.html', signup: 'signup.html', charter: 'charter.html' };
 const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter'];
-// profile, wallet, join always use legacy app (Stripe/payment wiring lives there)
-const legacyOnlyPaths = ['profile', 'wallet', 'join'];
+// Serve React dashboard for all dashboard paths (no legacy-only; client-side nav + locale preserved)
 dashboardPaths.forEach(function (segment) {
   app.get(new RegExp('^/' + localeRegex + '/' + segment + '/?$'), function (req, res) {
-    const useLegacy = legacyOnlyPaths.includes(segment);
-    if (!useLegacy && hasDashboardApp) return res.sendFile(dashboardIndexPath);
+    if (hasDashboardApp) return res.sendFile(dashboardIndexPath);
     const legacyFile = dashboardPathToLegacy[segment];
     if (legacyFile) return res.sendFile(path.join(staticRoot, 'app', legacyFile));
     res.sendFile(dashboardIndexPath);
