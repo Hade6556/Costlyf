@@ -152,7 +152,10 @@ const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', '
 // Serve React dashboard for all dashboard paths (no legacy-only; client-side nav + locale preserved)
 dashboardPaths.forEach(function (segment) {
   app.get(new RegExp('^/' + localeRegex + '/' + segment + '/?$'), function (req, res) {
-    if (hasDashboardApp) return res.sendFile(dashboardIndexPath);
+    if (hasDashboardApp) {
+      res.set('Cache-Control', 'no-cache, max-age=0');
+      return res.sendFile(dashboardIndexPath);
+    }
     const legacyFile = dashboardPathToLegacy[segment];
     if (legacyFile) return res.sendFile(path.join(staticRoot, 'app', legacyFile));
     res.sendFile(dashboardIndexPath);

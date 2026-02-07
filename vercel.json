@@ -2,6 +2,7 @@
   "buildCommand": "npm run build",
   "framework": "express",
   "installCommand": "npm install && (cd dashboard-app && npm install)",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/",
@@ -14,10 +15,6 @@
     {
       "source": "/uploads/:path*",
       "destination": "/api?path=uploads/:path*"
-    },
-    {
-      "source": "/dashboard-app/(.*)",
-      "destination": "/api?path=dashboard-app/$1"
     },
     {
       "source": "/home",
