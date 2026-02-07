@@ -1650,6 +1650,34 @@ app.post('/api/wallet/topup-intent', async (req, res) => {
   }
 });
 
+app.post('/api/wallet/withdraw', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  const amount_cents = Math.min(100000, Math.max(500, parseInt(req.body && req.body.amount_cents, 10) || 0)); // €5–1000
+  if (amount_cents < 500) return res.status(400).json({ error: 'Minimum withdrawal is 5€' });
+  try {
+    const { data: balanceRow } = await supabaseAdmin.from('user_balances').select('balance_cents').eq('user_id', user.id).single();
+    const balance_cents = (balanceRow && balanceRow.balance_cents != null) ? balanceRow.balance_cents : 0;
+    if (balance_cents < amount_cents) return res.status(400).json({ error: 'Insufficient balance' });
+    const crypto = require('crypto');
+    const referenceId = 'withdraw_' + user.id + '_' + Date.now() + '_' + crypto.randomBytes(8).toString('hex');
+    const metadata = { amount_eur: (amount_cents / 100).toFixed(2), purpose: 'withdraw_to_bank' };
+    const { error: txErr } = await supabaseAdmin.rpc('apply_balance_transaction', {
+      p_user_id: user.id,
+      p_amount_cents: -amount_cents,
+      p_type: 'withdrawal',
+      p_reference_type: 'withdrawal',
+      p_reference_id: referenceId,
+      p_metadata: metadata
+    });
+    if (txErr) throw new Error(txErr.message);
+    return res.status(200).json({ message: 'Withdrawal requested', amount_cents });
+  } catch (e) {
+    if (e.message && e.message.indexOf('balance would go negative') !== -1) return res.status(400).json({ error: 'Insufficient balance' });
+    return res.status(500).json({ error: e.message || 'Withdrawal failed' });
+  }
+});
+
 app.post('/api/wallet/setup-intent', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });
