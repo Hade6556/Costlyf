@@ -264,37 +264,48 @@ export default function Wallet() {
               )}
               {withdrawalDetails?.has_iban && (
                 <>
-                  <div className="wallet-topup-amounts" style={{ marginBottom: '1rem' }}>
+                  <div className="wallet-topup-stepper">
+                    <button
+                      type="button"
+                      className="wallet-topup-stepper-btn wallet-topup-stepper-btn--minus"
+                      aria-label="Decrease amount"
+                      disabled={withdrawCents <= 500}
+                      onClick={() => setWithdrawCents((c) => Math.max(500, c - 100))}
+                    >
+                      −
+                    </button>
+                    <span className="wallet-topup-stepper-value">{withdrawCents / 100}€</span>
+                    <button
+                      type="button"
+                      className="wallet-topup-stepper-btn wallet-topup-stepper-btn--plus"
+                      aria-label="Increase amount"
+                      disabled={withdrawCents >= (balanceCents || 0)}
+                      onClick={() => setWithdrawCents((c) => Math.min(balanceCents || 0, c + 100))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="wallet-topup-hint">
+                    Enter an amount between €5 and €{formatEuros(balanceCents)}
+                  </p>
+                  <div className="wallet-topup-presets">
                     {TOPUP_PRESETS.filter((a) => a.cents <= (balanceCents || 0)).map(({ cents, label }) => (
                       <button
                         key={cents}
                         type="button"
-                        className={`wallet-topup-amount-btn ${withdrawCents === cents ? 'wallet-topup-amount-btn--active' : ''}`}
+                        className={`wallet-topup-preset-btn ${withdrawCents === cents ? 'wallet-topup-preset-btn--active' : ''}`}
                         onClick={() => setWithdrawCents(cents)}
                       >
                         {label}
                       </button>
                     ))}
                   </div>
-                  <div className="wallet-card-field" style={{ marginBottom: '1rem' }}>
-                    <label className="wallet-card-label">Amount (€)</label>
-                    <input
-                      type="number"
-                      min="5"
-                      max={(balanceCents || 0) / 100}
-                      step="0.01"
-                      value={withdrawCents / 100}
-                      onChange={(e) => setWithdrawCents(Math.round(parseFloat(e.target.value) * 100) || 0)}
-                      className="subscription-chat-input"
-                      style={{ padding: '10px', width: '100%', boxSizing: 'border-box' }}
-                    />
-                  </div>
                   {withdrawError && <p className="wallet-modal-error" role="alert">{withdrawError}</p>}
                   <div className="wallet-modal-actions wallet-modal-actions--step1">
                     <button type="button" className="wallet-modal-cancel" onClick={() => setWithdrawOpen(false)}>Cancel</button>
                     <button
                       type="button"
-                      className="wallet-modal-next"
+                      className="wallet-modal-next wallet-modal-next--full"
                       disabled={withdrawLoading || withdrawCents < 500 || withdrawCents > (balanceCents || 0)}
                       onClick={() => {
                         setWithdrawError('')
