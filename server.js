@@ -113,6 +113,29 @@ app.get('/join/:service', function (req, res) {
   }
   res.sendFile(path.join(staticRoot, 'app', 'service.html'));
 });
+// Dashboard SPA sub-routes (profile/payment-method, admin/withdrawals)
+app.get('/profile/payment-method', function (req, res) {
+  if (hasDashboardApp) {
+    res.set('Cache-Control', 'no-cache, max-age=0');
+    return res.sendFile(dashboardIndexPath);
+  }
+  res.sendFile(dashboardIndexPath);
+});
+app.get('/profile/payment-method/', function (req, res) {
+  const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
+  res.redirect(302, '/profile/payment-method' + q);
+});
+app.get('/admin/withdrawals', function (req, res) {
+  if (hasDashboardApp) {
+    res.set('Cache-Control', 'no-cache, max-age=0');
+    return res.sendFile(dashboardIndexPath);
+  }
+  res.sendFile(dashboardIndexPath);
+});
+app.get('/admin/withdrawals/', function (req, res) {
+  const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
+  res.redirect(302, '/admin/withdrawals' + q);
+});
 app.get('/guides', function (req, res) {
   res.sendFile(path.join(staticRoot, 'app', 'guides.html'));
 });

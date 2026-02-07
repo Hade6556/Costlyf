@@ -4,109 +4,33 @@
   "installCommand": "npm install && (cd dashboard-app && npm install)",
   "crons": [{"path": "/api/cron/process-payouts", "schedule": "0 2 * * *"}],
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/api"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "/api?path=api/:path*"
-    },
-    {
-      "source": "/uploads/:path*",
-      "destination": "/api?path=uploads/:path*"
-    },
-    {
-      "source": "/dashboard-app/(.*)",
-      "destination": "/api?path=dashboard-app/$1"
-    },
-    {
-      "source": "/home",
-      "destination": "/api?path=home"
-    },
-    {
-      "source": "/home/:rest*",
-      "destination": "/api?path=home/:rest*"
-    },
-    {
-      "source": "/login",
-      "destination": "/api?path=login"
-    },
-    {
-      "source": "/signup",
-      "destination": "/api?path=signup"
-    },
-    {
-      "source": "/forgot-password",
-      "destination": "/api?path=forgot-password"
-    },
-    {
-      "source": "/reset-password",
-      "destination": "/api?path=reset-password"
-    },
-    {
-      "source": "/terms",
-      "destination": "/api?path=terms"
-    },
-    {
-      "source": "/privacy",
-      "destination": "/api?path=privacy"
-    },
-    {
-      "source": "/legal",
-      "destination": "/api?path=legal"
-    },
-    {
-      "source": "/guides",
-      "destination": "/api?path=guides"
-    },
-    {
-      "source": "/guides/:slug",
-      "destination": "/api?path=guides/:slug"
-    },
-    {
-      "source": "/join",
-      "destination": "/api?path=join"
-    },
-    {
-      "source": "/join/:service",
-      "destination": "/api?path=join/:service"
-    },
-    {
-      "source": "/share",
-      "destination": "/api?path=share"
-    },
-    {
-      "source": "/wallet",
-      "destination": "/api?path=wallet"
-    },
-    {
-      "source": "/offer",
-      "destination": "/api?path=offer"
-    },
-    {
-      "source": "/profile",
-      "destination": "/api?path=profile"
-    },
-    {
-      "source": "/subscription",
-      "destination": "/api?path=subscription"
-    },
-    {
-      "source": "/help",
-      "destination": "/api?path=help"
-    },
-    {
-      "source": "/inbox",
-      "destination": "/api?path=inbox"
-    },
-    {
-      "source": "/charter",
-      "destination": "/api?path=charter"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/api?path=dashboard"
-    }
+    {"source": "/", "destination": "/api"},
+    {"source": "/api/:path*", "destination": "/api?path=api/:path*"},
+    {"source": "/uploads/:path*", "destination": "/api?path=uploads/:path*"},
+    {"source": "/dashboard-app/(.*)", "destination": "/api?path=dashboard-app/$1"},
+    {"source": "/home", "destination": "/api?path=home"},
+    {"source": "/home/:rest*", "destination": "/api?path=home/:rest*"},
+    {"source": "/login", "destination": "/api?path=login"},
+    {"source": "/signup", "destination": "/api?path=signup"},
+    {"source": "/forgot-password", "destination": "/api?path=forgot-password"},
+    {"source": "/reset-password", "destination": "/api?path=reset-password"},
+    {"source": "/terms", "destination": "/api?path=terms"},
+    {"source": "/privacy", "destination": "/api?path=privacy"},
+    {"source": "/legal", "destination": "/api?path=legal"},
+    {"source": "/guides", "destination": "/api?path=guides"},
+    {"source": "/guides/:slug", "destination": "/api?path=guides/:slug"},
+    {"source": "/join", "destination": "/api?path=join"},
+    {"source": "/join/:service", "destination": "/api?path=join/:service"},
+    {"source": "/share", "destination": "/api?path=share"},
+    {"source": "/wallet", "destination": "/api?path=wallet"},
+    {"source": "/offer", "destination": "/api?path=offer"},
+    {"source": "/profile", "destination": "/api?path=profile"},
+    {"source": "/profile/payment-method", "destination": "/api?path=profile/payment-method"},
+    {"source": "/admin/withdrawals", "destination": "/api?path=admin/withdrawals"},
+    {"source": "/subscription", "destination": "/api?path=subscription"},
+    {"source": "/help", "destination": "/api?path=help"},
+    {"source": "/inbox", "destination": "/api?path=inbox"},
+    {"source": "/charter", "destination": "/api?path=charter"},
+    {"source": "/dashboard", "destination": "/api?path=dashboard"}
   ]
 }
