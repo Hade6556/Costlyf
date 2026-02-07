@@ -20,6 +20,8 @@ import Signup from './pages/Signup'
 import Charter from './pages/Charter'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import PaymentMethod from './pages/PaymentMethod'
+import AdminWithdrawals from './pages/AdminWithdrawals'
 import { I18nProvider } from './contexts/I18nContext'
 
 // English only: no locale in URL, routes at /home, /join, etc.
@@ -41,6 +43,8 @@ const router = createBrowserRouter(
         { path: 'wallet', element: <Wallet /> },
         { path: 'offer', element: <Offer /> },
         { path: 'profile', element: <Profile /> },
+        { path: 'profile/payment-method', element: <PaymentMethod /> },
+        { path: 'admin/withdrawals', element: <AdminWithdrawals /> },
         { path: 'subscription', element: <Subscription /> },
         { path: 'help', element: <Help /> },
         { path: 'inbox', element: <Inbox /> },

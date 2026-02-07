@@ -1522,7 +1522,7 @@ app.patch('/api/profile', async (req, res) => {
   try {
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) return res.status(401).json({ error: 'Invalid or expired token' });
-    const { phone, email, date_of_birth, alias, first_name, last_name, avatar_url: bodyAvatarUrl, charter_accepted_at: charterAcceptedAt } = req.body || {};
+    const { phone, email, date_of_birth, alias, first_name, last_name, avatar_url: bodyAvatarUrl, charter_accepted_at: charterAcceptedAt, withdrawal_iban: withdrawalIban, withdrawal_account_holder: withdrawalAccountHolder } = req.body || {};
     const updates = { updated_at: new Date().toISOString() };
     if (email !== undefined) updates.email = String(email).trim() || null;
     if (phone !== undefined) updates.phone = String(phone).trim() || null;
@@ -1531,6 +1531,8 @@ app.patch('/api/profile', async (req, res) => {
     if (first_name !== undefined) updates.first_name = String(first_name).trim() || null;
     if (last_name !== undefined) updates.last_name = String(last_name).trim() || null;
     if (bodyAvatarUrl !== undefined) updates.avatar_url = bodyAvatarUrl ? String(bodyAvatarUrl).trim() : null;
+    if (withdrawalIban !== undefined) updates.withdrawal_iban = String(withdrawalIban).trim().replace(/\s/g, '') || null;
+    if (withdrawalAccountHolder !== undefined) updates.withdrawal_account_holder = String(withdrawalAccountHolder).trim() || null;
     if (charterAcceptedAt !== undefined) updates.charter_accepted_at = charterAcceptedAt ? String(charterAcceptedAt).trim() : null;
     // When user accepts charter for the first time, bump trust_score (max 10)
     if (charterAcceptedAt && String(charterAcceptedAt).trim()) {
@@ -1622,6 +1624,24 @@ app.get('/api/wallet/transactions', async (req, res) => {
   }
 });
 
+app.get('/api/wallet/withdrawal-details', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const { data: profile } = await supabaseAdmin.from('profiles').select('withdrawal_iban, withdrawal_account_holder').eq('id', user.id).single();
+    const iban = profile && profile.withdrawal_iban && String(profile.withdrawal_iban).trim().replace(/\s/g, '');
+    const has_iban = !!(iban && iban.length >= 15);
+    const iban_last4 = has_iban && iban.length >= 4 ? iban.slice(-4) : null;
+    return res.status(200).json({
+      has_iban,
+      iban_last4,
+      account_holder: (profile && profile.withdrawal_account_holder) ? String(profile.withdrawal_account_holder).trim() : null
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to get withdrawal details' });
+  }
+});
+
 app.post('/api/wallet/topup-intent', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });
@@ -1656,22 +1676,34 @@ app.post('/api/wallet/withdraw', async (req, res) => {
   const amount_cents = Math.min(100000, Math.max(500, parseInt(req.body && req.body.amount_cents, 10) || 0)); // €5–1000
   if (amount_cents < 500) return res.status(400).json({ error: 'Minimum withdrawal is 5€' });
   try {
+    const { data: profile } = await supabaseAdmin.from('profiles').select('withdrawal_iban, withdrawal_account_holder').eq('id', user.id).single();
+    const iban = profile && profile.withdrawal_iban && String(profile.withdrawal_iban).trim().replace(/\s/g, '');
+    if (!iban || iban.length < 15) return res.status(400).json({ error: 'Add your bank IBAN on the Payment method page first' });
     const { data: balanceRow } = await supabaseAdmin.from('user_balances').select('balance_cents').eq('user_id', user.id).single();
     const balance_cents = (balanceRow && balanceRow.balance_cents != null) ? balanceRow.balance_cents : 0;
     if (balance_cents < amount_cents) return res.status(400).json({ error: 'Insufficient balance' });
-    const crypto = require('crypto');
-    const referenceId = 'withdraw_' + user.id + '_' + Date.now() + '_' + crypto.randomBytes(8).toString('hex');
-    const metadata = { amount_eur: (amount_cents / 100).toFixed(2), purpose: 'withdraw_to_bank' };
+    const { data: requestRow, error: insertErr } = await supabaseAdmin.from('withdrawal_requests').insert({
+      user_id: user.id,
+      amount_cents,
+      iban_snapshot: iban,
+      account_holder_snapshot: (profile && profile.withdrawal_account_holder) ? String(profile.withdrawal_account_holder).trim() : null,
+      status: 'pending'
+    }).select('id').single();
+    if (insertErr || !requestRow) throw new Error(insertErr ? insertErr.message : 'Failed to create withdrawal request');
+    const metadata = { amount_eur: (amount_cents / 100).toFixed(2), purpose: 'withdraw_to_bank', withdrawal_request_id: requestRow.id };
     const { error: txErr } = await supabaseAdmin.rpc('apply_balance_transaction', {
       p_user_id: user.id,
       p_amount_cents: -amount_cents,
       p_type: 'withdrawal',
-      p_reference_type: 'withdrawal',
-      p_reference_id: referenceId,
+      p_reference_type: 'withdrawal_request',
+      p_reference_id: requestRow.id,
       p_metadata: metadata
     });
-    if (txErr) throw new Error(txErr.message);
-    return res.status(200).json({ message: 'Withdrawal requested', amount_cents });
+    if (txErr) {
+      await supabaseAdmin.from('withdrawal_requests').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', requestRow.id);
+      throw new Error(txErr.message);
+    }
+    return res.status(200).json({ message: 'Withdrawal requested', amount_cents, withdrawal_request_id: requestRow.id });
   } catch (e) {
     if (e.message && e.message.indexOf('balance would go negative') !== -1) return res.status(400).json({ error: 'Insufficient balance' });
     return res.status(500).json({ error: e.message || 'Withdrawal failed' });
@@ -1701,6 +1733,59 @@ app.post('/api/wallet/setup-intent', async (req, res) => {
     });
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Failed to create setup intent' });
+  }
+});
+
+// --- Admin: withdrawal requests (confirm payout to IBAN, e.g. via Stripe Dashboard) ---
+function isAdmin(user) {
+  if (!user) return false;
+  const ids = (process.env.ADMIN_USER_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const emails = (process.env.ADMIN_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  if (ids.includes(user.id)) return true;
+  if (user.email && emails.includes(user.email.toLowerCase())) return true;
+  return false;
+}
+
+app.get('/api/admin/withdrawal-requests', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const status = (req.query.status || 'pending').toString();
+    const { data: rows, error } = await supabaseAdmin
+      .from('withdrawal_requests')
+      .select('id, user_id, amount_cents, iban_snapshot, account_holder_snapshot, status, stripe_payout_id, created_at, updated_at')
+      .in('status', status === 'all' ? ['pending', 'paid', 'cancelled'] : [status])
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) return res.status(500).json({ error: error.message });
+    const userIds = [...new Set((rows || []).map((r) => r.user_id))];
+    const { data: profiles } = await supabaseAdmin.from('profiles').select('id, email, alias').in('id', userIds);
+    const byId = (profiles || []).reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+    const list = (rows || []).map((r) => ({ ...r, user_email: byId[r.user_id]?.email, user_alias: byId[r.user_id]?.alias }));
+    return res.status(200).json({ withdrawal_requests: list });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to list withdrawal requests' });
+  }
+});
+
+app.patch('/api/admin/withdrawal-requests/:id', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const id = (req.params && req.params.id) || '';
+  const { status: newStatus, stripe_payout_id: stripePayoutId } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Missing withdrawal request id' });
+  try {
+    const { data: row, error: fetchErr } = await supabaseAdmin.from('withdrawal_requests').select('id, status').eq('id', id).single();
+    if (fetchErr || !row) return res.status(404).json({ error: 'Withdrawal request not found' });
+    if (row.status !== 'pending') return res.status(400).json({ error: 'Only pending requests can be updated' });
+    if (newStatus !== 'paid' && newStatus !== 'cancelled') return res.status(400).json({ error: 'status must be paid or cancelled' });
+    const updates = { status: newStatus, updated_at: new Date().toISOString() };
+    if (stripePayoutId !== undefined) updates.stripe_payout_id = String(stripePayoutId).trim() || null;
+    const { error: updateErr } = await supabaseAdmin.from('withdrawal_requests').update(updates).eq('id', id);
+    if (updateErr) return res.status(500).json({ error: updateErr.message });
+    return res.status(200).json({ message: newStatus === 'paid' ? 'Marked as paid' : 'Cancelled' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Update failed' });
   }
 });
 

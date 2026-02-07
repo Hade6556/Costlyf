@@ -56,6 +56,7 @@ export default function Wallet() {
   const [withdrawCents, setWithdrawCents] = useState(0)
   const [withdrawError, setWithdrawError] = useState('')
   const [withdrawLoading, setWithdrawLoading] = useState(false)
+  const [withdrawalDetails, setWithdrawalDetails] = useState(null)
   const [payLoading, setPayLoading] = useState(false)
   const [nextLoading, setNextLoading] = useState(false)
   const stripeRef = useRef(null)
@@ -90,6 +91,17 @@ export default function Wallet() {
     loadTransactions()
   }, [loadBalance, loadTransactions])
 
+  const loadWithdrawalDetails = useCallback(() => {
+    fetchWithAuth('/api/wallet/withdrawal-details', {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setWithdrawalDetails(d || {}))
+      .catch(() => setWithdrawalDetails({ has_iban: false }))
+  }, [fetchWithAuth])
+
+  useEffect(() => {
+    if (withdrawOpen) loadWithdrawalDetails()
+  }, [withdrawOpen, loadWithdrawalDetails])
+
   const transactionsInMonth = transactions.filter((tx) => {
     const d = new Date(tx.created_at)
     return d.getFullYear() === monthDate.getFullYear() && d.getMonth() === monthDate.getMonth()
@@ -101,7 +113,6 @@ export default function Wallet() {
     setSelectedCents(5000)
     setTopupError('')
     setTopupSuccess('')
-    setBankMessageShow(false)
     clientSecretRef.current = null
     publishableKeyRef.current = null
     stripeRef.current = null
@@ -228,7 +239,7 @@ export default function Wallet() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
             <span>{t('dashboard.topUp')}</span>
           </button>
-          <button type="button" className="wallet-action-btn" disabled={(balanceCents || 0) < 500} onClick={() => { setWithdrawOpen(true); setWithdrawCents(Math.min(5000, Math.max(500, balanceCents || 0))); setWithdrawError(''); }}>
+          <button type="button" className="wallet-action-btn" disabled={(balanceCents || 0) < 500} onClick={() => { setWithdrawOpen(true); setWithdrawCents(Math.min(5000, Math.max(500, balanceCents || 0))); setWithdrawError(''); loadWithdrawalDetails(); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M7 7h10v10" /></svg>
             <span>Withdraw to bank</span>
           </button>
@@ -239,62 +250,79 @@ export default function Wallet() {
             <div className="wallet-modal-backdrop" onClick={() => setWithdrawOpen(false)} aria-hidden="true" />
             <div className="wallet-modal-box">
               <h2 id="wallet-withdraw-title" className="wallet-modal-title">Withdraw to bank</h2>
-              <p className="wallet-modal-desc">Available: {formatEuros(balanceCents)}€. Enter amount (min 5€). The transfer will be processed to your registered bank account.</p>
-              <div className="wallet-topup-amounts" style={{ marginBottom: '1rem' }}>
-                {TOPUP_AMOUNTS.filter((a) => a.cents <= (balanceCents || 0)).map(({ cents, label }) => (
-                  <button
-                    key={cents}
-                    type="button"
-                    className={`wallet-topup-amount-btn ${withdrawCents === cents ? 'wallet-topup-amount-btn--active' : ''}`}
-                    onClick={() => setWithdrawCents(cents)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="wallet-card-field" style={{ marginBottom: '1rem' }}>
-                <label className="wallet-card-label">Amount (€)</label>
-                <input
-                  type="number"
-                  min="5"
-                  max={(balanceCents || 0) / 100}
-                  step="0.01"
-                  value={withdrawCents / 100}
-                  onChange={(e) => setWithdrawCents(Math.round(parseFloat(e.target.value) * 100) || 0)}
-                  className="subscription-chat-input"
-                  style={{ padding: '10px', width: '100%', boxSizing: 'border-box' }}
-                />
-              </div>
-              {withdrawError && <p className="wallet-modal-error" role="alert">{withdrawError}</p>}
-              <div className="wallet-modal-actions wallet-modal-actions--step1">
-                <button type="button" className="wallet-modal-cancel" onClick={() => setWithdrawOpen(false)}>Cancel</button>
-                <button
-                  type="button"
-                  className="wallet-modal-next"
-                  disabled={withdrawLoading || withdrawCents < 500 || withdrawCents > (balanceCents || 0)}
-                  onClick={() => {
-                    setWithdrawError('')
-                    setWithdrawLoading(true)
-                    fetchWithAuth('/api/wallet/withdraw', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ amount_cents: withdrawCents }),
-                    })
-                      .then((r) => r.json().then((d) => ({ ok: r.ok, data: d })))
-                      .then(({ ok, data }) => {
-                        if (ok) {
-                          setWithdrawOpen(false)
-                          loadBalance()
-                          loadTransactions()
-                        } else throw new Error(data?.error || 'Withdrawal failed')
-                      })
-                      .catch((e) => setWithdrawError(e.message || 'Withdrawal failed'))
-                      .finally(() => setWithdrawLoading(false))
-                  }}
-                >
-                  {withdrawLoading ? '…' : `Withdraw ${(withdrawCents / 100).toFixed(2)}€`}
-                </button>
-              </div>
+              {withdrawalDetails && !withdrawalDetails.has_iban ? (
+                <p className="wallet-modal-desc">
+                  Add your bank IBAN on the <Link to="/profile/payment-method" onClick={() => setWithdrawOpen(false)}>Payment method</Link> page first. Withdrawals are then sent to that account after admin confirmation (e.g. via Stripe).
+                </p>
+              ) : (
+                <p className="wallet-modal-desc">
+                  Available: {formatEuros(balanceCents)}€. Enter amount (min 5€). Withdrawal will be sent to your registered bank account (****{withdrawalDetails?.iban_last4 || '····'}) after admin confirmation.
+                </p>
+              )}
+              {withdrawalDetails?.has_iban && (
+                <>
+                  <div className="wallet-topup-amounts" style={{ marginBottom: '1rem' }}>
+                    {TOPUP_AMOUNTS.filter((a) => a.cents <= (balanceCents || 0)).map(({ cents, label }) => (
+                      <button
+                        key={cents}
+                        type="button"
+                        className={`wallet-topup-amount-btn ${withdrawCents === cents ? 'wallet-topup-amount-btn--active' : ''}`}
+                        onClick={() => setWithdrawCents(cents)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="wallet-card-field" style={{ marginBottom: '1rem' }}>
+                    <label className="wallet-card-label">Amount (€)</label>
+                    <input
+                      type="number"
+                      min="5"
+                      max={(balanceCents || 0) / 100}
+                      step="0.01"
+                      value={withdrawCents / 100}
+                      onChange={(e) => setWithdrawCents(Math.round(parseFloat(e.target.value) * 100) || 0)}
+                      className="subscription-chat-input"
+                      style={{ padding: '10px', width: '100%', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  {withdrawError && <p className="wallet-modal-error" role="alert">{withdrawError}</p>}
+                  <div className="wallet-modal-actions wallet-modal-actions--step1">
+                    <button type="button" className="wallet-modal-cancel" onClick={() => setWithdrawOpen(false)}>Cancel</button>
+                    <button
+                      type="button"
+                      className="wallet-modal-next"
+                      disabled={withdrawLoading || withdrawCents < 500 || withdrawCents > (balanceCents || 0)}
+                      onClick={() => {
+                        setWithdrawError('')
+                        setWithdrawLoading(true)
+                        fetchWithAuth('/api/wallet/withdraw', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ amount_cents: withdrawCents }),
+                        })
+                          .then((r) => r.json().then((d) => ({ ok: r.ok, data: d })))
+                          .then(({ ok, data }) => {
+                            if (ok) {
+                              setWithdrawOpen(false)
+                              loadBalance()
+                              loadTransactions()
+                            } else throw new Error(data?.error || 'Withdrawal failed')
+                          })
+                          .catch((e) => setWithdrawError(e.message || 'Withdrawal failed'))
+                          .finally(() => setWithdrawLoading(false))
+                      }}
+                    >
+                      {withdrawLoading ? '…' : `Withdraw ${(withdrawCents / 100).toFixed(2)}€`}
+                    </button>
+                  </div>
+                </>
+              )}
+              {!withdrawalDetails?.has_iban && (
+                <div className="wallet-modal-actions wallet-modal-actions--step1">
+                  <button type="button" className="wallet-modal-cancel" onClick={() => setWithdrawOpen(false)}>Close</button>
+                </div>
+              )}
             </div>
           </div>
         )}
