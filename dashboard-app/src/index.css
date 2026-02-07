@@ -626,3 +626,4 @@ a.profile-nav-item:focus,
   animation-delay: 0.15s;
 }
 .my-offers-list.skeleton-cards { margin-top: 0; }
+.inbox-skeleton-card .skeleton-card__avatar { border-radius: 50%; }

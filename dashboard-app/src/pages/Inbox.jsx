@@ -31,17 +31,19 @@ export default function Inbox() {
   const [threads, setThreads] = useState([])
   const [systemUnreadCount, setSystemUnreadCount] = useState(0)
   const [hashThreadId, setHashThreadId] = useState(null)
+  const [loadingThreads, setLoadingThreads] = useState(true)
+  const hasLoadedOnce = useRef(false)
   const messagesEndRef = useRef(null)
 
   const fetchThreads = useCallback(() => {
-    fetchWithAuth('/api/chat/threads', {})
+    return fetchWithAuth('/api/chat/threads', {})
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setThreads(Array.isArray(data) ? data : []))
       .catch(() => setThreads([]))
   }, [fetchWithAuth])
 
   const fetchSystemUnread = useCallback(() => {
-    fetchWithAuth('/api/chat/system-messages', {})
+    return fetchWithAuth('/api/chat/system-messages', {})
       .then((r) => (r.ok ? r.json() : { unread_count: 0 }))
       .then((data) => {
         setSystemUnreadCount(data.unread_count ?? 0)
@@ -63,8 +65,11 @@ export default function Inbox() {
   }, [])
 
   useEffect(() => {
-    fetchThreads()
-    fetchSystemUnread()
+    if (!hasLoadedOnce.current) setLoadingThreads(true)
+    Promise.all([fetchThreads(), fetchSystemUnread()]).finally(() => {
+      setLoadingThreads(false)
+      hasLoadedOnce.current = true
+    })
   }, [fetchThreads, fetchSystemUnread, hashThreadId])
 
   useEffect(() => {
@@ -88,6 +93,21 @@ export default function Inbox() {
           <h1 className="inbox-title">{t('dashboard.inboxTitle')}</h1>
           <p className="inbox-hint">People you subscribe to or who joined your offers.</p>
           <div className="inbox-contacts">
+            {loadingThreads ? (
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="skeleton-card skeleton-card--offer inbox-skeleton-card" aria-hidden="true">
+                    <span className="skeleton-card__avatar" />
+                    <div className="skeleton-card__lines">
+                      <span className="skeleton-card__line skeleton-card__line--name" />
+                      <span className="skeleton-card__line skeleton-card__line--sub" />
+                    </div>
+                    <span className="skeleton-card__chevron" />
+                  </div>
+                ))}
+              </>
+            ) : (
+            <>
             <Link to="/inbox#thread-system" className="inbox-contact-card" onClick={() => setHashThreadId(SYSTEM_THREAD_ID)}>
               <span className="inbox-contact-avatar inbox-contact-avatar--default" style={{ '--circle-color': '#ffc8d4' }} aria-hidden="true">
                 <span className="inbox-avatar-circle"><img src="/media/hero-profiles/5.png" alt="" /></span>
@@ -110,8 +130,10 @@ export default function Inbox() {
                 <span className="inbox-contact-chevron">›</span>
               </Link>
             ))}
+            </>
+            )}
           </div>
-          {threads.length === 0 && systemUnreadCount === 0 && (
+          {!loadingThreads && threads.length === 0 && systemUnreadCount === 0 && (
             <p className="inbox-empty">{t('dashboard.noConversationsFull')}</p>
           )}
         </div>
