@@ -62,6 +62,7 @@ export default function Wallet() {
   const cardElementRef = useRef(null)
   const elementsRef = useRef(null)
   const clientSecretRef = useRef(null)
+  const publishableKeyRef = useRef(null)
 
   const monthLabel = monthDate.toLocaleString(locale || 'en', { month: 'long', year: 'numeric' })
   const prevMonth = () => setMonthDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
@@ -99,6 +100,7 @@ export default function Wallet() {
     setTopupSuccess('')
     setBankMessageShow(false)
     clientSecretRef.current = null
+    publishableKeyRef.current = null
     stripeRef.current = null
     elementsRef.current = null
     cardElementRef.current = null
@@ -129,29 +131,36 @@ export default function Wallet() {
         if (data.error) throw new Error(data.error)
         if (!data.client_secret || !data.publishableKey) throw new Error('Missing Stripe keys')
         clientSecretRef.current = data.client_secret
-        return loadStripeScript().then((Stripe) => {
-          if (!cardNumberRef.current || !cardExpiryRef.current || !cardCvcRef.current) return
-          cardNumberRef.current.innerHTML = ''
-          cardExpiryRef.current.innerHTML = ''
-          cardCvcRef.current.innerHTML = ''
-          const stripe = Stripe(data.publishableKey)
-          stripeRef.current = stripe
-          const elements = stripe.elements()
-          elementsRef.current = elements
-          const style = { base: { fontSize: '16px', paddingLeft: '12px', paddingRight: '12px' } }
-          const cardNumber = elements.create('cardNumber', { style, disableLink: true })
-          const cardExpiry = elements.create('cardExpiry', { style })
-          const cardCvc = elements.create('cardCvc', { style })
-          cardElementRef.current = cardNumber
-          cardNumber.mount(cardNumberRef.current)
-          cardExpiry.mount(cardExpiryRef.current)
-          cardCvc.mount(cardCvcRef.current)
-          setTopupStep(2)
-        })
+        publishableKeyRef.current = data.publishableKey
+        setTopupStep(2)
       })
       .catch((e) => setTopupError(e.message || 'Something went wrong'))
       .finally(() => setNextLoading(false))
   }
+
+  // Mount Stripe card elements when step 2 is shown (refs exist only after step 2 is rendered)
+  useEffect(() => {
+    if (topupStep !== 2 || !clientSecretRef.current || !publishableKeyRef.current || !cardNumberRef.current) return
+    const key = publishableKeyRef.current
+    loadStripeScript().then((Stripe) => {
+      if (!cardNumberRef.current || !cardExpiryRef.current || !cardCvcRef.current) return
+      cardNumberRef.current.innerHTML = ''
+      cardExpiryRef.current.innerHTML = ''
+      cardCvcRef.current.innerHTML = ''
+      const stripe = Stripe(key)
+      stripeRef.current = stripe
+      const elements = stripe.elements()
+      elementsRef.current = elements
+      const style = { base: { fontSize: '16px', paddingLeft: '12px', paddingRight: '12px' } }
+      const cardNumber = elements.create('cardNumber', { style, disableLink: true })
+      const cardExpiry = elements.create('cardExpiry', { style })
+      const cardCvc = elements.create('cardCvc', { style })
+      cardElementRef.current = cardNumber
+      cardNumber.mount(cardNumberRef.current)
+      cardExpiry.mount(cardExpiryRef.current)
+      cardCvc.mount(cardCvcRef.current)
+    }).catch((e) => setTopupError(e.message || 'Failed to load payment form'))
+  }, [topupStep])
 
   const goBack = () => {
     setTopupError('')
@@ -162,6 +171,7 @@ export default function Wallet() {
     stripeRef.current = null
     elementsRef.current = null
     clientSecretRef.current = null
+    publishableKeyRef.current = null
     cardElementRef.current = null
     setTopupStep(1)
   }
