@@ -707,7 +707,7 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve', async (req, res) => {
   }
 });
 
-// Reserve a slot and charge the first period from wallet balance. Records debit_join in wallet history.
+// Reserve a slot and hold the first period from wallet balance (hold_join). Money is charged only after subscriber confirms details; if owner declines, money is refunded.
 app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
@@ -736,7 +736,7 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, re
     await supabaseAdmin.rpc('apply_balance_transaction', {
       p_user_id: user.id,
       p_amount_cents: -amount_cents,
-      p_type: 'debit_join',
+      p_type: 'hold_join',
       p_reference_type: 'offer_slot',
       p_reference_id: referenceId,
       p_metadata: metadata
@@ -805,6 +805,40 @@ app.post('/api/offers/:id/slots/:slotIndex/accept', async (req, res) => {
   }
 });
 
+// Subscriber confirms details (credentials received, everything working). Converts hold_join to debit_join so the charge is final.
+app.post('/api/offers/:id/slots/:slotIndex/confirm-details', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  const offerId = req.params.id;
+  const slotIndex = parseInt(req.params.slotIndex, 10);
+  if (!offerId || !slotIndex || slotIndex < 1) return res.status(400).json({ error: 'Invalid offer or slot' });
+  try {
+    const { data: slot, error: slotErr } = await supabaseAdmin
+      .from('offer_slots')
+      .select('id, status, user_id')
+      .eq('offer_id', offerId)
+      .eq('slot_index', slotIndex)
+      .single();
+    if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
+    if (slot.status !== 'taken' || slot.user_id !== user.id) return res.status(403).json({ error: 'Only the subscriber can confirm, and the slot must be accepted' });
+    const refId = offerId + '_' + slotIndex;
+    const { data: updated, error: upErr } = await supabaseAdmin
+      .from('balance_transactions')
+      .update({ type: 'debit_join' })
+      .eq('user_id', user.id)
+      .eq('reference_type', 'offer_slot')
+      .eq('reference_id', refId)
+      .eq('type', 'hold_join')
+      .select('id')
+      .maybeSingle();
+    if (upErr) return res.status(500).json({ error: upErr.message });
+    if (!updated) return res.status(404).json({ error: 'No pending hold found for this slot' });
+    return res.status(200).json({ message: 'Details confirmed' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Confirm failed' });
+  }
+});
+
 // Owner declines a reserved slot (slot becomes available again).
 app.post('/api/offers/:id/slots/:slotIndex/decline', async (req, res) => {
   const user = await getCurrentUser(req);
@@ -824,6 +858,21 @@ app.post('/api/offers/:id/slots/:slotIndex/decline', async (req, res) => {
     if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
     if (slot.status !== 'reserved') return res.status(400).json({ error: 'Slot is not reserved' });
     const declinedUserId = slot.user_id;
+    // Refund any wallet hold for this slot (join paid by balance).
+    const refId = offerId + '_' + slotIndex;
+    const { data: holdRow } = await supabaseAdmin.from('balance_transactions').select('id, amount_cents, metadata').eq('user_id', declinedUserId).eq('reference_type', 'offer_slot').eq('reference_id', refId).eq('type', 'hold_join').maybeSingle();
+    if (holdRow && holdRow.amount_cents < 0) {
+      const refundCents = -holdRow.amount_cents;
+      const meta = holdRow.metadata || {};
+      await supabaseAdmin.rpc('apply_balance_transaction', {
+        p_user_id: declinedUserId,
+        p_amount_cents: refundCents,
+        p_type: 'refund_hold_join',
+        p_reference_type: 'offer_slot_refund',
+        p_reference_id: refId,
+        p_metadata: { ...meta, reason: 'owner_declined' }
+      });
+    }
     const { error: updateErr } = await supabaseAdmin
       .from('offer_slots')
       .update({ status: 'available', user_id: null, reserved_at: null, removal_requested_at: null, removal_effective_at: null })

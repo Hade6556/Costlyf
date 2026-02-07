@@ -1,9 +1,118 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
 import { getServiceMeta } from '../data/joinServices'
 import { getPriceBreakdown } from '../data/services'
+
+function loadStripeScript() {
+  if (window.Stripe) return Promise.resolve(window.Stripe)
+  return new Promise((resolve) => {
+    const s = document.createElement('script')
+    s.src = 'https://js.stripe.com/v3/'
+    s.async = true
+    s.onload = () => resolve(window.Stripe)
+    document.head.appendChild(s)
+  })
+}
+
+const TOPUP_AMOUNTS = [
+  { cents: 1000, label: '10€' },
+  { cents: 2000, label: '20€' },
+  { cents: 5000, label: '50€' },
+  { cents: 10000, label: '100€' },
+]
+
+function JoinModalTopupCard({
+  fetchWithAuth,
+  topupCents,
+  topupClientSecretRef,
+  topupPublishableKeyRef,
+  topupCardNumberRef,
+  topupCardExpiryRef,
+  topupCardCvcRef,
+  topupStripeRef,
+  topupElementsRef,
+  topupCardElementRef,
+  loadStripeScript,
+  topupError,
+  setTopupError,
+  onSuccess,
+  t,
+}) {
+  const [payLoading, setPayLoading] = useState(false)
+  useEffect(() => {
+    if (!topupClientSecretRef.current || !topupPublishableKeyRef.current || !topupCardNumberRef.current) return
+    const key = topupPublishableKeyRef.current
+    loadStripeScript().then((Stripe) => {
+      if (!topupCardNumberRef.current || !topupCardExpiryRef.current || !topupCardCvcRef.current) return
+      topupCardNumberRef.current.innerHTML = ''
+      topupCardExpiryRef.current.innerHTML = ''
+      topupCardCvcRef.current.innerHTML = ''
+      const stripe = Stripe(key)
+      topupStripeRef.current = stripe
+      const elements = stripe.elements()
+      topupElementsRef.current = elements
+      const style = { base: { fontSize: '16px', paddingLeft: '12px', paddingRight: '12px' } }
+      const cardNumber = elements.create('cardNumber', { style, disableLink: true })
+      const cardExpiry = elements.create('cardExpiry', { style })
+      const cardCvc = elements.create('cardCvc', { style })
+      topupCardElementRef.current = cardNumber
+      cardNumber.mount(topupCardNumberRef.current)
+      cardExpiry.mount(topupCardExpiryRef.current)
+      cardCvc.mount(topupCardCvcRef.current)
+    }).catch((e) => setTopupError(e.message || 'Failed to load payment form'))
+  }, [])
+  const handlePay = () => {
+    const stripe = topupStripeRef.current
+    const secret = topupClientSecretRef.current
+    const cardElement = topupCardElementRef.current
+    if (!stripe || !secret || !cardElement) return
+    setTopupError('')
+    setPayLoading(true)
+    stripe.confirmCardPayment(secret, { payment_method: { card: cardElement } })
+      .then((result) => {
+        if (result.error) throw new Error(result.error.message || 'Payment failed')
+        let pollCount = 0
+        const poll = () => {
+          fetchWithAuth('/api/wallet/balance', {}).then((r) => r.ok ? r.json() : null).then((data) => {
+            if (data && data.balance_cents != null) onSuccess()
+          })
+          pollCount += 1
+          if (pollCount < 10) setTimeout(poll, 500)
+          else onSuccess()
+        }
+        setTimeout(poll, 500)
+      })
+      .catch((e) => setTopupError(e.message || 'Payment failed'))
+      .finally(() => setPayLoading(false))
+  }
+  return (
+    <>
+      <p className="join-offer-subtitle">Pay {topupCents / 100}€ — enter your card details.</p>
+      <div className="wallet-card-fields" style={{ marginBottom: '1rem' }}>
+        <div className="wallet-card-field">
+          <label className="wallet-card-label">Card number</label>
+          <div ref={topupCardNumberRef} className="wallet-stripe-input" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }} />
+        </div>
+        <div className="wallet-card-field-row" style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="wallet-card-field" style={{ flex: 1 }}>
+            <label className="wallet-card-label">Expiry</label>
+            <div ref={topupCardExpiryRef} className="wallet-stripe-input" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }} />
+          </div>
+          <div className="wallet-card-field" style={{ flex: 1 }}>
+            <label className="wallet-card-label">CVC</label>
+            <div ref={topupCardCvcRef} className="wallet-stripe-input" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }} />
+          </div>
+        </div>
+      </div>
+      {topupError && <p className="join-offer-insufficient" role="alert">{topupError}</p>}
+      <button type="button" className="join-offer-pay" disabled={payLoading} onClick={handlePay}>
+        {payLoading ? '…' : t('dashboard.payAmount', { amount: (topupCents / 100).toFixed(2) + '€' })}
+      </button>
+    </>
+  )
+}
 
 const LOGO_MAP = {
   netflix: '/media/brand-logos/netflix.svg',
@@ -275,6 +384,18 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const [boxCollapsed, setBoxCollapsed] = useState(true)
   const [breakdownOpen, setBreakdownOpen] = useState(false)
   const [payError, setPayError] = useState('')
+  const [topupSubStep, setTopupSubStep] = useState(1)
+  const [topupCents, setTopupCents] = useState(5000)
+  const [topupLoading, setTopupLoading] = useState(false)
+  const [topupError, setTopupError] = useState('')
+  const topupClientSecretRef = useRef(null)
+  const topupPublishableKeyRef = useRef(null)
+  const topupCardNumberRef = useRef(null)
+  const topupCardExpiryRef = useRef(null)
+  const topupCardCvcRef = useRef(null)
+  const topupStripeRef = useRef(null)
+  const topupElementsRef = useRef(null)
+  const topupCardElementRef = useRef(null)
 
   const slots = offer.slots || []
   const available = slots.filter((s) => s.status === 'available')
@@ -309,6 +430,9 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
     setPayError('')
     if (paymentMethod === 'wallet' && slotIndex != null) {
       if (!canPayWithWallet) {
+        setTopupError('')
+        setTopupSubStep(1)
+        setTopupCents(TOPUP_AMOUNTS.find((a) => a.cents >= amountCents)?.cents ?? 1000)
         setStep(3)
         return
       }
@@ -442,10 +566,90 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
 
         {step === 3 && (
           <div className="join-offer-step">
-            <button type="button" className="join-offer-back" aria-label={t('dashboard.back')} onClick={() => setStep(2)}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></button>
+            <button
+              type="button"
+              className="join-offer-back"
+              aria-label={t('dashboard.back')}
+              onClick={() => {
+                setTopupError('')
+                if (topupSubStep === 2) {
+                  topupClientSecretRef.current = null
+                  topupPublishableKeyRef.current = null
+                  if (topupCardNumberRef.current) topupCardNumberRef.current.innerHTML = ''
+                  if (topupCardExpiryRef.current) topupCardExpiryRef.current.innerHTML = ''
+                  if (topupCardCvcRef.current) topupCardCvcRef.current.innerHTML = ''
+                  setTopupSubStep(1)
+                } else {
+                  setStep(2)
+                }
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
             <h2 className="join-offer-title">{t('dashboard.topUpBalance')}</h2>
-            <p className="join-offer-subtitle">{t('dashboard.walletTopUpNotAvailable')}</p>
-            <button type="button" className="join-offer-next" onClick={() => setStep(2)}>{t('dashboard.backToPayment')}</button>
+            {topupSubStep === 1 && (
+              <>
+                <p className="join-offer-subtitle">{t('dashboard.insufficientBalance')} Choose amount to add (€).</p>
+                <div className="join-offer-topup-amounts" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {TOPUP_AMOUNTS.map(({ cents, label }) => (
+                    <button
+                      key={cents}
+                      type="button"
+                      className={`join-offer-payment-option ${topupCents === cents ? 'join-offer-payment-option--selected' : ''}`}
+                      style={{ flex: '1 1 auto', minWidth: '4rem' }}
+                      onClick={() => setTopupCents(cents)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="join-offer-pay" disabled={topupLoading} onClick={() => {
+                  setTopupError('')
+                  setTopupLoading(true)
+                  fetchWithAuth('/api/wallet/topup-intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount_cents: topupCents }),
+                  })
+                    .then((r) => r.json())
+                    .then((data) => {
+                      if (data.error) throw new Error(data.error)
+                      if (!data.client_secret || !data.publishableKey) throw new Error('Missing payment setup')
+                      topupClientSecretRef.current = data.client_secret
+                      topupPublishableKeyRef.current = data.publishableKey
+                      setTopupSubStep(2)
+                    })
+                    .catch((e) => setTopupError(e.message || 'Something went wrong'))
+                    .finally(() => setTopupLoading(false))
+                }}>
+                  {topupLoading ? '…' : t('dashboard.nextLabel')}
+                </button>
+              </>
+            )}
+            {topupSubStep === 2 && (
+              <JoinModalTopupCard
+                fetchWithAuth={fetchWithAuth}
+                topupCents={topupCents}
+                topupClientSecretRef={topupClientSecretRef}
+                topupPublishableKeyRef={topupPublishableKeyRef}
+                topupCardNumberRef={topupCardNumberRef}
+                topupCardExpiryRef={topupCardExpiryRef}
+                topupCardCvcRef={topupCardCvcRef}
+                topupStripeRef={topupStripeRef}
+                topupElementsRef={topupElementsRef}
+                topupCardElementRef={topupCardElementRef}
+                loadStripeScript={loadStripeScript}
+                topupError={topupError}
+                setTopupError={setTopupError}
+                onSuccess={() => {
+                  setStep(2)
+                  setTopupSubStep(1)
+                  setTopupError('')
+                  fetchWithAuth('/api/wallet/balance', {}).then((r) => r.ok ? r.json() : null).then((data) => setBalanceCents(data?.balance_cents ?? 0))
+                }}
+                t={t}
+              />
+            )}
           </div>
         )}
       </div>

@@ -339,7 +339,13 @@ export default function Wallet() {
                           ? t('dashboard.subscriptionJoin', { service: tx.metadata.service_name })
                           : tx.type === 'debit_join'
                             ? 'Subscription join'
-                            : tx.type}
+                            : tx.type === 'hold_join' && tx.metadata?.service_name
+                              ? t('dashboard.holdJoinPending', { service: tx.metadata.service_name })
+                              : tx.type === 'hold_join'
+                                ? 'Pending join'
+                                : tx.type === 'refund_hold_join'
+                                  ? t('dashboard.refundHoldJoin')
+                                  : tx.type}
                     </span>
                     <span className="wallet-history-item-amount">
                       {tx.amount_cents >= 0 ? '+' : ''}{formatEuros(tx.amount_cents)}€

@@ -283,12 +283,22 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
   }
 
   const handleConfirm = () => {
-    fetchWithAuth(`/api/chat/threads/${encodeURIComponent(threadId)}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: CONFIRM_CREDENTIALS_TEXT }),
-    })
-      .then((r) => r.ok && fetchMessages())
+    const doPostMessage = () =>
+      fetchWithAuth(`/api/chat/threads/${encodeURIComponent(threadId)}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: CONFIRM_CREDENTIALS_TEXT }),
+      }).then((r) => r.ok && fetchMessages())
+    if (offer && mySlot && mySlot.status === 'taken') {
+      fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${mySlot.slot_index}/confirm-details`, { method: 'POST' })
+        .then((r) => {
+          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not confirm') })
+        })
+        .then(doPostMessage)
+        .catch((e) => alert(e.message))
+    } else {
+      doPostMessage()
+    }
   }
 
   const showAcceptDecline = isOwner && reservedSlotForOther
