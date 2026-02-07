@@ -145,15 +145,6 @@ export default function Layout() {
             {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
           </Link>
         ))}
-        <Link
-          to={`/${profilePath}`}
-          className={`bottom-nav-item ${current === profilePath ? 'bottom-nav-item--active' : ''}`}
-        >
-          <span className="bottom-nav-icon bottom-nav-icon--avatar">
-            <ProfileAvatar profile={profile} user={user} className="bottom-nav-profile-avatar" />
-          </span>
-          <span>{t(profileLabelKey)}</span>
-        </Link>
       </nav>
     </div>
   )

@@ -12,6 +12,15 @@ const LOGO_MAP = {
   'prime-video': '/media/brand-logos/prime-video.svg',
 }
 
+const HERO_AVATAR_COLORS = ['#a8e6cf', '#d4b5ff', '#a8d4f0', '#fff4b8', '#ffc8d4']
+function getDefaultHeroIndex(userId) {
+  if (!userId) return 1
+  let h = 0
+  const s = String(userId)
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i) | 0
+  return (Math.abs(h) % 5) + 1
+}
+
 function getDaysLeftInMonth() {
   const now = new Date()
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -30,7 +39,7 @@ function formatEuros(cents) {
 
 export default function Home() {
   const { t } = useI18n()
-  const { fetchWithAuth } = useAuth()
+  const { profile, user, fetchWithAuth } = useAuth()
   const [offers, setOffers] = useState([])
   const [joined, setJoined] = useState([])
   const [balanceCents, setBalanceCents] = useState(null)
@@ -62,8 +71,26 @@ export default function Home() {
       .catch(() => setBalanceCents(0))
   }, [fetchWithAuth])
 
+  const nickname = profile?.alias || profile?.email || '—'
+  const avatarUrl = profile?.avatar_url?.trim()
+  const heroIndex = getDefaultHeroIndex(user?.id)
+  const heroColor = HERO_AVATAR_COLORS[heroIndex - 1] || HERO_AVATAR_COLORS[0]
+
   return (
     <section className="dashboard-home">
+      <Link to="/profile" className="home-profile" aria-label={t('dashboard.navProfile', 'Profile')}>
+        <span className="home-profile-avatar">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" />
+          ) : (
+            <span className="home-profile-avatar-placeholder" style={{ '--hero-color': heroColor }}>
+              <img src={`/media/hero-profiles/${heroIndex}.png`} alt="" />
+            </span>
+          )}
+        </span>
+        <span className="home-profile-name">{nickname}</span>
+      </Link>
+
       <Link to="/wallet" className="home-balance">
         <span className="home-balance-label">{t('dashboard.homeBalance')}</span>
         <span className="home-balance-right">
