@@ -149,7 +149,7 @@ export default function Offer() {
 
   const handlePublicClick = () => {
     if (isPrivate && !charterAccepted) {
-      navigate({ pathname: 'charter', search: `?from=offer&id=${encodeURIComponent(offerId)}` })
+      navigate({ pathname: '/charter', search: `?from=offer&id=${encodeURIComponent(offerId)}` })
       return
     }
     if (isPrivate) {

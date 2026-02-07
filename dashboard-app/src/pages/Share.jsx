@@ -82,7 +82,7 @@ export default function Share() {
           const params = new URLSearchParams({ from: 'share' })
           if (state.service) params.set('service', state.service)
           if (state.serviceName) params.set('serviceName', state.serviceName)
-          navigate({ pathname: 'charter', search: '?' + params.toString() })
+          navigate({ pathname: '/charter', search: '?' + params.toString() })
           return
         }
         setState((s) => ({ ...s, type: 'public' }))
