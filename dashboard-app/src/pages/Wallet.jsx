@@ -335,17 +335,25 @@ export default function Wallet() {
                     <span className="wallet-history-item-label">
                       {tx.type === 'top_up'
                         ? 'Top-up'
-                        : tx.type === 'debit_join' && tx.metadata?.service_name
-                          ? t('dashboard.subscriptionJoin', { service: tx.metadata.service_name })
-                          : tx.type === 'debit_join'
-                            ? 'Subscription join'
-                            : tx.type === 'hold_join' && tx.metadata?.service_name
-                              ? t('dashboard.holdJoinPending', { service: tx.metadata.service_name })
-                              : tx.type === 'hold_join'
-                                ? 'Pending join'
-                                : tx.type === 'refund_hold_join'
-                                  ? t('dashboard.refundHoldJoin')
-                                  : tx.type}
+                        : tx.type === 'debit_join'
+                          ? (tx.metadata?.service_name && tx.metadata?.owner_alias
+                              ? `${tx.metadata.service_name} – ${tx.metadata.owner_alias}`
+                              : tx.metadata?.service_name
+                                ? tx.metadata.service_name
+                                : 'Subscription join')
+                          : tx.type === 'hold_join'
+                            ? (tx.metadata?.service_name && tx.metadata?.owner_alias
+                                ? `Pending: ${tx.metadata.service_name} – ${tx.metadata.owner_alias}`
+                                : tx.metadata?.service_name
+                                  ? `Pending: ${tx.metadata.service_name}`
+                                  : 'Pending join')
+                            : tx.type === 'refund_hold_join'
+                              ? (tx.metadata?.service_name && tx.metadata?.owner_alias
+                                  ? `Refund: ${tx.metadata.service_name} – ${tx.metadata.owner_alias}`
+                                  : tx.metadata?.service_name
+                                    ? `Refund: ${tx.metadata.service_name}`
+                                    : 'Refund (join declined)')
+                              : tx.type}
                     </span>
                     <span className="wallet-history-item-amount">
                       {tx.amount_cents >= 0 ? '+' : ''}{formatEuros(tx.amount_cents)}€

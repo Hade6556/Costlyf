@@ -732,7 +732,13 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, re
     const balance_cents = (balanceRow && balanceRow.balance_cents != null) ? balanceRow.balance_cents : 0;
     if (balance_cents < amount_cents) return res.status(400).json({ error: 'Insufficient balance. Top up your wallet or pay by card.' });
     const referenceId = offerId + '_' + slotIndex;
-    const metadata = { service_name: offer.service_name || offer.service || 'Subscription', offer_id: offerId, slot_index: slotIndex };
+    let ownerDisplay = 'Host';
+    const { data: ownerProfile } = await supabaseAdmin.from('profiles').select('alias, first_name, last_name').eq('id', offer.owner_id).single();
+    if (ownerProfile) {
+      ownerDisplay = ownerProfile.alias || [ownerProfile.first_name, ownerProfile.last_name].filter(Boolean).join(' ').trim() || 'Host';
+    }
+    const serviceName = offer.service_name || offer.service || 'Subscription';
+    const metadata = { service_name: serviceName, owner_alias: ownerDisplay, offer_id: offerId, slot_index: slotIndex };
     const { error: txErr } = await supabaseAdmin.rpc('apply_balance_transaction', {
       p_user_id: user.id,
       p_amount_cents: -amount_cents,
@@ -806,7 +812,7 @@ app.post('/api/offers/:id/slots/:slotIndex/accept', async (req, res) => {
   }
 });
 
-// Subscriber confirms details (credentials received, everything working). Converts hold_join to debit_join so the charge is final.
+// Subscriber confirms details (credentials received, everything working). Sets subscriber_confirmed_at so the 30-day payout to the owner will run. Optionally converts hold_join to debit_join if present.
 app.post('/api/offers/:id/slots/:slotIndex/confirm-details', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
@@ -822,18 +828,22 @@ app.post('/api/offers/:id/slots/:slotIndex/confirm-details', async (req, res) =>
       .single();
     if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
     if (slot.status !== 'taken' || slot.user_id !== user.id) return res.status(403).json({ error: 'Only the subscriber can confirm, and the slot must be accepted' });
+    const now = new Date().toISOString();
+    const { error: subErr } = await supabaseAdmin
+      .from('subscriptions')
+      .update({ subscriber_confirmed_at: now, updated_at: now })
+      .eq('offer_id', offerId)
+      .eq('slot_index', slotIndex)
+      .eq('user_id', user.id);
+    if (subErr) return res.status(500).json({ error: subErr.message });
     const refId = offerId + '_' + slotIndex;
-    const { data: updated, error: upErr } = await supabaseAdmin
+    await supabaseAdmin
       .from('balance_transactions')
       .update({ type: 'debit_join' })
       .eq('user_id', user.id)
       .eq('reference_type', 'offer_slot')
       .eq('reference_id', refId)
-      .eq('type', 'hold_join')
-      .select('id')
-      .maybeSingle();
-    if (upErr) return res.status(500).json({ error: upErr.message });
-    if (!updated) return res.status(404).json({ error: 'No pending hold found for this slot' });
+      .eq('type', 'hold_join');
     return res.status(200).json({ message: 'Details confirmed' });
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Confirm failed' });
@@ -1681,6 +1691,7 @@ app.post('/api/cron/process-payouts', async (req, res) => {
       .from('subscriptions')
       .select('id, offer_id, slot_index, period_end, contribution_price, status')
       .lte('period_end', now)
+      .not('subscriber_confirmed_at', 'is', null)
       .in('status', ['active', 'canceling', 'ended']);
     if (subsErr) return res.status(500).json({ error: subsErr.message });
     let processed = 0;

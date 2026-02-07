@@ -35,18 +35,20 @@ begin
     raise exception 'idempotency: transaction already applied for % %', p_reference_type, p_reference_id;
   end if;
 
-  -- Check balance before update so we never violate user_balances_balance_cents_check.
+  -- Check balance before writing so we never violate user_balances_balance_cents_check.
+  -- For new users (no row) we were inserting p_amount_cents, which is negative for debits → CHECK violation.
   select balance_cents into v_current_balance from public.user_balances where user_id = p_user_id;
   v_new_balance := coalesce(v_current_balance, 0) + p_amount_cents;
   if v_new_balance < 0 then
     raise exception 'balance would go negative: user_id=% new_balance_cents=%', p_user_id, v_new_balance;
   end if;
 
+  -- Write the new balance (never negative) for both INSERT and UPDATE.
   insert into public.user_balances (user_id, balance_cents, updated_at)
-  values (p_user_id, p_amount_cents, now())
+  values (p_user_id, v_new_balance, now())
   on conflict (user_id) do update
   set
-    balance_cents = user_balances.balance_cents + p_amount_cents,
+    balance_cents = v_new_balance,
     updated_at = now();
 
   return v_tx_id;
