@@ -18,6 +18,8 @@ import Inbox from './pages/Inbox'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Charter from './pages/Charter'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import { I18nProvider } from './contexts/I18nContext'
 
 // English only: no locale in URL, routes at /home, /join, etc.
@@ -44,6 +46,8 @@ const router = createBrowserRouter(
         { path: 'inbox', element: <Inbox /> },
         { path: 'login', element: <Login /> },
         { path: 'signup', element: <Signup /> },
+        { path: 'forgot-password', element: <ForgotPassword /> },
+        { path: 'reset-password', element: <ResetPassword /> },
         { path: 'charter', element: <Charter /> },
       ],
     },

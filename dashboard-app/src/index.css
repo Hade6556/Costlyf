@@ -171,6 +171,23 @@ a.profile-nav-item:focus,
 .auth-error.visible {
   display: block;
 }
+.auth-forgot {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  text-align: right;
+}
+.auth-forgot a {
+  color: var(--dash-primary);
+}
+.auth-message {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: var(--dash-text);
+  display: none;
+}
+.auth-message.visible {
+  display: block;
+}
 .auth-footer {
   margin-top: 1.5rem;
   text-align: center;

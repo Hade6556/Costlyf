@@ -84,6 +84,9 @@ export default function Login() {
               autoComplete="current-password"
               disabled={submitting}
             />
+            <p className="auth-forgot">
+              <Link to="/forgot-password">{t('dashboard.forgotPassword')}</Link>
+            </p>
           </div>
           {error && (
             <p className="auth-error visible" role="alert">

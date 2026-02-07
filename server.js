@@ -82,8 +82,8 @@ app.get('/messages/en.json', function (req, res) {
 
 const dashboardIndexPath = path.join(staticRoot, dashboardSegment, 'index.html');
 const hasDashboardApp = fs.existsSync(dashboardIndexPath);
-const dashboardPathToLegacy = { home: 'home.html', join: 'join.html', share: 'share.html', wallet: 'wallet.html', offer: 'offer.html', profile: 'profile.html', subscription: 'subscription.html', help: 'help.html', inbox: 'inbox.html', login: 'login.html', signup: 'signup.html', charter: 'charter.html' };
-const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter'];
+const dashboardPathToLegacy = { home: 'home.html', join: 'join.html', share: 'share.html', wallet: 'wallet.html', offer: 'offer.html', profile: 'profile.html', subscription: 'subscription.html', help: 'help.html', inbox: 'inbox.html', login: 'login.html', signup: 'signup.html', charter: 'charter.html', 'forgot-password': 'login.html', 'reset-password': 'login.html' };
+const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter', 'forgot-password', 'reset-password'];
 
 // Landing page
 app.get('/', function (req, res) {
@@ -1280,6 +1280,39 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(200).json({ access_token: data.session?.access_token, refresh_token: data.session?.refresh_token, user: data.user });
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Login failed' });
+  }
+});
+
+// Forgot password: send recovery email (Supabase redirects to SITE_URL/reset-password with hash)
+app.post('/api/auth/forgot-password', async (req, res) => {
+  if (!supabaseAuth) return res.status(503).json({ error: 'Auth not configured' });
+  const { email } = req.body || {};
+  if (!email || typeof email !== 'string' || !email.trim()) return res.status(400).json({ error: 'Email required' });
+  const siteUrl = process.env.SITE_URL || (process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://www.costlyf.com');
+  const redirectTo = siteUrl.replace(/\/$/, '') + '/reset-password';
+  try {
+    const { data, error } = await supabaseAuth.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(200).json({ message: 'If an account exists for this email, you will receive a password reset link.' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to send reset email' });
+  }
+});
+
+// Update password (from recovery link: client sends access_token from hash + new password)
+app.post('/api/auth/update-password', async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: 'Auth not configured' });
+  const { access_token, new_password } = req.body || {};
+  if (!access_token || typeof access_token !== 'string') return res.status(400).json({ error: 'Token required' });
+  if (!new_password || String(new_password).length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
+  try {
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(access_token.trim());
+    if (userError || !user) return res.status(401).json({ error: 'Invalid or expired link. Please request a new password reset.' });
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, { password: String(new_password) });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(200).json({ message: 'Password updated. You can now log in.' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Update failed' });
   }
 });
 

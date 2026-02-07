@@ -36,6 +36,14 @@
       "destination": "/api?path=signup"
     },
     {
+      "source": "/forgot-password",
+      "destination": "/api?path=forgot-password"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/api?path=reset-password"
+    },
+    {
       "source": "/terms",
       "destination": "/api?path=terms"
     },
