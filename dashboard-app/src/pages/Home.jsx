@@ -23,13 +23,18 @@ function getMonthProgressColor(fractionLeft) {
   return `hsl(${hue}, 65%, 42%)`
 }
 
+function formatEuros(cents) {
+  if (cents == null) return '0'
+  return (cents / 100).toFixed(2).replace('.', ',')
+}
+
 export default function Home() {
   const { t, locale } = useI18n()
   const currentLocale = locale || (typeof window !== 'undefined' && window.location.pathname.split('/')[1]) || 'en'
   const { fetchWithAuth } = useAuth()
   const [offers, setOffers] = useState([])
   const [joined, setJoined] = useState([])
-  const [balance] = useState('0')
+  const [balanceCents, setBalanceCents] = useState(null)
 
   useEffect(() => {
     fetchWithAuth('/api/offers/mine', {})
@@ -45,12 +50,19 @@ export default function Home() {
       .catch(() => setJoined([]))
   }, [fetchWithAuth])
 
+  useEffect(() => {
+    fetchWithAuth('/api/wallet/balance', {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setBalanceCents(data && data.balance_cents != null ? data.balance_cents : 0))
+      .catch(() => setBalanceCents(0))
+  }, [fetchWithAuth])
+
   return (
     <section className="dashboard-home">
       <a href={`/${currentLocale}/wallet`} className="home-balance">
         <span className="home-balance-label">{t('dashboard.homeBalance')}</span>
         <span className="home-balance-right">
-          <span className="home-balance-amount">{balance}€</span>
+          <span className="home-balance-amount">{formatEuros(balanceCents)}€</span>
           <span className="home-balance-chevron" aria-hidden="true">›</span>
         </span>
       </a>

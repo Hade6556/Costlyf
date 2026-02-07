@@ -12,7 +12,7 @@
     return (window.Auth && window.Auth.fetchWithAuth) ? window.Auth.fetchWithAuth(url, opts) : fetch(url, opts);
   }
 
-  var balanceEl, modal, step1, step2, topupPayAmountEl, step2AmountEl, stripeCardWrap, stripeCardNumberWrap, stripeCardExpiryWrap, stripeCardCvcWrap, topupErrorEl, payBtn, cancelBtn, nextBtn, backBtn;
+  var balanceEl, modal, step1, step2, topupPayAmountEl, step2AmountEl, stripeCardWrap, stripeCardNumberWrap, stripeCardExpiryWrap, stripeCardCvcWrap, topupErrorEl, payBtn, cancelBtn, nextBtn, backBtn, historyListEl, historyEmptyEl;
   var selectedCents = 5000;
   var stripeInstance = null;
   var cardNumberElement = null;
@@ -35,6 +35,46 @@
         }
       })
       .catch(function () { balanceEl.textContent = '0€'; });
+  }
+
+  function formatTransactionDate(iso) {
+    if (!iso) return '—';
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      var day = ('0' + d.getDate()).slice(-2);
+      var month = ('0' + (d.getMonth() + 1)).slice(-2);
+      return day + '/' + month + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    } catch (e) { return iso; }
+  }
+
+  function loadHistory() {
+    if (!historyListEl || !historyEmptyEl) return;
+    fetchWithAuth('/api/wallet/transactions')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var list = (data && data.transactions) ? data.transactions : [];
+        historyListEl.innerHTML = '';
+        if (list.length === 0) {
+          historyEmptyEl.hidden = false;
+          historyListEl.classList.remove('wallet-history-list--has-items');
+        } else {
+          historyEmptyEl.hidden = true;
+          historyListEl.classList.add('wallet-history-list--has-items');
+          list.forEach(function (tx) {
+            var row = document.createElement('div');
+            row.className = 'wallet-history-item';
+            var label = tx.type === 'top_up' ? 'Top-up' : tx.type;
+            var sign = tx.amount_cents >= 0 ? '+' : '';
+            row.innerHTML = '<span class="wallet-history-item-date">' + formatTransactionDate(tx.created_at) + '</span><span class="wallet-history-item-label">' + label + '</span><span class="wallet-history-item-amount">' + sign + formatEuros(tx.amount_cents) + '</span>';
+            historyListEl.appendChild(row);
+          });
+        }
+      })
+      .catch(function () {
+        historyEmptyEl.hidden = false;
+        historyListEl.innerHTML = '';
+      });
   }
 
   function showError(msg) {
@@ -123,7 +163,7 @@
           if (stripeCardCvcWrap) stripeCardCvcWrap.innerHTML = '';
           stripeInstance = Stripe(data.publishableKey);
           var elements = stripeInstance.elements();
-          var style = { base: { fontSize: '16px' } };
+          var style = { base: { fontSize: '16px', paddingLeft: '12px', paddingRight: '12px' } };
           cardNumberElement = elements.create('cardNumber', { style: style, disableLink: true });
           var cardExpiry = elements.create('cardExpiry', { style: style });
           var cardCvc = elements.create('cardCvc', { style: style });
@@ -160,11 +200,13 @@
         var pollMs = 500;
         function pollBalance() {
           loadBalance();
+          loadHistory();
           pollCount += 1;
           if (pollCount < maxPolls) setTimeout(pollBalance, pollMs);
           else {
             closeTopupModal();
             loadBalance();
+            loadHistory();
           }
         }
         setTimeout(pollBalance, pollMs);
@@ -211,11 +253,14 @@
     cancelBtn = document.getElementById('wallet-topup-cancel');
     nextBtn = document.getElementById('wallet-topup-next');
     backBtn = document.getElementById('wallet-topup-back');
+    historyListEl = document.getElementById('wallet-history-list');
+    historyEmptyEl = document.getElementById('wallet-history-empty');
   }
 
   function init() {
     refreshRefs();
     loadBalance();
+    loadHistory();
   }
 
   function showBankTransferMessage() {

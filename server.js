@@ -1573,6 +1573,23 @@ app.get('/api/wallet/balance', async (req, res) => {
   }
 });
 
+app.get('/api/wallet/transactions', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('balance_transactions')
+      .select('id, amount_cents, type, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ transactions: data || [] });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to get transactions' });
+  }
+});
+
 app.post('/api/wallet/topup-intent', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });

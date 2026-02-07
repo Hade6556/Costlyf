@@ -45,7 +45,7 @@ No Stripe Connect or Subscriptions product is required for this design: you hold
 **If payments appear in Stripe but balance never updates in the app or Supabase**, the webhook is not reaching your server or is failing. Do the following:
 
 1. **Add a webhook endpoint in Stripe:** Dashboard → Developers → Webhooks → **Add endpoint**.
-2. **URL:** Your server must be reachable over HTTPS, e.g. `https://your-api.com/api/webhooks/stripe`. For local dev, use [Stripe CLI](https://stripe.com/docs/stripe-cli): `stripe listen --forward-to localhost:3000/api/webhooks/stripe` and use the printed signing secret as `STRIPE_WEBHOOK_SECRET`.
+2. **URL:** Your server must be reachable over HTTPS, e.g. `https://your-api.com/api/webhooks/stripe`. **Use the exact canonical URL** (e.g. if your host redirects to `https://www.costlyf.com`, set the webhook URL to `https://www.costlyf.com/api/webhooks/stripe`). Stripe does not follow redirects—if the endpoint returns 307/301, webhook delivery fails. For local dev, use [Stripe CLI](https://stripe.com/docs/stripe-cli): `stripe listen --forward-to localhost:3000/api/webhooks/stripe` and use the printed signing secret as `STRIPE_WEBHOOK_SECRET`.
 3. **Events:** Subscribe to at least **`payment_intent.succeeded`** (required for top-up balance credit).
 4. **Secret:** Copy the **Signing secret** (whsec_…) and set `STRIPE_WEBHOOK_SECRET` in your env. The server returns 500 if the balance update fails so Stripe will retry.
 

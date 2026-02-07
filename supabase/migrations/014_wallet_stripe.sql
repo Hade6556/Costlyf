@@ -88,7 +88,7 @@ begin
   end if;
 
   insert into public.user_balances (user_id, balance_cents, updated_at)
-  values (p_user_id, 0, now())
+  values (p_user_id, p_amount_cents, now())
   on conflict (user_id) do update
   set
     balance_cents = user_balances.balance_cents + p_amount_cents,
