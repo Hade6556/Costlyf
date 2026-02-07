@@ -188,11 +188,23 @@ export default function Wallet() {
       .then((result) => {
         if (result.error) throw new Error(result.error.message || 'Payment failed')
         setTopupSuccess('Payment successful. Updating balance…')
-        loadBalance()
-        loadTransactions()
-        setTimeout(() => {
-          closeTopup()
-        }, 1500)
+        // Poll for updated balance/history (Stripe webhook updates backend asynchronously)
+        let pollCount = 0
+        const maxPolls = 8
+        const pollMs = 500
+        const poll = () => {
+          loadBalance()
+          loadTransactions()
+          pollCount += 1
+          if (pollCount < maxPolls) {
+            setTimeout(poll, pollMs)
+          } else {
+            closeTopup()
+            loadBalance()
+            loadTransactions()
+          }
+        }
+        setTimeout(poll, pollMs)
       })
       .catch((e) => setTopupError(e.message || 'Something went wrong'))
       .finally(() => setPayLoading(false))
