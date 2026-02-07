@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
 import './PaymentMethod.css'
@@ -144,14 +144,7 @@ export default function PaymentMethod() {
   }
 
   return (
-    <main className="dashboard-main dashboard-content dashboard-content--profile payment-method-page">
-      <div className="profile-layout">
-        <div className="profile-main">
-          <Link to="/profile" className="profile-nav-item" style={{ display: 'inline-flex', marginBottom: '1rem' }}>
-            <span className="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></span>
-            <span>Back to profile</span>
-          </Link>
-
+    <div className="payment-method-page">
           <h1 className="profile-main-title">Payment method</h1>
           <p className="profile-panel-desc">Manage your card for top-ups and your bank account (IBAN) for withdrawals.</p>
 
@@ -226,8 +219,6 @@ export default function PaymentMethod() {
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    </main>
+    </div>
   )
 }

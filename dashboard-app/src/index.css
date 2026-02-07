@@ -252,6 +252,37 @@ a.profile-nav-item:focus,
   max-width: 100%;
 }
 
+/* Profile: tighter horizontal space on mobile so content fits nicely */
+@media (max-width: 899px) {
+  .dashboard-content--profile .profile-sidebar {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .dashboard-content--profile .profile-main {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .dashboard-content--profile .dashboard-main {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+@media (max-width: 480px) {
+  .dashboard-content--profile .profile-sidebar {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .dashboard-content--profile .profile-main {
+    margin-left: 0.375rem;
+    margin-right: 0.375rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
 /* Skeleton cards – polishing shimmer for my-offers / my-subscriptions loading */
 @keyframes skeleton-shimmer {
   0% { background-position: 200% 0; }
