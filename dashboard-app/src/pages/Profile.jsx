@@ -482,7 +482,7 @@ function TrustPanel({ trust, trustStats, invoicesCount, onNavigate, navigateTo, 
                 if (!clickable) return
                 if (c.action === 'personal') onNavigate('personal')
                 else if (c.action === 'inbox') navigateTo('/inbox')
-                else if (c.action === 'wallet') window.location.href = `/${loc}/wallet`
+                else if (c.action === 'wallet') window.location.href = '/wallet'
               }}
             >
               <span className="profile-trust-criterion-emoji" aria-hidden="true">{c.emoji}</span>
