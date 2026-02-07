@@ -52,6 +52,15 @@
 }
 
 @media (max-width: 767px) {
+  /* Inbox: remove horizontal padding from nested dashboard-main and inbox-page; keep outer padding */
+  .dashboard-main .dashboard-main {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .dashboard-main .dashboard-main .inbox-page {
+    padding-left: 0;
+    padding-right: 0;
+  }
   .inbox-chat-view {
     position: fixed;
     inset: 0;
