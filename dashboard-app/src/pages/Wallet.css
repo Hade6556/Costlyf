@@ -1,0 +1,213 @@
+/* Wallet page & top-up modal – self-contained styles so modal always looks good */
+
+/* ----- Top-up modal ----- */
+.wallet-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.wallet-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+}
+.wallet-modal-box {
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  padding: 2rem 1.75rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+.wallet-modal-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.02em;
+}
+.wallet-modal-desc {
+  margin: 0 0 0;
+  font-size: 0.9375rem;
+  color: #6e6e73;
+  line-height: 1.45;
+}
+
+/* ----- Stepper: minus | amount | plus ----- */
+.wallet-topup-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 1.5rem 0 0.75rem;
+  padding: 1rem 0.5rem;
+  background: #f8f8f8;
+  border-radius: 16px;
+  border: 1px solid #ebebeb;
+}
+.wallet-topup-stepper-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #1d1d1f;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.wallet-topup-stepper-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.wallet-topup-stepper-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.wallet-topup-stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.wallet-topup-stepper-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  min-width: 4.5rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+.wallet-topup-hint {
+  margin: 0 0 1.25rem;
+  font-size: 0.8125rem;
+  color: #8e8e93;
+  text-align: center;
+}
+
+/* ----- Preset amount buttons ----- */
+.wallet-topup-presets {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.wallet-topup-preset-btn {
+  padding: 0.625rem 1.5rem;
+  border: 1px solid #e5e5e7;
+  border-radius: 999px;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.wallet-topup-preset-btn:hover {
+  background: #ebebed;
+  border-color: #d2d2d7;
+}
+.wallet-topup-preset-btn--active {
+  background: #1d1d1f;
+  color: #fff;
+  border-color: #1d1d1f;
+}
+.wallet-topup-preset-btn--active:hover {
+  background: #2d2d30;
+  border-color: #2d2d30;
+}
+
+/* ----- Step 1 actions ----- */
+.wallet-modal-actions--step1 {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  align-items: stretch;
+}
+.wallet-modal-actions--step1 .wallet-modal-cancel {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  background: #fff;
+  color: #1d1d1f;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.wallet-modal-actions--step1 .wallet-modal-cancel:hover {
+  background: #f5f5f7;
+  border-color: #c7c7cc;
+}
+.wallet-modal-actions--step1 .wallet-modal-next {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  background: #1d1d1f;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.wallet-modal-actions--step1 .wallet-modal-next:hover:not(:disabled) {
+  background: #2d2d30;
+}
+.wallet-modal-actions--step1 .wallet-modal-next:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Step 2 (card) and other wallet modal bits – keep in sync with global dashboard.css if needed */
+.wallet-topup-step {
+  display: block;
+}
+.wallet-modal-error {
+  color: #b91c1c;
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem;
+}
+.wallet-modal-error.wallet-modal-success {
+  color: #059669;
+}
+.wallet-modal-actions--step2 {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.wallet-modal-back {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 500;
+}
+.wallet-modal-pay {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  background: #1d1d1f;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wallet-modal-pay:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

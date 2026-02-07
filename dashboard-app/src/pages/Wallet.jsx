@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useI18n } from '../contexts/I18nContext'
 import { useAuth } from '../contexts/AuthContext'
+import './Wallet.css'
 
 function formatEuros(cents) {
   if (cents == null) return '0'
