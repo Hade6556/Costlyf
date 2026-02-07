@@ -33,6 +33,60 @@
   object-fit: cover;
 }
 
+/* Inbox chat on mobile: full width/height, back as icon left of avatar */
+.inbox-chat-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin: -0.25rem 0 -0.25rem -0.25rem;
+  color: var(--dash-text-muted, #6e6e73);
+  text-decoration: none;
+  border-radius: 50%;
+}
+.inbox-chat-back:hover {
+  color: var(--dash-text, #1d1d1f);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 767px) {
+  .inbox-chat-view {
+    position: fixed;
+    inset: 0;
+    bottom: var(--dash-nav-h, 64px);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #fff;
+  }
+  .inbox-chat-view .subscription-chat-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+  }
+  .inbox-chat-view .subscription-chat-messages {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
+}
+
+/* Share flow: reduce top padding on phone */
+@media (max-width: 767px) {
+  .share-flow {
+    padding-top: 1rem;
+  }
+}
+
 /* Join page and join listing (e.g. /join, /join/youtube-premium): use full width instead of 80% */
 .dashboard-content--join .dashboard-main {
   max-width: 100%;
