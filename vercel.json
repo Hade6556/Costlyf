@@ -98,22 +98,6 @@
     {
       "source": "/dashboard",
       "destination": "/api?path=dashboard"
-    },
-    {
-      "source": "/:locale(en|lt|lv|pl|es|de)",
-      "destination": "/api?path=:locale"
-    },
-    {
-      "source": "/:locale(en|lt|lv|pl|es|de)/:segment",
-      "destination": "/api?path=:locale/:segment"
-    },
-    {
-      "source": "/:locale(en|lt|lv|pl|es|de)/:segment/",
-      "destination": "/api?path=:locale/:segment"
-    },
-    {
-      "source": "/:locale(en|lt|lv|pl|es|de)/:segment/:rest*",
-      "destination": "/api?path=:locale/:segment/:rest*"
     }
   ]
 }

@@ -300,10 +300,7 @@ export default function Offer() {
                   type="button"
                   className="offer-row-btn offer-owner-action-btn"
                   onClick={() => {
-                    const validLocales = ['en', 'lt', 'lv', 'pl', 'es', 'de']
-                    const firstSegment = location.pathname.split('/').filter(Boolean)[0]
-                    const locale = firstSegment && validLocales.includes(firstSegment) ? firstSegment : 'en'
-                    const base = `${window.location.origin}/${locale}/join`
+                    const base = `${window.location.origin}/join`
                     const token = isPrivate && offer.share_token ? `&token=${encodeURIComponent(offer.share_token)}` : ''
                     const url = `${base}?offer=${encodeURIComponent(offerId)}${token}`
                     navigator.clipboard.writeText(url).then(() => {

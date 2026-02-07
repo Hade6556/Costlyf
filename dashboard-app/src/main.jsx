@@ -20,14 +20,7 @@ import Signup from './pages/Signup'
 import Charter from './pages/Charter'
 import { I18nProvider } from './contexts/I18nContext'
 
-// Basename is the first path segment (locale), e.g. /en -> routes are /en/home, /en/join, etc.
-function getBasename() {
-  const segments = window.location.pathname.split('/').filter(Boolean)
-  return segments.length >= 1 ? `/${segments[0]}` : ''
-}
-
-const basename = getBasename()
-
+// English only: no locale in URL, routes at /home, /join, etc.
 const router = createBrowserRouter(
   [
     {
@@ -55,7 +48,7 @@ const router = createBrowserRouter(
       ],
     },
   ],
-  { basename }
+  { basename: '' }
 )
 
 createRoot(document.getElementById('root')).render(

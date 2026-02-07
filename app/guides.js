@@ -53,7 +53,6 @@
       return true;
     });
 
-    var locale = (typeof window !== 'undefined' && window.__LOCALE__) ? window.__LOCALE__ : 'en';
     var readLabel = (typeof window !== 'undefined' && window.i18n && window.i18n.t) ? window.i18n.t('guides.readArticle') : 'Read the article';
     grid.innerHTML = filtered.map(function (g) {
       var title = cardTitle(g);
@@ -61,7 +60,7 @@
         '<article class="guide-card" role="listitem">' +
           '<span class="guide-card-tag">' + escapeHtml(g.category) + '</span>' +
           '<h2 class="guide-card-title">' + escapeHtml(title) + '</h2>' +
-          '<a href="/' + locale + '/guides/' + encodeURIComponent(g.slug) + '" class="guide-card-cta">' + escapeHtml(readLabel) + '</a>' +
+          '<a href="/guides/' + encodeURIComponent(g.slug) + '" class="guide-card-cta">' + escapeHtml(readLabel) + '</a>' +
         '</article>'
       );
     }).join('');

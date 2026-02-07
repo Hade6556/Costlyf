@@ -67,91 +67,32 @@ if (stripe && stripeWebhookSecret) {
 // JSON body for API (after webhook so webhook gets raw body)
 app.use(express.json());
 
-// --- i18n: locales and detection (priority: cookie → Accept-Language → en) ---
-const LOCALES = ['en', 'lt', 'lv', 'pl', 'es', 'de'];
-const LOCALE_COOKIE = 'NEXT_LOCALE';
-const DEFAULT_LOCALE = 'en';
-
-function detectLocale(req) {
-  const cookie = req.cookies && req.cookies[LOCALE_COOKIE];
-  if (cookie && LOCALES.includes(cookie)) return cookie;
-  const accept = req.headers['accept-language'];
-  if (accept) {
-    const parts = accept.split(',').map(function (p) {
-      const s = p.trim().split(';')[0];
-      const lang = (s && s.split('-')[0]) ? s.split('-')[0].toLowerCase() : '';
-      const q = p.indexOf('q=') >= 0 ? parseFloat(p.split('q=')[1]) : 1;
-      return { lang: lang, q: q };
-    });
-    parts.sort(function (a, b) { return b.q - a.q; });
-    for (let i = 0; i < parts.length; i++) {
-      if (LOCALES.includes(parts[i].lang)) return parts[i].lang;
-    }
-  }
-  return DEFAULT_LOCALE;
-}
-
-function setLocaleCookie(res, locale) {
-  res.cookie(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365, httpOnly: false, sameSite: 'lax' });
-}
-
 // Vercel serves static files from public/ only; when public/ exists (after build), use it for HTML and static paths.
 const publicDir = path.join(__dirname, 'public');
 const usePublic = fs.existsSync(publicDir);
 const staticRoot = usePublic ? publicDir : __dirname;
 const dashboardSegment = usePublic ? 'dashboard-app' : 'dashboard-build';
 
-// Serve message files
-app.get('/messages/:locale.json', function (req, res) {
-  const locale = req.params.locale;
-  if (!LOCALES.includes(locale)) return res.status(404).json({ error: 'Unknown locale' });
-  const file = path.join(staticRoot, 'messages', locale + '.json');
-  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Messages not found' });
+// Serve English messages only (for dashboard and any legacy i18n)
+app.get('/messages/en.json', function (req, res) {
+  const file = path.join(staticRoot, 'messages', 'en.json');
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Not found' });
   res.type('json').sendFile(file);
 });
 
-// Redirect root and locale-less app paths to /:locale/ or /:locale/path (preserve query)
-const REDIRECT_PATHS = ['', 'home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'guides', 'terms', 'privacy', 'legal', 'charter', 'inbox', 'login', 'signup'];
-REDIRECT_PATHS.forEach(function (segment) {
-  const pathExpr = segment === '' ? '/' : '/' + segment;
-  app.get(pathExpr, function (req, res) {
-    const locale = detectLocale(req);
-    setLocaleCookie(res, locale);
-    const target = segment === '' ? '/' + locale + '/' : '/' + locale + '/' + segment + '/';
-    const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
-    res.redirect(302, target.replace(/\/+$/, '') + q);
-  });
-  if (segment !== '') app.get(pathExpr + '/', function (req, res) {
-    const locale = detectLocale(req);
-    setLocaleCookie(res, locale);
-    const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
-    res.redirect(302, '/' + locale + '/' + segment + q);
-  });
-});
-app.get('/guides/:slug', function (req, res) {
-  const locale = detectLocale(req);
-  setLocaleCookie(res, locale);
-  res.redirect(302, '/' + locale + '/guides/' + encodeURIComponent(req.params.slug) + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
-});
-app.get('/join/:service', function (req, res) {
-  const locale = detectLocale(req);
-  setLocaleCookie(res, locale);
-  res.redirect(302, '/' + locale + '/join/' + encodeURIComponent(req.params.service) + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
-});
-
-// Locale-prefixed routes: serve same HTML (client reads locale from pathname)
-const localeRegex = '(' + LOCALES.join('|') + ')';
-app.get(new RegExp('^/' + localeRegex + '/?$'), function (req, res) {
-  res.sendFile(path.join(staticRoot, 'index.html'));
-});
-// React dashboard SPA or legacy app (locale-prefixed). Fallback to app/*.html when dashboard-app is missing (e.g. Vercel build without dashboard).
 const dashboardIndexPath = path.join(staticRoot, dashboardSegment, 'index.html');
 const hasDashboardApp = fs.existsSync(dashboardIndexPath);
 const dashboardPathToLegacy = { home: 'home.html', join: 'join.html', share: 'share.html', wallet: 'wallet.html', offer: 'offer.html', profile: 'profile.html', subscription: 'subscription.html', help: 'help.html', inbox: 'inbox.html', login: 'login.html', signup: 'signup.html', charter: 'charter.html' };
 const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', 'subscription', 'help', 'inbox', 'login', 'signup', 'charter'];
-// Serve React dashboard for all dashboard paths (no legacy-only; client-side nav + locale preserved)
+
+// Landing page
+app.get('/', function (req, res) {
+  res.sendFile(path.join(staticRoot, 'index.html'));
+});
+
+// App routes: React dashboard or legacy HTML
 dashboardPaths.forEach(function (segment) {
-  app.get(new RegExp('^/' + localeRegex + '/' + segment + '/?$'), function (req, res) {
+  app.get('/' + segment, function (req, res) {
     if (hasDashboardApp) {
       res.set('Cache-Control', 'no-cache, max-age=0');
       return res.sendFile(dashboardIndexPath);
@@ -160,24 +101,44 @@ dashboardPaths.forEach(function (segment) {
     if (legacyFile) return res.sendFile(path.join(staticRoot, 'app', legacyFile));
     res.sendFile(dashboardIndexPath);
   });
+  app.get('/' + segment + '/', function (req, res) {
+    const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
+    res.redirect(302, '/' + segment + q);
+  });
 });
-app.get(new RegExp('^/' + localeRegex + '/join/([^/]+)/?$'), function (req, res) {
+app.get('/join/:service', function (req, res) {
+  if (hasDashboardApp) {
+    res.set('Cache-Control', 'no-cache, max-age=0');
+    return res.sendFile(dashboardIndexPath);
+  }
   res.sendFile(path.join(staticRoot, 'app', 'service.html'));
 });
-app.get(new RegExp('^/' + localeRegex + '/guides/?$'), function (req, res) {
+app.get('/guides', function (req, res) {
   res.sendFile(path.join(staticRoot, 'app', 'guides.html'));
 });
-app.get(new RegExp('^/' + localeRegex + '/guides/([^/]+)/?$'), function (req, res) {
+app.get('/guides/', function (req, res) {
+  res.redirect(302, '/guides' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
+});
+app.get('/guides/:slug', function (req, res) {
   res.sendFile(path.join(staticRoot, 'app', 'guide.html'));
 });
-app.get(new RegExp('^/' + localeRegex + '/terms/?$'), function (req, res) {
+app.get('/terms', function (req, res) {
   res.sendFile(path.join(staticRoot, 'app', 'terms.html'));
 });
-app.get(new RegExp('^/' + localeRegex + '/privacy/?$'), function (req, res) {
+app.get('/terms/', function (req, res) {
+  res.redirect(302, '/terms' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
+});
+app.get('/privacy', function (req, res) {
   res.sendFile(path.join(staticRoot, 'app', 'privacy.html'));
 });
-app.get(new RegExp('^/' + localeRegex + '/legal/?$'), function (req, res) {
+app.get('/privacy/', function (req, res) {
+  res.redirect(302, '/privacy' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
+});
+app.get('/legal', function (req, res) {
   res.sendFile(path.join(staticRoot, 'app', 'legal.html'));
+});
+app.get('/legal/', function (req, res) {
+  res.redirect(302, '/legal' + (req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : ''));
 });
 
 // React dashboard SPA static assets (built bundle at /dashboard-app/assets/*). Local dev only; Vercel serves public/.
@@ -222,86 +183,9 @@ const uploadAvatar = multer({ storage: avatarStorage, limits: { fileSize: 5 * 10
 } }).single('avatar');
 app.use('/uploads', express.static(uploadsBase));
 
-// App: Home (wallet + 3 buttons only)
-app.get('/home', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'home.html'));
-});
-
-// App: Join (search, filters, subscription cards)
-app.get('/join', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'join.html'));
-});
-
-// Service marketplace (e.g. /join/netflix)
-app.get('/join/:service', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'service.html'));
-});
-
-// App: Share (placeholder)
-app.get('/share', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'share.html'));
-});
-
-// Wallet (My wallet screen)
-app.get('/wallet', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'wallet.html'));
-});
-
-// My offer detail (e.g. /offer or /offer#0)
-app.get('/offer', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'offer.html'));
-});
-
-// Profile (account settings, personal info)
-app.get('/profile', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'profile.html'));
-});
-
-// Subscription detail (first-time or returning view by hash index)
-app.get('/subscription', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'subscription.html'));
-});
-
-// Help (FAQ, contact owner, contact support)
-app.get('/help', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'help.html'));
-});
-
-// Guides (sharing guides by service)
-app.get('/guides', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'guides.html'));
-});
-app.get('/guides/:slug', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'guide.html'));
-});
-
-// Terms & Conditions
-app.get('/terms', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'terms.html'));
-});
-
-app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'privacy.html'));
-});
-
-app.get('/legal', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'legal.html'));
-});
-
-// Charter (read and accept required before going public with share offer)
-app.get('/charter', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'charter.html'));
-});
-
-// Inbox (list of contacts, chat on tap)
-app.get('/inbox', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'inbox.html'));
-});
-
-// Redirect old dashboard URL to locale-prefixed home
+// Redirect old dashboard URL to home
 app.get('/dashboard', (req, res) => {
-  const locale = detectLocale(req);
-  res.redirect(301, '/' + locale + '/home');
+  res.redirect(301, '/home');
 });
 
 // --- Helper: get current user from Bearer token (returns null if none) ---
@@ -1661,16 +1545,6 @@ app.post('/api/auth/change-password', async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Update failed' });
   }
-});
-
-// Login page
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'login.html'));
-});
-
-// Sign up page
-app.get('/signup', (req, res) => {
-  res.sendFile(path.join(staticRoot, 'app', 'signup.html'));
 });
 
 // Export for Vercel serverless (handles /home, /login, /terms, etc.). Local dev: run listen.

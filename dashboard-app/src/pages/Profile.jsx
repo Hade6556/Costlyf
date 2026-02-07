@@ -95,7 +95,7 @@ export default function Profile() {
   const { user, profile, trustStats, setProfile, fetchWithAuth, clearSession, loading } = useAuth()
   const navigate = useNavigate()
   const { locale } = useI18n()
-  const currentLocale = locale || (typeof window !== 'undefined' && window.location.pathname.split('/')[1]) || 'en'
+  const currentLocale = locale || 'en'
   const [panel, setPanel] = useState('personal')
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState(false)
@@ -133,10 +133,7 @@ export default function Profile() {
 
   const handleSignOut = () => {
     clearSession()
-    // Full page redirect to landing (root) so server serves index.html; navigate('/') would stay in SPA and show dashboard Home
-    const segments = window.location.pathname.split('/').filter(Boolean)
-    const landingPath = segments.length ? `/${segments[0]}` : '/'
-    window.location.href = landingPath
+    window.location.href = '/'
   }
 
   const { t } = useI18n()
@@ -189,7 +186,7 @@ export default function Profile() {
               <span>{t('dashboard.profilePersonalInfo')}</span>
               <span className="profile-nav-chevron">›</span>
             </button>
-            <a href={`/${currentLocale}/wallet`} className="profile-nav-item">
+            <a href="/wallet" className="profile-nav-item">
               <span className="profile-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /></svg></span>
               <span>{t('dashboard.profileMyWallet')}</span>
               <span className="profile-nav-chevron">›</span>
@@ -252,7 +249,7 @@ export default function Profile() {
 }
 
 function PersonalPanel({ profile, user, onUpdate, fetchWithAuth, avatarInputRef }) {
-  const { t, locale, setLocale, LOCALES, LOCALE_NAMES } = useI18n()
+  const { t } = useI18n()
   return (
     <>
       <h1 className="profile-main-title">{t('dashboard.profilePersonalInfo')}</h1>
@@ -296,27 +293,6 @@ function PersonalPanel({ profile, user, onUpdate, fetchWithAuth, avatarInputRef 
       <h2 className="profile-section-title">{t('dashboard.profileContactInfo')}</h2>
       <ProfileField label={t('dashboard.profileEmailAddress')} value={profile.email || '—'} fieldKey="email" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} inputType="email" />
       <ProfileField label={t('dashboard.profilePhone')} value={profile.phone || '—'} fieldKey="phone" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} inputType="tel" />
-
-      <div className="profile-field profile-field--language">
-        <label className="profile-field-label" htmlFor="profile-dashboard-language">{t('dashboard.profileDashboardLanguage')}</label>
-        <div className="profile-field-value">
-          <select
-            id="profile-dashboard-language"
-            name="dashboard_language"
-            className="profile-language-select"
-            value={locale}
-            onChange={(e) => {
-              const newLocale = e.target.value
-              if (LOCALES.includes(newLocale)) setLocale(newLocale)
-            }}
-            aria-label={t('dashboard.profileLanguage')}
-          >
-            {LOCALES.map((loc) => (
-              <option key={loc} value={loc}>{LOCALE_NAMES[loc] || loc}</option>
-            ))}
-          </select>
-        </div>
-      </div>
     </>
   )
 }

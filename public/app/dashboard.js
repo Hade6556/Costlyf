@@ -4,28 +4,13 @@
   var TOKEN_KEY = 'costlyf_access_token';
   var REFRESH_KEY = 'costlyf_refresh_token';
   var path = typeof window !== 'undefined' && window.location ? window.location.pathname : '';
-  var LOCALES = ['en', 'lt', 'lv', 'pl', 'es', 'de'];
-  var pathSegments = path.replace(/^\/+|\/+$/g, '').split('/');
-  var locale = pathSegments[0] && LOCALES.indexOf(pathSegments[0]) >= 0 ? pathSegments[0] : null;
-  if (locale) {
-    var navPaths = ['home', 'join', 'share', 'inbox', 'wallet', 'profile'];
-    navPaths.forEach(function (seg) {
-      document.querySelectorAll('a[href="/' + seg + '"]').forEach(function (a) {
-        a.setAttribute('href', '/' + locale + '/' + seg);
-      });
-    });
-    document.querySelectorAll('a.sidebar-logo[href="/"]').forEach(function (a) {
-      a.setAttribute('href', '/' + locale);
-    });
-  }
   if (path && path !== '/login' && path !== '/signup') {
     try {
       var hasToken = !!localStorage.getItem(TOKEN_KEY);
       var hasRefresh = !!localStorage.getItem(REFRESH_KEY);
       if (!hasToken && !hasRefresh) {
-        var loc = locale || 'en';
-        var redirect = (path !== '/' && path !== '/' + loc ? '?redirect=' + encodeURIComponent(path + (window.location.search || '')) : '');
-        window.location.replace('/' + loc + '/login' + redirect);
+        var redirect = (path !== '/' ? '?redirect=' + encodeURIComponent(path + (window.location.search || '')) : '');
+        window.location.replace('/login' + redirect);
         return;
       }
     } catch (e) {}
