@@ -1679,7 +1679,7 @@ app.post('/api/wallet/setup-intent', async (req, res) => {
 // --- 30-day payouts: credit owners (contribution - platform fee) when period ends ---
 const PLATFORM_FEE_PERCENT = 10; // 10% fee; owner receives 90%
 
-app.post('/api/cron/process-payouts', async (req, res) => {
+async function processPayoutsCron(req, res) {
   const cronSecret = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET;
   if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -1720,7 +1720,10 @@ app.post('/api/cron/process-payouts', async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Payout job failed' });
   }
-});
+}
+
+app.get('/api/cron/process-payouts', processPayoutsCron);
+app.post('/api/cron/process-payouts', processPayoutsCron);
 
 // Change password (Bearer token)
 app.post('/api/auth/change-password', async (req, res) => {

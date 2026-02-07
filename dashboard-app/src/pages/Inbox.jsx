@@ -374,7 +374,7 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
         )}
         {chatInputDisabled ? (
           <div className="inbox-chat-input-bar" style={{ opacity: 0.8, pointerEvents: 'none' }}>
-            <p className="inbox-chat-actions-hint" style={{ margin: 0, padding: '0.5rem 0' }}>
+            <p className="inbox-chat-actions-hint" style={{ margin: 0, padding: '0.5rem 0', textAlign: 'center' }}>
               {isOwner && reservedSlotForOther ? 'Accept or decline below. Chat unlocks after you accept.' : "You can't send messages until the host accepts your request."}
             </p>
           </div>
