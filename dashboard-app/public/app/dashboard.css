@@ -4819,6 +4819,25 @@ button.profile-nav-item {
   margin-left: 0.25rem;
 }
 
+/* Mobile bottom nav: badge overlays the inbox icon */
+.bottom-nav-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bottom-nav-item .inbox-unread-badge--overlay {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  margin-left: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 0.625rem;
+}
+
 /* Inbox page */
 .inbox-page {
   padding: var(--dash-padding);

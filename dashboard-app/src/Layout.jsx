@@ -153,9 +153,11 @@ export default function Layout() {
             to={`/${item.path}`}
             className={`bottom-nav-item ${current === item.path ? 'bottom-nav-item--active' : ''}`}
           >
-            <span className="bottom-nav-icon"><BottomNavIcon item={item} /></span>
+            <span className="bottom-nav-icon-wrap">
+              <span className="bottom-nav-icon"><BottomNavIcon item={item} /></span>
+              {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge inbox-unread-badge--overlay" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
+            </span>
             <span>{t(item.labelKey)}</span>
-            {item.path === 'inbox' && (inboxBadge ? <span className="inbox-unread-badge" aria-label={`${unreadCount} ${t('dashboard.unreadMessages')}`}>{inboxBadge}</span> : null)}
           </Link>
         ))}
       </nav>
