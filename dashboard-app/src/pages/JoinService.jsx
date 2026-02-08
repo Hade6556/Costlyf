@@ -143,6 +143,7 @@ export default function JoinService() {
   const [instantOnly, setInstantOnly] = useState(false)
   const [sortBy, setSortBy] = useState('trust')
   const [joinModal, setJoinModal] = useState(null) // { offerId, offer }
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
   const offerIdFromUrl = searchParams.get('offer')
   const tokenFromUrl = searchParams.get('token')
@@ -220,11 +221,19 @@ export default function JoinService() {
           <p className="service-desc">{meta.description}</p>
         </div>
         <div className="service-header-actions">
+          <a href={typeof window !== 'undefined' ? window.location.href : '#'} className="service-header-btn" aria-label={t('dashboard.shareLink', 'Share link')} onClick={(e) => { e.preventDefault(); if (typeof navigator !== 'undefined' && navigator.clipboard) navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : ''); }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+          </a>
           <Link to="/help" className="service-header-btn" aria-label="Help">
             <img src="/media/icons/mingcute--question-2-fill.svg" alt="" width="20" height="20" className="service-header-btn-img" />
           </Link>
         </div>
       </header>
+
+      {/* Service title (prominent on mobile) + offer cards */}
+      <div className="service-page-title-wrap">
+        <h2 className="service-page-title">{meta.name}</h2>
+      </div>
 
       <div className="service-layout">
         <aside className="service-sidebar">
@@ -338,6 +347,87 @@ export default function JoinService() {
           )}
         </main>
       </div>
+
+      {/* Mobile: floating Filter button above bottom nav */}
+      <button
+        type="button"
+        className="service-filter-float"
+        aria-label={t('dashboard.filter', 'Filter')}
+        aria-expanded={filterSheetOpen}
+        onClick={() => setFilterSheetOpen(true)}
+      >
+        <span className="service-filter-float-text">{t('dashboard.filter', 'Filter')}</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="16" y2="12" /><line x1="4" y1="18" x2="12" y2="18" />
+        </svg>
+      </button>
+
+      {/* Mobile: bottom sheet for filters/sort (popout from bottom, tap outside to close) */}
+      {filterSheetOpen && (
+        <div
+          className="service-filter-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('dashboard.filter', 'Filter')}
+          onClick={() => setFilterSheetOpen(false)}
+        >
+          <div className="service-filter-sheet__panel" onClick={(e) => e.stopPropagation()}>
+            <div className="service-filter-sheet__handle" aria-hidden="true" />
+            <div className="service-filters">
+              <p className="service-filter-label">{t('dashboard.typeOfPlan', { service: meta.name })}</p>
+              <div className="service-plan-pills">
+                {['all', 'standard', 'premium'].map((plan) => (
+                  <button
+                    key={plan}
+                    type="button"
+                    className={`service-plan-pill ${planFilter === plan ? 'service-plan-pill--active' : ''}`}
+                    onClick={() => setPlanFilter(plan)}
+                  >
+                    {plan === 'all' ? t('dashboard.all') : t('dashboard.' + plan)}
+                  </button>
+                ))}
+              </div>
+              <div className="service-toggle-row">
+                <span className="service-toggle-icon" aria-hidden="true"><img src="/media/icons/ic--round-verified.svg" alt="" width="24" height="24" /></span>
+                <span className="service-toggle-label">{t('dashboard.subscriptionVerified')}</span>
+                <label className="service-toggle-wrap">
+                  <input type="checkbox" className="service-toggle-input" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
+                  <span className="service-toggle-slider" />
+                </label>
+              </div>
+              <div className="service-toggle-row">
+                <span className="service-toggle-icon service-toggle-icon--bolt" aria-hidden="true"><img src="/media/icons/ic--round-bolt.svg" alt="" width="24" height="24" /></span>
+                <span className="service-toggle-label">{t('dashboard.instantlyAccepts')}</span>
+                <label className="service-toggle-wrap">
+                  <input type="checkbox" className="service-toggle-input" checked={instantOnly} onChange={(e) => setInstantOnly(e.target.checked)} />
+                  <span className="service-toggle-slider" />
+                </label>
+              </div>
+              <p className="service-filter-label">{t('dashboard.sortBy')}:</p>
+              <div className="service-sort-list">
+                {[
+                  { id: 'trust', label: t('dashboard.trustScore'), icon: 'mingcute--medal-line.svg' },
+                  { id: 'price', label: t('dashboard.lowestPrice'), icon: 'mingcute--coin-2-line.svg' },
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`service-sort-item ${sortBy === s.id ? 'service-sort-item--active' : ''}`}
+                    onClick={() => setSortBy(s.id)}
+                  >
+                    <span className="service-sort-icon"><img src={`/media/icons/${s.icon}`} alt="" width="18" height="18" /></span>
+                    <span>{s.label}</span>
+                    <span className="service-sort-chevron">›</span>
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="service-filter-sheet-done" onClick={() => setFilterSheetOpen(false)}>
+                {t('dashboard.done', 'Done')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {joinModal && (
         <JoinOfferModal

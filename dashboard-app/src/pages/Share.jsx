@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
+import { useNotification } from '../contexts/NotificationContext'
 import { SHARE_CATEGORIES, SHARE_SERVICES } from '../data/shareServices'
 import { getServiceBySlug, getPlanPriceTotal, getPriceBreakdown } from '../data/services'
 
@@ -295,6 +296,7 @@ export default function Share() {
 }
 
 function ConfirmStep({ t = (k) => k, state, serviceName, onBack, fetchWithAuth, getToken, onSuccess }) {
+  const { showNotification } = useNotification()
   const [phone, setPhone] = useState('')
   const [terms, setTerms] = useState(false)
   const [wiggle, setWiggle] = useState(false)
@@ -315,7 +317,7 @@ function ConfirmStep({ t = (k) => k, state, serviceName, onBack, fetchWithAuth, 
     }
     const token = getToken()
     if (!token) {
-      alert('Please log in to create an offer.')
+      showNotification({ type: 'error', title: 'Error', message: 'Please log in to create an offer.' })
       return
     }
     setCreating(true)
@@ -337,10 +339,12 @@ function ConfirmStep({ t = (k) => k, state, serviceName, onBack, fetchWithAuth, 
           onSuccess(result.data.id)
           return
         }
-        const msg = result.status === 409 ? t('dashboard.offerAlreadyExists') : (result.data?.error || 'Could not create offer.')
-        alert(msg)
+        const msg = result.status === 409
+          ? "You already have an offer for this service. Edit or stop the existing one first."
+          : (result.data?.error || 'Could not create offer.')
+        showNotification({ type: 'error', title: 'Error', message: msg })
       })
-      .catch(() => alert('Network error.'))
+      .catch(() => showNotification({ type: 'error', title: 'Error', message: 'Network error.' }))
       .finally(() => setCreating(false))
   }
 

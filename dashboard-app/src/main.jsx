@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { InboxUnreadProvider } from './contexts/InboxUnreadContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import './index.css'
 import Layout from './Layout'
 import Home from './pages/Home'
@@ -74,7 +75,9 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <InboxUnreadProvider>
-        <RouterProvider router={router} />
+        <NotificationProvider>
+          <RouterProvider router={router} />
+        </NotificationProvider>
       </InboxUnreadProvider>
     </AuthProvider>
   </StrictMode>,

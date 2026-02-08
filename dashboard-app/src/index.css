@@ -1,5 +1,90 @@
 /* Minimal overrides; dashboard.css from server provides main styles */
 
+/* App notification toast (replaces native alert) */
+.app-notification {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: stretch;
+  min-width: 280px;
+  max-width: calc(100vw - 2rem);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+.app-notification__bar {
+  width: 4px;
+  flex-shrink: 0;
+}
+.app-notification__bar--error {
+  background: #dc2626;
+}
+.app-notification__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 0.75rem 1rem 1rem;
+  flex: 1;
+  min-width: 0;
+}
+.app-notification__icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-notification__icon--error {
+  border: 2px solid #dc2626;
+  color: #dc2626;
+  background: #fff;
+}
+.app-notification__text {
+  min-width: 0;
+  flex: 1;
+}
+.app-notification__title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+.app-notification__message {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #3d3d3d;
+  line-height: 1.4;
+}
+.app-notification__close {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #6e6e73;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+@media (hover: hover) {
+  .app-notification__close:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1d1d1f;
+  }
+}
+
 /* Profile avatar in bottom nav (left of "Profile" text) */
 .bottom-nav-icon--avatar {
   padding: 0;
@@ -46,9 +131,11 @@
   text-decoration: none;
   border-radius: 50%;
 }
-.inbox-chat-back:hover {
-  color: var(--dash-text, #1d1d1f);
-  background: rgba(0, 0, 0, 0.05);
+@media (hover: hover) {
+  .inbox-chat-back:hover {
+    color: var(--dash-text, #1d1d1f);
+    background: rgba(0, 0, 0, 0.05);
+  }
 }
 
 @media (max-width: 767px) {
@@ -93,6 +180,16 @@
 @media (max-width: 767px) {
   .share-flow {
     padding-top: 1rem;
+  }
+  .share-options {
+    display: block;
+  }
+  .share-option-card {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  .share-option-card:last-of-type {
+    margin-bottom: 0;
   }
 }
 
@@ -161,6 +258,110 @@
   }
 }
 
+/* Join service (offers list) page: title + cards, floating Filter button, bottom sheet */
+.service-page-title-wrap {
+  display: none;
+}
+@media (max-width: 899px) {
+  .dashboard-content--service .service-sidebar {
+    display: none;
+  }
+  .dashboard-content--service .service-page-title-wrap {
+    display: block;
+    padding: 0.5rem var(--dash-padding, 1rem) 1rem;
+    text-align: center;
+  }
+  .dashboard-content--service .service-page-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--dash-text, #1d1d1f);
+  }
+  .dashboard-content--service .service-header .service-header-center .service-title,
+  .dashboard-content--service .service-header .service-desc {
+    display: none;
+  }
+  .dashboard-content--service .service-header .service-header-center {
+    flex: 0;
+  }
+  .dashboard-content--service .service-main {
+    padding-bottom: 5rem;
+  }
+}
+
+/* Floating Filter button: center above bottom nav (mobile only) */
+.service-filter-float {
+  display: none;
+}
+@media (max-width: 899px) {
+  .service-filter-float {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(var(--dash-nav-h, 64px) + 12px);
+    z-index: 100;
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    border: none;
+    background: var(--dash-primary, #1d1d1f);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  .service-filter-float-text {
+    font-weight: 600;
+  }
+}
+
+/* Bottom sheet: popout from bottom, tap outside to close */
+.service-filter-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+.service-filter-sheet__panel {
+  width: 100%;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 1.5rem var(--dash-padding, 1rem) calc(1.5rem + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+}
+.service-filter-sheet__handle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+.service-filter-sheet-done {
+  display: block;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--dash-primary, #1d1d1f);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* Profile: remove focus outline from trust card and nav items */
 .profile-trust-card:focus,
 button.profile-trust-card:focus,
@@ -209,8 +410,10 @@ a.profile-nav-item:focus,
   }
 }
 
-.home-profile:hover .home-profile-name {
-  color: var(--dash-text, #1d1d1f);
+@media (hover: hover) {
+  .home-profile:hover .home-profile-name {
+    color: var(--dash-text, #1d1d1f);
+  }
 }
 
 .home-profile-avatar {
@@ -337,8 +540,10 @@ a.profile-nav-item:focus,
   font-weight: 600;
   cursor: pointer;
 }
-.auth-submit:hover {
-  background: #1d1d1f;
+@media (hover: hover) {
+  .auth-submit:hover {
+    background: #1d1d1f;
+  }
 }
 .auth-submit:disabled {
   opacity: 0.7;
@@ -463,8 +668,10 @@ a.profile-nav-item:focus,
   transition: background 0.15s ease;
 }
 
-.profile-hub-card:hover {
-  background: #f8f8f8;
+@media (hover: hover) {
+  .profile-hub-card:hover {
+    background: #f8f8f8;
+  }
 }
 
 .profile-hub-card .profile-hub-chevron {
@@ -491,8 +698,10 @@ a.profile-nav-item:focus,
   transition: background 0.15s ease;
 }
 
-.profile-hub-link:hover {
-  background: #f8f8f8;
+@media (hover: hover) {
+  .profile-hub-link:hover {
+    background: #f8f8f8;
+  }
 }
 
 .profile-hub-link .profile-nav-chevron {
@@ -514,8 +723,10 @@ a.profile-nav-item:focus,
   cursor: pointer;
 }
 
-.profile-hub-sign-out:hover {
-  color: var(--dash-text, #1d1d1f);
+@media (hover: hover) {
+  .profile-hub-sign-out:hover {
+    color: var(--dash-text, #1d1d1f);
+  }
 }
 
 /* Profile subpage: back button + content (no sidebar) */
@@ -543,8 +754,10 @@ a.profile-nav-item:focus,
   text-decoration: none;
 }
 
-.dashboard-content--profile .profile-back-btn:hover {
-  color: var(--dash-text, #1d1d1f);
+@media (hover: hover) {
+  .dashboard-content--profile .profile-back-btn:hover {
+    color: var(--dash-text, #1d1d1f);
+  }
 }
 
 /* Profile: tighter horizontal space on mobile */
@@ -649,3 +862,31 @@ a.profile-nav-item:focus,
 }
 .my-offers-list.skeleton-cards { margin-top: 0; }
 .inbox-skeleton-card .skeleton-card__avatar { border-radius: 50%; }
+
+/* Mobile: disable hover effects (script in index.html sets html.no-hover when viewport <= 767px) */
+html.no-hover *:hover {
+  transform: none !important;
+}
+html.no-hover .bottom-nav-item:hover,
+html.no-hover .bottom-nav-item:hover .bottom-nav-icon--circle {
+  color: var(--dash-text-muted, #6e6e73) !important;
+  border-color: var(--dash-text-muted, #6e6e73) !important;
+}
+html.no-hover .wallet-action-btn:hover,
+html.no-hover .wallet-month-btn:hover,
+html.no-hover .wallet-back:hover {
+  background: var(--dash-search-bg, #f0f0f2) !important;
+  color: inherit !important;
+}
+html.no-hover .home-balance:hover,
+html.no-hover .home-pill:hover {
+  background: var(--dash-search-bg, #f0f0f2) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+}
+html.no-hover .share-option-card:hover,
+html.no-hover .share-offer-row:hover,
+html.no-hover .share-next-btn:hover,
+html.no-hover .share-create-btn:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  transform: none !important;
+}
