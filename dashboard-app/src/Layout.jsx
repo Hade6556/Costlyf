@@ -107,7 +107,8 @@ export default function Layout() {
         className="sidebar-hamburger"
         aria-label={t('dashboard.openMenu', 'Open menu')}
         aria-expanded={sidebarOpen}
-        onClick={() => setSidebarOpen(true)}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSidebarOpen(true); }}
+        onTouchEnd={() => setSidebarOpen(true)}
       >
         <span className="sidebar-hamburger-line" />
         <span className="sidebar-hamburger-line" />
@@ -120,7 +121,27 @@ export default function Layout() {
           onClick={closeSidebar}
         />
       )}
-      <aside className="sidebar" aria-label="Navigation">
+      <aside
+        className="sidebar"
+        aria-label="Navigation"
+        style={
+          sidebarOpen
+            ? {
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'fixed',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: '280px',
+                maxWidth: '85vw',
+                zIndex: 10000,
+                background: '#fff',
+                boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+              }
+            : undefined
+        }
+      >
         <div className="sidebar-header">
           <button type="button" className="sidebar-close" aria-label={t('dashboard.closeMenu', 'Close menu')} onClick={closeSidebar}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
