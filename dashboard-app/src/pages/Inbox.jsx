@@ -342,7 +342,6 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
   const showAcceptDecline = isOwner && reservedSlotForOther
   const showConfirm = !isOwner && slotBelongsToMe && !alreadyConfirmed
   const slotTakenByOther = slots.some((s) => s.status === 'taken' && s.user_id && String(s.user_id) === otherId)
-  const chatInputDisabled = (isOwner && reservedSlotForOther) || (slotBelongsToMe && mySlot?.status === 'reserved')
 
   return (
     <div className="inbox-chat-view">
@@ -411,14 +410,7 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
             )}
           </div>
         )}
-        {chatInputDisabled ? (
-          <div className="inbox-chat-input-bar" style={{ opacity: 0.8, pointerEvents: 'none' }}>
-            <p className="inbox-chat-actions-hint" style={{ margin: 0, padding: '0.5rem 0', textAlign: 'center' }}>
-              {isOwner && reservedSlotForOther ? 'Accept or decline below. Chat unlocks after you accept.' : "You can't send messages until the host accepts your request."}
-            </p>
-          </div>
-        ) : (
-          <div className="subscription-chat-input-bar">
+        <div className="subscription-chat-input-bar">
             <button type="button" className="subscription-chat-attach" aria-label="Attach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></button>
             <div className="subscription-chat-input-wrap">
               <input type="text" className="subscription-chat-input" placeholder="Type a message…" autoComplete="off" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendMessage())} />
@@ -426,7 +418,6 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
             </div>
             <button type="button" className="subscription-chat-emoji" aria-label="Send OK" onClick={() => sendMessage('👌')}>👌</button>
           </div>
-        )}
       </div>
     </div>
   )
