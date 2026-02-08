@@ -255,7 +255,7 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
       created_at: new Date().toISOString(),
       read_at: null,
     }
-    setMessages((prev) => [optimisticMsg, ...prev])
+    setMessages((prev) => [...prev, optimisticMsg])
     if (overrideText === undefined) setInput('')
     else setInput('')
     fetchWithAuth(`/api/chat/threads/${encodeURIComponent(threadId)}/messages`, {
