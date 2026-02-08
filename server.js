@@ -87,7 +87,9 @@ const dashboardPaths = ['home', 'join', 'share', 'wallet', 'offer', 'profile', '
 
 function sendDashboard(req, res) {
   if (hasDashboardApp) {
-    res.set('Cache-Control', 'no-cache, max-age=0');
+    res.set('Cache-Control', 'no-store, no-cache, max-age=0, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     return res.sendFile(dashboardIndexPath);
   }
   res.sendFile(dashboardIndexPath);

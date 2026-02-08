@@ -3,6 +3,13 @@
   "framework": "express",
   "installCommand": "npm install && (cd dashboard-app && npm install)",
   "crons": [{"path": "/api/cron/process-payouts", "schedule": "0 2 * * *"}],
+  "headers": [
+    {"source": "/signup", "headers": [{"key": "Cache-Control", "value": "no-store, no-cache, max-age=0, must-revalidate"}]},
+    {"source": "/login", "headers": [{"key": "Cache-Control", "value": "no-store, no-cache, max-age=0, must-revalidate"}]},
+    {"source": "/forgot-password", "headers": [{"key": "Cache-Control", "value": "no-store, no-cache, max-age=0, must-revalidate"}]},
+    {"source": "/reset-password", "headers": [{"key": "Cache-Control", "value": "no-store, no-cache, max-age=0, must-revalidate"}]},
+    {"source": "/home", "headers": [{"key": "Cache-Control", "value": "no-store, no-cache, max-age=0, must-revalidate"}]}
+  ],
   "rewrites": [
     {"source": "/", "destination": "/api"},
     {"source": "/api/:path*", "destination": "/api?path=api/:path*"},

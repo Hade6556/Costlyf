@@ -92,11 +92,15 @@ export default function Layout() {
   const segments = location.pathname.split('/').filter(Boolean)
   const current = segments[0] || 'home'
   const isJoinPage = location.pathname.startsWith('/join')
-  const isAuthPage = segments.includes('login') || segments.includes('signup')
+  const isAuthPage = segments.includes('login') || segments.includes('signup') || segments.includes('forgot-password') || segments.includes('reset-password')
   const isPublicRoute = isAuthPage || isJoinPage || (segments[0] && PUBLIC_SEGMENTS.has(segments[0]))
   const inboxBadge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
 
   if (isAuthPage) {
+    const isLoginOrSignup = segments.includes('login') || segments.includes('signup')
+    if (!loading && user && isLoginOrSignup) {
+      return <Navigate to="/home" replace />
+    }
     return <Outlet />
   }
 
