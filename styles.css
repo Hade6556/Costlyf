@@ -573,16 +573,16 @@ img {
     display: none;
   }
   .hero-heading {
-    font-size: clamp(2.25rem, 9vw, 3rem);
+    font-size: clamp(2.75rem, 12vw, 3.5rem);
   }
   .hero-rotating-wrap {
     height: 1.3em;
-    min-width: 240px;
+    min-width: 260px;
   }
   .hero-rotating-item {
     height: 1.3em;
     line-height: 1.3em;
-    min-width: 240px;
+    min-width: 260px;
     font-size: inherit;
   }
 }
