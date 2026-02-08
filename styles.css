@@ -559,6 +559,34 @@ img {
   color: var(--text-muted);
 }
 
+/* Hero: mobile – full-width CTA with glow, bigger title, hide trust */
+@media (max-width: 767px) {
+  .btn-hero {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    box-shadow: 0 0 0 1px rgba(29, 29, 31, 0.1), 0 4px 20px rgba(29, 29, 31, 0.25);
+  }
+  .trust-badge {
+    display: none;
+  }
+  .hero-heading {
+    font-size: clamp(2.25rem, 9vw, 3rem);
+  }
+  .hero-rotating-wrap {
+    height: 1.3em;
+    min-width: 240px;
+  }
+  .hero-rotating-item {
+    height: 1.3em;
+    line-height: 1.3em;
+    min-width: 240px;
+    font-size: inherit;
+  }
+}
+
 .trust-google {
   display: inline-flex;
   align-items: center;
