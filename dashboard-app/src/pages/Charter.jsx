@@ -8,7 +8,7 @@ export default function Charter() {
   const { t } = useI18n()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { user, profile, fetchWithAuth } = useAuth()
+  const { user, profile, fetchWithAuth, refreshAuth } = useAuth()
   const [checked, setChecked] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -68,7 +68,7 @@ export default function Charter() {
         return r.json()
       })
       .then(() => {
-        navigate(getReturnTo(true))
+        return refreshAuth().then(() => { navigate(getReturnTo(true)) })
       })
       .catch((err) => {
         setError(err.message || 'Could not save. Try again.')

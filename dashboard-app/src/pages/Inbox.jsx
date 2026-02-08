@@ -210,6 +210,7 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
   const [offer, setOffer] = useState(null)
   const [input, setInput] = useState('')
   const messagesEndRef = useRef(null)
+  const prevMessageCountRef = useRef(0)
 
   const fetchMessages = useCallback(() => {
     fetchWithAuth(`/api/chat/threads/${encodeURIComponent(threadId)}/messages`, {})
@@ -219,6 +220,7 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
   }, [threadId, fetchWithAuth])
 
   useEffect(() => {
+    prevMessageCountRef.current = 0
     fetchMessages()
   }, [fetchMessages])
 
@@ -239,7 +241,13 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
   }, [thread?.offer_id, fetchWithAuth])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const count = messages.length
+    if (count > prevMessageCountRef.current) {
+      prevMessageCountRef.current = count
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      })
+    }
   }, [messages])
 
   const sendMessage = (overrideText) => {
@@ -392,7 +400,6 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
           <div className="inbox-chat-actions">
             {showAcceptDecline && (
               <>
-                <p className="inbox-chat-actions-hint">Accept or decline the join request below. Chat is available after you accept.</p>
                 <div className="inbox-chat-actions-buttons">
                   <button type="button" className="inbox-chat-action-btn inbox-chat-action-btn--primary" onClick={handleAccept}>Accept</button>
                   <button type="button" className="inbox-chat-action-btn inbox-chat-action-btn--danger" onClick={handleDecline}>Decline</button>
@@ -414,7 +421,7 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
             <button type="button" className="subscription-chat-attach" aria-label="Attach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></button>
             <div className="subscription-chat-input-wrap">
               <input type="text" className="subscription-chat-input" placeholder="Type a message…" autoComplete="off" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendMessage())} />
-              <button type="button" className={`subscription-chat-send ${input.trim() ? '' : 'subscription-chat-send--hidden'}`} aria-label="Send" onClick={sendMessage}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M20.235 5.686c.432-1.195-.726-2.353-1.921-1.92L3.709 9.048c-1.199.434-1.344 2.07-.241 2.709l4.662 2.699l4.163-4.163a1 1 0 0 1 1.414 1.414L9.544 15.87l2.7 4.662c.638 1.103 2.274.957 2.708-.241z"/></g></svg></button>
+              <button type="button" className={`subscription-chat-send ${input.trim() ? '' : 'subscription-chat-send--empty'}`} aria-label="Send" onClick={() => sendMessage()}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M20.235 5.686c.432-1.195-.726-2.353-1.921-1.92L3.709 9.048c-1.199.434-1.344 2.07-.241 2.709l4.662 2.699l4.163-4.163a1 1 0 0 1 1.414 1.414L9.544 15.87l2.7 4.662c.638 1.103 2.274.957 2.708-.241z"/></g></svg></button>
             </div>
             <button type="button" className="subscription-chat-emoji" aria-label="Send OK" onClick={() => sendMessage('👌')}>👌</button>
           </div>

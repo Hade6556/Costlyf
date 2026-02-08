@@ -312,7 +312,7 @@ export default function Offer() {
                   {shareLinkCopied ? t('dashboard.copied') : t('dashboard.copyLink')}
                 </button>
               </div>
-              <Link to="/charter?from=offer" className="offer-row offer-owner-only">
+              <Link to={`/charter?from=offer&id=${encodeURIComponent(offerId)}`} className="offer-row offer-owner-only">
                 <div className="offer-row-main">
                   <h2 className="offer-row-title">{t('dashboard.charterTitle')}</h2>
                   <span className={`offer-charter-status ${charterAccepted ? '' : 'offer-charter-status--pending'}`}>
