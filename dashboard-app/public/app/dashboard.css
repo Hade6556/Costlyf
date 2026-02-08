@@ -66,6 +66,12 @@ img {
   display: flex;
   flex-direction: column;
 }
+/* Mobile: avoid body scroll — dashboard fills viewport above fixed nav, not viewport + nav */
+@media (max-width: 767px) {
+  .dashboard {
+    min-height: calc(100vh - var(--dash-nav-h));
+  }
+}
 
 /* Left sidebar: desktop only */
 .sidebar {

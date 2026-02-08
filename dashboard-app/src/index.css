@@ -548,6 +548,12 @@ a.profile-nav-item:focus,
     padding-right: 0.75rem;
   }
 }
+/* Profile: extra top gap on mobile so avatar is not stuck to top */
+@media (max-width: 767px) {
+  .dashboard-content--profile .profile-hub {
+    padding-top: 1.25rem;
+  }
+}
 @media (max-width: 480px) {
   .dashboard-content--profile .profile-hub,
   .dashboard-content--profile .profile-subpage {
