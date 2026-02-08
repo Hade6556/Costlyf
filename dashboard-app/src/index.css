@@ -608,12 +608,18 @@ a.profile-nav-item:focus,
   font-weight: 500;
 }
 
-/* Auth pages (login, signup): mobile – no card container, compact, no extra scroll */
+/* Auth pages (login, signup): mobile – no card container, centered, no scroll */
 @media (max-width: 767px) {
   .auth-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
     padding: 1rem;
-    justify-content: flex-start;
-    padding-top: 2rem;
+    justify-content: center;
   }
   .auth-card {
     max-width: 100%;
