@@ -5,8 +5,6 @@ import { useI18n } from '../contexts/I18nContext'
 import { JoinOfferModal } from './JoinService'
 import { JOIN_CATEGORIES, JOIN_SERVICES } from '../data/joinServices'
 
-const SCROLL_STEP = 180
-
 function ServiceCard({ service, t }) {
   return (
     <Link to={`/join/${service.slug}`} className="service-card">
@@ -23,22 +21,71 @@ function ServiceCard({ service, t }) {
   )
 }
 
+const REPEAT = 3
+const CARD_WIDTH_PX = 200
+const CARD_GAP_PX = 12
+
 function Carousel({ children, t }) {
   const scrollRef = useRef(null)
-  const scroll = (dir) => {
-    if (scrollRef.current) scrollRef.current.scrollBy({ left: dir * SCROLL_STEP, behavior: 'smooth' })
-  }
+  const innerRef = useRef(null)
+  const isJumpingRef = useRef(false)
+  const childArray = Array.isArray(children) ? children : [children]
+  const total = childArray.length
+  const repeated = Array(REPEAT).fill(null).flatMap(() => childArray)
+  const singleBlockWidth = total * (CARD_WIDTH_PX + CARD_GAP_PX) - CARD_GAP_PX
+  const offsetToMiddle = singleBlockWidth
+
+  useEffect(() => {
+    const el = scrollRef.current
+    const inner = innerRef.current
+    if (!el || !inner) return
+    const run = () => {
+      const spacer = inner.firstElementChild
+      const spacerWidth = spacer ? spacer.offsetWidth : 0
+      const viewportWidth = el.clientWidth
+      const firstCardOfMiddleLeft = spacerWidth + offsetToMiddle
+      el.scrollLeft = firstCardOfMiddleLeft - viewportWidth / 2 + CARD_WIDTH_PX / 2
+    }
+    requestAnimationFrame(run)
+  }, [offsetToMiddle])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    const inner = innerRef.current
+    if (!el || !inner) return
+    const spacer = inner.firstElementChild
+    const spacerWidth = spacer ? spacer.offsetWidth : 0
+    const onScroll = () => {
+      if (isJumpingRef.current) return
+      const left = el.scrollLeft
+      const threshold = singleBlockWidth * 0.6
+      if (left < spacerWidth + threshold) {
+        isJumpingRef.current = true
+        el.scrollLeft = left + singleBlockWidth
+        requestAnimationFrame(() => { isJumpingRef.current = false })
+      } else if (left > spacerWidth + singleBlockWidth * 2 - threshold) {
+        isJumpingRef.current = true
+        el.scrollLeft = left - singleBlockWidth
+        requestAnimationFrame(() => { isJumpingRef.current = false })
+      }
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [singleBlockWidth])
+
   return (
-    <div className="card-carousel">
-      <button type="button" className="carousel-btn carousel-btn--prev" aria-label={t('dashboard.previous')} onClick={() => scroll(-1)}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
-      </button>
-      <div className="card-scroll" ref={scrollRef}>
-        {children}
+    <div className="card-carousel card-carousel--centered">
+      <div className="card-scroll card-scroll--centered" ref={scrollRef}>
+        <div className="card-scroll-inner" ref={innerRef}>
+          <div className="card-scroll-spacer" aria-hidden="true" />
+          {repeated.map((child, i) => (
+            <div key={i} className="card-scroll-item">
+              {child}
+            </div>
+          ))}
+          <div className="card-scroll-spacer" aria-hidden="true" />
+        </div>
       </div>
-      <button type="button" className="carousel-btn carousel-btn--next" aria-label={t('dashboard.nextLabel')} onClick={() => scroll(1)}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6" /></svg>
-      </button>
     </div>
   )
 }

@@ -223,18 +223,47 @@
   max-width: 100%;
 }
 
-/* Join page: no carousel scroll buttons, use edge fade instead */
+/* Join page: centered carousel, one card in center, one left/right, infinite scroll */
 .dashboard-content--join .carousel-btn {
   display: none;
 }
-.dashboard-content--join .card-carousel {
-  gap: 0;
+.dashboard-content--join .card-carousel--centered {
   width: 100%;
+  max-width: 100%;
 }
-/* Edge fade: ~10% of next card visible with lower opacity as scroll hint */
-.dashboard-content--join .card-scroll {
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+.dashboard-content--join .card-scroll--centered {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 calc(50% - 100px);
+  padding: 1rem 0;
+}
+.dashboard-content--join .card-scroll--centered::-webkit-scrollbar {
+  display: none;
+}
+.dashboard-content--join .card-scroll-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  min-width: min-content;
+}
+.dashboard-content--join .card-scroll-spacer {
+  flex: 0 0 calc(50% - 100px);
+  min-width: 0;
+  scroll-snap-align: none;
+}
+.dashboard-content--join .card-scroll-item {
+  flex: 0 0 200px;
+  scroll-snap-align: center;
+  min-width: 0;
+}
+.dashboard-content--join .card-scroll-item .service-card {
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
 }
 @media (min-width: 768px) {
   .dashboard-content--join .dashboard-main {
@@ -264,14 +293,10 @@
   .dashboard-content--join .filter-pill {
     flex-shrink: 0;
   }
-  /* Carousel: full-width scroll on mobile, wider cards */
-  .dashboard-content--join .card-scroll {
-    flex: 1;
-    min-width: 0;
-    max-width: none;
-    width: 100%;
+  .dashboard-content--join .card-scroll-spacer {
+    flex: 0 0 calc(50% - 100px);
   }
-  .dashboard-content--join .card-scroll .service-card {
+  .dashboard-content--join .card-scroll-item {
     flex: 0 0 200px;
   }
 }
