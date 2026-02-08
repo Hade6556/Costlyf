@@ -232,21 +232,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      <div className="home-card home-card--control">
-        <div className="home-card-inner home-card-inner--wide">
-          <div className="home-control-text">
-            <h2 className="home-card-title home-card-title--left">{t('dashboard.controlMode')}</h2>
-            <p className="home-card-subtitle">{t('dashboard.controlSubtitle')}</p>
-            <Link to="/home#costlyf-one" className="home-pill home-pill--no-icon">
-              <span className="home-pill-text">{t('dashboard.discoverCostlyfOne')}</span>
-            </Link>
-          </div>
-          <div className="home-control-illus">
-            <img src="/media/home/on.png" alt="" className="home-card-illus-img" />
-          </div>
-        </div>
-      </div>
     </section>
   )
 }
