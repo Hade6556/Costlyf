@@ -21,19 +21,18 @@ function ServiceCard({ service, t }) {
   )
 }
 
-const REPEAT = 3
+const REPEAT = 9
 const CARD_WIDTH_PX = 200
 const CARD_GAP_PX = 12
 
-function Carousel({ children, t }) {
+function Carousel({ children }) {
   const scrollRef = useRef(null)
   const innerRef = useRef(null)
-  const isJumpingRef = useRef(false)
   const childArray = Array.isArray(children) ? children : [children]
   const total = childArray.length
   const repeated = Array(REPEAT).fill(null).flatMap(() => childArray)
   const singleBlockWidth = total * (CARD_WIDTH_PX + CARD_GAP_PX) - CARD_GAP_PX
-  const offsetToMiddle = singleBlockWidth
+  const startScroll = singleBlockWidth * Math.floor(REPEAT / 2)
 
   useEffect(() => {
     const el = scrollRef.current
@@ -43,42 +42,11 @@ function Carousel({ children, t }) {
       const spacer = inner.firstElementChild
       const spacerWidth = spacer ? spacer.offsetWidth : 0
       const viewportWidth = el.clientWidth
-      const firstCardOfMiddleLeft = spacerWidth + offsetToMiddle
-      el.scrollLeft = firstCardOfMiddleLeft - viewportWidth / 2 + CARD_WIDTH_PX / 2
+      const firstCardOfBlockLeft = spacerWidth + startScroll
+      el.scrollLeft = firstCardOfBlockLeft - viewportWidth / 2 + CARD_WIDTH_PX / 2
     }
     requestAnimationFrame(run)
-  }, [offsetToMiddle])
-
-  useEffect(() => {
-    const el = scrollRef.current
-    const inner = innerRef.current
-    if (!el || !inner) return
-    let jumpTimeout = null
-    const onScroll = () => {
-      if (isJumpingRef.current) return
-      const spacer = inner.firstElementChild
-      const spacerWidth = spacer ? spacer.offsetWidth : 0
-      if (spacerWidth <= 0) return
-      const left = el.scrollLeft
-      const edge = singleBlockWidth * 0.25
-      if (left < spacerWidth + edge) {
-        isJumpingRef.current = true
-        el.scrollLeft = left + singleBlockWidth
-        if (jumpTimeout) clearTimeout(jumpTimeout)
-        jumpTimeout = setTimeout(() => { isJumpingRef.current = false }, 200)
-      } else if (left > spacerWidth + singleBlockWidth * 2 - edge) {
-        isJumpingRef.current = true
-        el.scrollLeft = left - singleBlockWidth
-        if (jumpTimeout) clearTimeout(jumpTimeout)
-        jumpTimeout = setTimeout(() => { isJumpingRef.current = false }, 200)
-      }
-    }
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-      if (jumpTimeout) clearTimeout(jumpTimeout)
-    }
-  }, [singleBlockWidth])
+  }, [startScroll])
 
   return (
     <div className="card-carousel card-carousel--centered">
