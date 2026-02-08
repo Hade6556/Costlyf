@@ -482,6 +482,7 @@ a.profile-nav-item:focus,
 
 /* Auth pages (login, signup) */
 .auth-page {
+  box-sizing: border-box;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -607,65 +608,73 @@ a.profile-nav-item:focus,
   font-weight: 500;
 }
 
-/* Auth pages: bigger content on mobile */
+/* Auth pages (login, signup): mobile – no card container, compact, no extra scroll */
 @media (max-width: 767px) {
   .auth-page {
-    padding: 1.25rem 1rem;
+    padding: 1rem;
+    justify-content: flex-start;
+    padding-top: 2rem;
   }
   .auth-card {
-    padding: 2rem 1.5rem;
     max-width: 100%;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .auth-logo {
+    margin-bottom: 1rem;
   }
   .auth-logo img {
-    width: 140px;
+    width: 120px;
     max-width: 100%;
   }
   .auth-title {
-    font-size: 1.75rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    margin: 0 0 0.25rem;
   }
   .auth-subtitle {
-    font-size: 1.125rem;
-    margin-bottom: 1.75rem;
+    font-size: 1rem;
+    margin: 0 0 1.25rem;
   }
   .auth-form .field {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.875rem;
   }
   .auth-form .field-row {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.875rem;
   }
   .auth-form label {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+    margin-bottom: 0.35rem;
   }
   .auth-form input {
-    padding: 1rem 1.25rem;
-    font-size: 1.125rem;
-    border-radius: 14px;
-    min-height: 52px;
+    padding: 0.875rem 1rem;
+    font-size: 1.0625rem;
+    border-radius: 12px;
+    min-height: 48px;
   }
   .auth-submit {
-    padding: 1.125rem;
-    font-size: 1.125rem;
-    border-radius: 14px;
-    margin-top: 0.75rem;
-    min-height: 54px;
+    padding: 1rem;
+    font-size: 1.0625rem;
+    border-radius: 12px;
+    margin-top: 0.5rem;
+    min-height: 50px;
   }
   .auth-error {
-    font-size: 1rem;
-    padding: 1rem;
-    margin-top: 1.25rem;
+    font-size: 0.9375rem;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
   }
   .auth-forgot {
-    font-size: 1rem;
-    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    margin-top: 0.35rem;
   }
   .auth-message {
-    font-size: 1.0625rem;
+    font-size: 1rem;
   }
   .auth-footer {
-    font-size: 1rem;
-    margin-top: 1.75rem;
+    font-size: 0.9375rem;
+    margin-top: 1.25rem;
   }
 }
 
