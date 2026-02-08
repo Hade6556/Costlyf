@@ -85,6 +85,24 @@
   }
 }
 
+/* Notification: full width on mobile, no transform (avoids shift/bug), no hover */
+@media (max-width: 767px) {
+  .app-notification {
+    left: 0;
+    right: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    transform: none;
+    border-radius: 0;
+  }
+  .app-notification__close:hover {
+    background: none !important;
+    color: #6e6e73 !important;
+  }
+}
+
 /* Profile avatar in bottom nav (left of "Profile" text) */
 .bottom-nav-icon--avatar {
   padding: 0;
@@ -866,6 +884,7 @@ a.profile-nav-item:focus,
 /* Mobile: disable hover effects (script in index.html sets html.no-hover when viewport <= 767px) */
 html.no-hover *:hover {
   transform: none !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
 }
 html.no-hover .bottom-nav-item:hover,
 html.no-hover .bottom-nav-item:hover .bottom-nav-icon--circle {
@@ -889,4 +908,58 @@ html.no-hover .share-next-btn:hover,
 html.no-hover .share-create-btn:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
   transform: none !important;
+}
+/* Cards and buttons: reset hover on mobile so nothing sticks */
+html.no-hover .service-offer-card:hover,
+html.no-hover .my-offer-card:hover,
+html.no-hover .service-card:hover,
+html.no-hover .service-plan-pill:hover,
+html.no-hover .service-plan-pill--active:hover,
+html.no-hover .service-sort-item:hover,
+html.no-hover .service-sort-item--active:hover,
+html.no-hover .service-header-btn:hover,
+html.no-hover .service-back:hover,
+html.no-hover .offer-row:hover,
+html.no-hover .offer-row--static:hover,
+html.no-hover .offer-share:hover,
+html.no-hover .inbox-contact-card:hover,
+html.no-hover .profile-hub-link:hover,
+html.no-hover .offer-owner-action-btn:hover,
+html.no-hover .offer-row-btn--danger:hover,
+html.no-hover .offer-row-btn--success:hover,
+html.no-hover .offer-visibility-option:hover,
+html.no-hover .offer-visibility-option--active:hover,
+html.no-hover .offer-stop-btn--danger:hover,
+html.no-hover .offer-stop-btn--secondary:hover,
+html.no-hover .offer-publish-btn:hover,
+html.no-hover .offer-publish-btn--secondary:hover,
+html.no-hover .join-offer-close:hover,
+html.no-hover .join-offer-next:hover,
+html.no-hover .join-offer-back:hover,
+html.no-hover .join-offer-pay:hover,
+html.no-hover .join-offer-payment-option:hover,
+html.no-hover .join-offer-price-wrap:hover,
+html.no-hover .join-offer-topup-btn:hover,
+html.no-hover .join-offer-topup-preset:hover,
+html.no-hover .join-offer-pay-method:hover,
+html.no-hover .join-offer-pay-btn:hover,
+html.no-hover .service-offer-join:hover,
+html.no-hover .service-offer-join--joined:hover,
+html.no-hover .filter-pill:hover,
+html.no-hover .service-filter-float:hover,
+html.no-hover .category-see-all-link:hover,
+html.no-hover .category-see-all a:hover,
+html.no-hover .carousel-btn:hover,
+html.no-hover .service-page-btn:hover,
+html.no-hover .wallet-modal-cancel:hover,
+html.no-hover .wallet-modal-next:hover,
+html.no-hover .wallet-modal-back:hover,
+html.no-hover .wallet-modal-pay:hover {
+  background-color: inherit !important;
+  background: inherit !important;
+  color: inherit !important;
+  border-color: inherit !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+  transform: none !important;
+  opacity: inherit !important;
 }
