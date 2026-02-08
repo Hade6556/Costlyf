@@ -840,6 +840,19 @@ img {
   margin: 0 auto;
 }
 
+@media (max-width: 767px) {
+  .faq-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+  .faq-accordion {
+    order: -1;
+  }
+  .faq-left {
+    order: 0;
+  }
+}
+
 @media (min-width: 768px) {
   .faq-wrap {
     grid-template-columns: 340px 1fr;
