@@ -86,7 +86,7 @@ export default function Layout() {
   const { user, profile } = useAuth()
   const { unreadCount } = useInboxUnread()
   const { t } = useI18n()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   // pathname is relative to basename (e.g. /join or /profile), so first segment is the route
   const segments = location.pathname.split('/').filter(Boolean)
   const current = segments[0] || 'home'
@@ -94,59 +94,83 @@ export default function Layout() {
   const isAuthPage = segments.includes('login') || segments.includes('signup')
   const inboxBadge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
 
-  const closeSidebar = () => setSidebarOpen(false)
+  const closeMobileNav = () => setMobileNavOpen(false)
 
   if (isAuthPage) {
     return <Outlet />
   }
 
   return (
-    <div className={`dashboard ${sidebarOpen ? 'sidebar-open' : ''}`}>
+    <div className="dashboard">
+      {/* Mobile: hamburger button */}
       <button
         type="button"
-        className="sidebar-hamburger"
+        className="mobile-nav-toggle"
         aria-label={t('dashboard.openMenu', 'Open menu')}
-        aria-expanded={sidebarOpen}
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSidebarOpen(true); }}
-        onTouchEnd={() => setSidebarOpen(true)}
+        aria-expanded={mobileNavOpen}
+        onClick={() => setMobileNavOpen(true)}
       >
-        <span className="sidebar-hamburger-line" />
-        <span className="sidebar-hamburger-line" />
-        <span className="sidebar-hamburger-line" />
+        <span className="mobile-nav-toggle-bar" />
+        <span className="mobile-nav-toggle-bar" />
+        <span className="mobile-nav-toggle-bar" />
       </button>
-      {sidebarOpen && (
-        <div
-          className="sidebar-backdrop"
-          aria-hidden="true"
-          onClick={closeSidebar}
-        />
-      )}
-      <aside
-        className="sidebar"
-        aria-label="Navigation"
-        style={
-          sidebarOpen
-            ? {
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'fixed',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: '280px',
-                maxWidth: '85vw',
-                zIndex: 10000,
-                background: '#fff',
-                boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-              }
-            : undefined
-        }
+
+      {/* Mobile: slide-out menu (separate from desktop sidebar) */}
+      <div
+        className={`mobile-nav ${mobileNavOpen ? 'mobile-nav--open' : ''}`}
+        aria-hidden={!mobileNavOpen}
       >
+        <div
+          className="mobile-nav-backdrop"
+          onClick={closeMobileNav}
+          aria-hidden="true"
+        />
+        <div className="mobile-nav-panel">
+          <div className="mobile-nav-header">
+            <a href="/" className="mobile-nav-logo" onClick={closeMobileNav}>
+              <img src="/media/iconlogo.png" alt="" width="32" height="32" />
+              <img src="/media/logo.svg" alt="CostLyf" />
+            </a>
+            <button
+              type="button"
+              className="mobile-nav-close"
+              aria-label={t('dashboard.closeMenu', 'Close menu')}
+              onClick={closeMobileNav}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </div>
+          <nav className="mobile-nav-links">
+            <p className="mobile-nav-heading">{t('dashboard.mainMenu')}</p>
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={`/${item.path}`}
+                className={`mobile-nav-link ${current === item.path ? 'mobile-nav-link--active' : ''}`}
+                onClick={closeMobileNav}
+              >
+                <span className="mobile-nav-link-icon"><NavIcon item={item} /></span>
+                <span>{t(item.labelKey)}</span>
+                {item.path === 'inbox' && inboxBadge ? <span className="mobile-nav-badge">{inboxBadge}</span> : null}
+              </Link>
+            ))}
+          </nav>
+          <div className="mobile-nav-footer">
+            <Link
+              to={`/${profilePath}`}
+              className={`mobile-nav-link mobile-nav-link--profile ${current === profilePath ? 'mobile-nav-link--active' : ''}`}
+              onClick={closeMobileNav}
+            >
+              <ProfileAvatar profile={profile} user={user} className="sidebar-user-avatar" />
+              <span>{t(profileLabelKey)}</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <aside className="sidebar" aria-label="Navigation">
         <div className="sidebar-header">
-          <button type="button" className="sidebar-close" aria-label={t('dashboard.closeMenu', 'Close menu')} onClick={closeSidebar}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-          <a href="/" className="sidebar-logo" onClick={closeSidebar}>
+          <a href="/" className="sidebar-logo">
             <img src="/media/iconlogo.png" alt="" className="sidebar-logo-icon" />
             <img src="/media/logo.svg" alt="CostLyf" />
           </a>
@@ -158,7 +182,6 @@ export default function Layout() {
               key={item.path}
               to={`/${item.path}`}
               className={`sidebar-nav-item ${current === item.path ? 'sidebar-nav-item--active' : ''}`}
-              onClick={closeSidebar}
             >
               <span className="sidebar-nav-icon"><NavIcon item={item} /></span>
               <span>{t(item.labelKey)}</span>
@@ -167,7 +190,7 @@ export default function Layout() {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <Link to={`/${profilePath}`} className={`sidebar-user ${current === profilePath ? 'sidebar-user--active' : ''}`} aria-label={t(profileLabelKey)} onClick={closeSidebar}>
+          <Link to={`/${profilePath}`} className={`sidebar-user ${current === profilePath ? 'sidebar-user--active' : ''}`} aria-label={t(profileLabelKey)}>
             <ProfileAvatar profile={profile} user={user} className="sidebar-user-avatar" />
             <span className="sidebar-user-label">{t(profileLabelKey)}</span>
           </Link>
