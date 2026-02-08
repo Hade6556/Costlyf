@@ -96,6 +96,13 @@
   }
 }
 
+/* Wallet: more gap above "My wallet" on mobile */
+@media (max-width: 767px) {
+  .wallet-screen {
+    padding-top: 2.25rem;
+  }
+}
+
 /* Join page and join listing (e.g. /join, /join/youtube-premium): use full width instead of 80% */
 .dashboard-content--join .dashboard-main {
   max-width: 100%;
