@@ -2,7 +2,6 @@ import { Outlet, Link, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useInboxUnread } from './contexts/InboxUnreadContext'
 import { useI18n } from './contexts/I18nContext'
-import MobileNav from './components/MobileNav'
 
 const HERO_AVATAR_COLORS = ['#a8e6cf', '#d4b5ff', '#a8d4f0', '#fff4b8', '#ffc8d4']
 function getDefaultHeroIndex(userId) {
@@ -109,8 +108,6 @@ export default function Layout() {
 
   return (
     <div className="dashboard">
-      <MobileNav />
-
       <aside className="sidebar" aria-label="Navigation">
         <div className="sidebar-header">
           <a href="/" className="sidebar-logo">

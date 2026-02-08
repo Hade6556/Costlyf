@@ -32,10 +32,29 @@
         <a href="/home" class="btn btn-primary" id="nav-dashboard" style="display: none;" data-i18n="common.goDashboard">Dashboard</a>
       </div>
     </nav>
-    <button class="menu-toggle" aria-label="Open menu">
+    <button class="menu-toggle" id="landing-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="landing-mobile-menu">
       <span></span><span></span><span></span>
     </button>
   </header>
+
+  <div class="landing-mobile-menu" id="landing-mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true">
+    <div class="landing-mobile-menu-backdrop" id="landing-mobile-menu-backdrop" aria-hidden="true"></div>
+    <div class="landing-mobile-menu-panel">
+      <div class="landing-mobile-menu-header">
+        <a href="/" class="landing-mobile-menu-logo"><img src="/media/logo.svg" alt="CostLyf" width="45" height="22"></a>
+        <button class="landing-mobile-menu-close" type="button" aria-label="Close menu" id="landing-mobile-menu-close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <nav class="landing-mobile-menu-nav">
+        <a href="/guides" data-i18n="common.guides" class="landing-mobile-menu-link">Guides</a>
+        <a href="/#how" class="landing-mobile-menu-link" data-i18n="common.howItWorks">How does it work?</a>
+        <a href="/login" class="btn btn-ghost landing-mobile-menu-link" id="landing-menu-login" data-i18n="common.signIn">Log in</a>
+        <a href="/signup" class="btn btn-primary landing-mobile-menu-link" id="landing-menu-signup" data-i18n="common.signUp">Sign up</a>
+        <a href="/home" class="btn btn-primary landing-mobile-menu-link" id="landing-menu-dashboard" style="display: none;" data-i18n="common.goDashboard">Dashboard</a>
+      </nav>
+    </div>
+  </div>
 
   <main>
     <section class="hero">
@@ -563,15 +582,48 @@
         var navLogin = document.getElementById('nav-login');
         var navSignup = document.getElementById('nav-signup');
         var navDashboard = document.getElementById('nav-dashboard');
+        var menuLogin = document.getElementById('landing-menu-login');
+        var menuSignup = document.getElementById('landing-menu-signup');
+        var menuDashboard = document.getElementById('landing-menu-dashboard');
         var heroCta = document.getElementById('hero-cta');
         if (navLogin) navLogin.style.display = 'none';
         if (navSignup) navSignup.style.display = 'none';
         if (navDashboard) navDashboard.style.display = '';
+        if (menuLogin) menuLogin.style.display = 'none';
+        if (menuSignup) menuSignup.style.display = 'none';
+        if (menuDashboard) menuDashboard.style.display = '';
         if (heroCta && window.i18n && window.i18n.t) {
           heroCta.href = '/home';
           heroCta.innerHTML = window.i18n.t('common.goDashboard') + ' <span class="arrow">→</span>';
         }
       }
+      (function initLandingMobileMenu() {
+        var menu = document.getElementById('landing-mobile-menu');
+        var toggle = document.getElementById('landing-menu-toggle');
+        var backdrop = document.getElementById('landing-mobile-menu-backdrop');
+        var closeBtn = document.getElementById('landing-mobile-menu-close');
+        var links = document.querySelectorAll('.landing-mobile-menu-link');
+        function openMenu() {
+          if (menu) {
+            menu.classList.add('landing-mobile-menu--open');
+            menu.setAttribute('aria-hidden', 'false');
+            if (toggle) toggle.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+          }
+        }
+        function closeMenu() {
+          if (menu) {
+            menu.classList.remove('landing-mobile-menu--open');
+            menu.setAttribute('aria-hidden', 'true');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+          }
+        }
+        if (toggle) toggle.addEventListener('click', openMenu);
+        if (backdrop) backdrop.addEventListener('click', closeMenu);
+        if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+        links.forEach(function (link) { link.addEventListener('click', closeMenu); });
+      })();
       document.addEventListener('i18n:ready', updateNavAndHeroForLoggedIn);
       if (window.i18n && window.i18n.ready && window.i18n.ready()) updateNavAndHeroForLoggedIn();
     })();
