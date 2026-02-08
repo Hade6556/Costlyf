@@ -32,7 +32,7 @@ export default function Subscription() {
   }, [fetchWithAuth])
 
   return (
-    <main className="dashboard-main">
+    <main className="dashboard-main dashboard-main--subscription">
       <div className="subscription-page">
         <Link to="/home" className="subscription-back">‹ {t('dashboard.backToHome')}</Link>
         <h1 className="subscription-title">{t('dashboard.mySubscriptions')}</h1>

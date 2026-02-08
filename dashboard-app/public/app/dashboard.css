@@ -2028,6 +2028,13 @@ img {
   max-width: 100%;
   padding: var(--dash-padding);
 }
+@media (max-width: 767px) {
+  .dashboard-main--offer,
+  .dashboard-main--subscription {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
 .offer-screen {
   max-width: 480px;
   margin: 0 auto;
