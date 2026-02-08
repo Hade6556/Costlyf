@@ -53,24 +53,31 @@ function Carousel({ children, t }) {
     const el = scrollRef.current
     const inner = innerRef.current
     if (!el || !inner) return
-    const spacer = inner.firstElementChild
-    const spacerWidth = spacer ? spacer.offsetWidth : 0
+    let jumpTimeout = null
     const onScroll = () => {
       if (isJumpingRef.current) return
+      const spacer = inner.firstElementChild
+      const spacerWidth = spacer ? spacer.offsetWidth : 0
+      if (spacerWidth <= 0) return
       const left = el.scrollLeft
-      const threshold = singleBlockWidth * 0.6
-      if (left < spacerWidth + threshold) {
+      const edge = singleBlockWidth * 0.25
+      if (left < spacerWidth + edge) {
         isJumpingRef.current = true
         el.scrollLeft = left + singleBlockWidth
-        requestAnimationFrame(() => { isJumpingRef.current = false })
-      } else if (left > spacerWidth + singleBlockWidth * 2 - threshold) {
+        if (jumpTimeout) clearTimeout(jumpTimeout)
+        jumpTimeout = setTimeout(() => { isJumpingRef.current = false }, 200)
+      } else if (left > spacerWidth + singleBlockWidth * 2 - edge) {
         isJumpingRef.current = true
         el.scrollLeft = left - singleBlockWidth
-        requestAnimationFrame(() => { isJumpingRef.current = false })
+        if (jumpTimeout) clearTimeout(jumpTimeout)
+        jumpTimeout = setTimeout(() => { isJumpingRef.current = false }, 200)
       }
     }
     el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      if (jumpTimeout) clearTimeout(jumpTimeout)
+    }
   }, [singleBlockWidth])
 
   return (
