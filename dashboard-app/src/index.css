@@ -607,6 +607,68 @@ a.profile-nav-item:focus,
   font-weight: 500;
 }
 
+/* Auth pages: bigger content on mobile */
+@media (max-width: 767px) {
+  .auth-page {
+    padding: 1.25rem 1rem;
+  }
+  .auth-card {
+    padding: 2rem 1.5rem;
+    max-width: 100%;
+  }
+  .auth-logo img {
+    width: 140px;
+    max-width: 100%;
+  }
+  .auth-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .auth-subtitle {
+    font-size: 1.125rem;
+    margin-bottom: 1.75rem;
+  }
+  .auth-form .field {
+    margin-bottom: 1.25rem;
+  }
+  .auth-form .field-row {
+    margin-bottom: 1.25rem;
+  }
+  .auth-form label {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .auth-form input {
+    padding: 1rem 1.25rem;
+    font-size: 1.125rem;
+    border-radius: 14px;
+    min-height: 52px;
+  }
+  .auth-submit {
+    padding: 1.125rem;
+    font-size: 1.125rem;
+    border-radius: 14px;
+    margin-top: 0.75rem;
+    min-height: 54px;
+  }
+  .auth-error {
+    font-size: 1rem;
+    padding: 1rem;
+    margin-top: 1.25rem;
+  }
+  .auth-forgot {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+  }
+  .auth-message {
+    font-size: 1.0625rem;
+  }
+  .auth-footer {
+    font-size: 1rem;
+    margin-top: 1.75rem;
+  }
+}
+
 /* Privacy & Security panel: stack layout so form is not squished */
 .profile-main--privacy .profile-main-title {
   margin: 0 0 0.35rem;
