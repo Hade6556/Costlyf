@@ -103,6 +103,80 @@
   }
 }
 
+/* Mobile: hamburger opens sidebar overlay */
+.sidebar-hamburger {
+  display: none;
+}
+.sidebar-close {
+  display: none;
+}
+@media (max-width: 767px) {
+  .sidebar-hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    position: fixed;
+    top: max(0.5rem, env(safe-area-inset-top));
+    left: 0.5rem;
+    z-index: 100;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--dash-search-bg, #f0f0f2);
+    color: var(--dash-text, #1d1d1f);
+    cursor: pointer;
+  }
+  .sidebar-hamburger-line {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 998;
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .dashboard.sidebar-open .sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 999;
+    background: #fff;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+  .dashboard.sidebar-open .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+  .sidebar-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--dash-search-bg, #f0f0f2);
+    color: var(--dash-text, #1d1d1f);
+    cursor: pointer;
+  }
+}
+
 /* Profile avatar in bottom nav (left of "Profile" text) */
 .bottom-nav-icon--avatar {
   padding: 0;

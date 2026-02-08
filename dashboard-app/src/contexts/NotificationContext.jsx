@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
+
+const AUTO_DISMISS_MS = 3000
 
 const NotificationContext = createContext(null)
 
@@ -9,14 +11,37 @@ export function useNotification() {
 
 export function NotificationProvider({ children }) {
   const [notification, setNotification] = useState(null)
+  const dismissTimerRef = useRef(null)
+
+  const hideNotification = useCallback(() => {
+    if (dismissTimerRef.current) {
+      clearTimeout(dismissTimerRef.current)
+      dismissTimerRef.current = null
+    }
+    setNotification(null)
+  }, [])
 
   const showNotification = useCallback(({ title = 'Notification', message, type = 'error' }) => {
+    if (dismissTimerRef.current) {
+      clearTimeout(dismissTimerRef.current)
+      dismissTimerRef.current = null
+    }
     setNotification({ title, message, type })
   }, [])
 
-  const hideNotification = useCallback(() => {
-    setNotification(null)
-  }, [])
+  useEffect(() => {
+    if (!notification) return
+    dismissTimerRef.current = setTimeout(() => {
+      dismissTimerRef.current = null
+      setNotification(null)
+    }, AUTO_DISMISS_MS)
+    return () => {
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current)
+        dismissTimerRef.current = null
+      }
+    }
+  }, [notification])
 
   const value = { showNotification, hideNotification }
 

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useInboxUnread } from './contexts/InboxUnreadContext'
@@ -85,6 +86,7 @@ export default function Layout() {
   const { user, profile } = useAuth()
   const { unreadCount } = useInboxUnread()
   const { t } = useI18n()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   // pathname is relative to basename (e.g. /join or /profile), so first segment is the route
   const segments = location.pathname.split('/').filter(Boolean)
   const current = segments[0] || 'home'
@@ -92,15 +94,38 @@ export default function Layout() {
   const isAuthPage = segments.includes('login') || segments.includes('signup')
   const inboxBadge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
 
+  const closeSidebar = () => setSidebarOpen(false)
+
   if (isAuthPage) {
     return <Outlet />
   }
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <button
+        type="button"
+        className="sidebar-hamburger"
+        aria-label={t('dashboard.openMenu', 'Open menu')}
+        aria-expanded={sidebarOpen}
+        onClick={() => setSidebarOpen(true)}
+      >
+        <span className="sidebar-hamburger-line" />
+        <span className="sidebar-hamburger-line" />
+        <span className="sidebar-hamburger-line" />
+      </button>
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          aria-hidden="true"
+          onClick={closeSidebar}
+        />
+      )}
       <aside className="sidebar" aria-label="Navigation">
         <div className="sidebar-header">
-          <a href="/" className="sidebar-logo">
+          <button type="button" className="sidebar-close" aria-label={t('dashboard.closeMenu', 'Close menu')} onClick={closeSidebar}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+          <a href="/" className="sidebar-logo" onClick={closeSidebar}>
             <img src="/media/iconlogo.png" alt="" className="sidebar-logo-icon" />
             <img src="/media/logo.svg" alt="CostLyf" />
           </a>
@@ -112,6 +137,7 @@ export default function Layout() {
               key={item.path}
               to={`/${item.path}`}
               className={`sidebar-nav-item ${current === item.path ? 'sidebar-nav-item--active' : ''}`}
+              onClick={closeSidebar}
             >
               <span className="sidebar-nav-icon"><NavIcon item={item} /></span>
               <span>{t(item.labelKey)}</span>
@@ -120,7 +146,7 @@ export default function Layout() {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <Link to={`/${profilePath}`} className={`sidebar-user ${current === profilePath ? 'sidebar-user--active' : ''}`} aria-label={t(profileLabelKey)}>
+          <Link to={`/${profilePath}`} className={`sidebar-user ${current === profilePath ? 'sidebar-user--active' : ''}`} aria-label={t(profileLabelKey)} onClick={closeSidebar}>
             <ProfileAvatar profile={profile} user={user} className="sidebar-user-avatar" />
             <span className="sidebar-user-label">{t(profileLabelKey)}</span>
           </Link>
