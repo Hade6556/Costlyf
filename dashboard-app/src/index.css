@@ -272,6 +272,11 @@
     margin-right: auto;
     width: 100%;
   }
+  .dashboard-content--join .card-carousel--centered {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 /* Join page mobile: filters in one line, scrollable */
