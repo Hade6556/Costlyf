@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useInboxUnread } from './contexts/InboxUnreadContext'
 import { useI18n } from './contexts/I18nContext'
@@ -81,21 +81,30 @@ function BottomNavIcon({ item }) {
   )
 }
 
+const PUBLIC_SEGMENTS = new Set(['login', 'signup', 'forgot-password', 'reset-password', 'join', 'charter', 'terms', 'privacy', 'legal', 'guides'])
+
 export default function Layout() {
   const location = useLocation()
-  const { user, profile } = useAuth()
+  const { user, profile, loading } = useAuth()
   const { unreadCount } = useInboxUnread()
   const { t } = useI18n()
 
   // pathname is relative to basename (e.g. /join or /profile), so first segment is the route
   const segments = location.pathname.split('/').filter(Boolean)
   const current = segments[0] || 'home'
-  const isJoinPage = location.pathname.includes('/join')
+  const isJoinPage = location.pathname.startsWith('/join')
   const isAuthPage = segments.includes('login') || segments.includes('signup')
+  const isPublicRoute = isAuthPage || isJoinPage || (segments[0] && PUBLIC_SEGMENTS.has(segments[0]))
   const inboxBadge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
 
   if (isAuthPage) {
     return <Outlet />
+  }
+
+  // Only join (and auth pages) are allowed without account; any other route requires login
+  if (!loading && !user && !isPublicRoute) {
+    const redirect = `${location.pathname}${location.search || ''}`
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirect)}`} replace />
   }
 
   return (

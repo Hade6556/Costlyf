@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useI18n } from '../contexts/I18nContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -58,13 +58,16 @@ const NAV_ITEMS = [
 
 const MOBILE_BREAKPOINT = 767
 
+const OVERLAY_CLASS_OPEN = 'mobile-nav--open'
+
 export default function MobileNav() {
   const { t } = useI18n()
   const location = useLocation()
   const { user, profile } = useAuth()
   const { unreadCount } = useInboxUnread()
-  const [open, setOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const overlayRef = useRef(null)
+  const backdropRef = useRef(null)
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
@@ -74,22 +77,47 @@ export default function MobileNav() {
     return () => mq.removeEventListener('change', update)
   }, [])
 
+  // Open/close via native DOM so it always works (no React state)
+  useEffect(() => {
+    if (!isMobile) return
+    const overlay = overlayRef.current
+    const backdrop = backdropRef.current
+    const btn = document.getElementById('js-mobile-nav-toggle')
+    if (!overlay || !backdrop || !btn) return
+
+    const open = () => overlay.classList.add(OVERLAY_CLASS_OPEN)
+    const close = () => overlay.classList.remove(OVERLAY_CLASS_OPEN)
+
+    btn.addEventListener('click', open)
+    btn.addEventListener('touchend', open, { passive: true })
+    backdrop.addEventListener('click', close)
+    backdrop.addEventListener('touchend', close, { passive: true })
+
+    return () => {
+      btn.removeEventListener('click', open)
+      btn.removeEventListener('touchend', open)
+      backdrop.removeEventListener('click', close)
+      backdrop.removeEventListener('touchend', close)
+    }
+  }, [isMobile])
+
   const segments = location.pathname.split('/').filter(Boolean)
   const current = segments[0] || 'home'
   const inboxBadge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
 
-  const close = () => setOpen(false)
+  const closeMenu = () => overlayRef.current?.classList.remove(OVERLAY_CLASS_OPEN)
 
   if (!isMobile) return null
 
   return (
     <>
       <button
+        id="js-mobile-nav-toggle"
         type="button"
         className="mobile-nav-toggle"
         aria-label={t('dashboard.openMenu', 'Open menu')}
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
+        aria-expanded="false"
+        aria-controls="js-mobile-nav-overlay"
       >
         <span className="mobile-nav-toggle-bar" />
         <span className="mobile-nav-toggle-bar" />
@@ -97,16 +125,18 @@ export default function MobileNav() {
       </button>
 
       <div
-        className={`mobile-nav ${open ? 'mobile-nav--open' : ''}`}
+        id="js-mobile-nav-overlay"
+        ref={overlayRef}
+        className="mobile-nav"
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
-        aria-hidden={!open}
+        aria-hidden="true"
       >
-        <div className="mobile-nav-backdrop" onClick={close} onTouchEnd={close} aria-hidden="true" />
+        <div ref={backdropRef} className="mobile-nav-backdrop" aria-hidden="true" />
         <div className="mobile-nav-panel">
           <div className="mobile-nav-header">
-            <a href="/" className="mobile-nav-logo" onClick={close}>
+            <a href="/" className="mobile-nav-logo" onClick={closeMenu}>
               <img src="/media/iconlogo.png" alt="" />
               <img src="/media/logo.svg" alt="CostLyf" />
             </a>
@@ -114,7 +144,7 @@ export default function MobileNav() {
               type="button"
               className="mobile-nav-close"
               aria-label={t('dashboard.closeMenu', 'Close menu')}
-              onClick={close}
+              onClick={closeMenu}
             >
               <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <line x1={18} y1={6} x2={6} y2={18} />
@@ -129,7 +159,7 @@ export default function MobileNav() {
                 key={item.path}
                 to={`/${item.path}`}
                 className={`mobile-nav-link ${current === item.path ? 'mobile-nav-link--active' : ''}`}
-                onClick={close}
+                onClick={closeMenu}
               >
                 <span className="mobile-nav-link-icon">
                   <NavIcon item={item} />
@@ -145,7 +175,7 @@ export default function MobileNav() {
             <Link
               to="/profile"
               className={`mobile-nav-link mobile-nav-link--profile ${current === 'profile' ? 'mobile-nav-link--active' : ''}`}
-              onClick={close}
+              onClick={closeMenu}
             >
               <ProfileAvatar profile={profile} user={user} />
               <span>{t('dashboard.navProfile')}</span>
