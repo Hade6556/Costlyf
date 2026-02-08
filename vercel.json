@@ -7,7 +7,6 @@
     {"source": "/", "destination": "/api"},
     {"source": "/api/:path*", "destination": "/api?path=api/:path*"},
     {"source": "/uploads/:path*", "destination": "/api?path=uploads/:path*"},
-    {"source": "/dashboard-app/(.*)", "destination": "/api?path=dashboard-app/$1"},
     {"source": "/home", "destination": "/api?path=home"},
     {"source": "/home/:rest*", "destination": "/api?path=home/:rest*"},
     {"source": "/login", "destination": "/api?path=login"},

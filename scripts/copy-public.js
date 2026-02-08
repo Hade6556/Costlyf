@@ -36,7 +36,7 @@ if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
   }
 });
 
-['media', 'messages'].forEach((dir) => {
+['media', 'messages', 'app'].forEach((dir) => {
   const src = path.join(root, dir);
   const dest = path.join(publicDir, dir);
   if (fs.existsSync(src)) {

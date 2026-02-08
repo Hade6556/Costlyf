@@ -1360,13 +1360,32 @@ app.post('/api/auth/signup', async (req, res) => {
   const { email, password, phone, first_name, last_name, alias, date_of_birth } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   try {
+    const emailVal = String(email).trim();
+    const aliasVal = (alias && String(alias).trim()) || null;
+    const phoneVal = (phone && String(phone).trim()) || null;
+    if (emailVal) {
+      const { data: existingEmail } = await supabaseAdmin.from('profiles').select('id').ilike('email', emailVal).limit(1).maybeSingle();
+      if (existingEmail) return res.status(400).json({ error: 'This email is already registered.' });
+    }
+    if (aliasVal) {
+      const { data: existingAlias } = await supabaseAdmin.from('profiles').select('id').ilike('alias', aliasVal).limit(1).maybeSingle();
+      if (existingAlias) return res.status(400).json({ error: 'This nickname is already taken.' });
+    }
+    if (phoneVal) {
+      const { data: existingPhone } = await supabaseAdmin.from('profiles').select('id').eq('phone', phoneVal).limit(1).maybeSingle();
+      if (existingPhone) return res.status(400).json({ error: 'This phone number is already in use.' });
+    }
     const { data: userData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: String(email).trim(),
       password: String(password),
       email_confirm: true,
       user_metadata: { first_name: first_name || '', last_name: last_name || '', alias: alias || '', phone: phone || '', date_of_birth: date_of_birth || null }
     });
-    if (authError) return res.status(400).json({ error: authError.message });
+    if (authError) {
+      const m = authError.message || '';
+      if (/already|registered|exists/i.test(m)) return res.status(400).json({ error: 'This email is already registered.' });
+      return res.status(400).json({ error: authError.message });
+    }
     const userId = userData.user?.id;
     if (!userId) return res.status(500).json({ error: 'User not created' });
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
@@ -1541,6 +1560,19 @@ app.patch('/api/profile', async (req, res) => {
     if (withdrawalIban !== undefined) updates.withdrawal_iban = String(withdrawalIban).trim().replace(/\s/g, '') || null;
     if (withdrawalAccountHolder !== undefined) updates.withdrawal_account_holder = String(withdrawalAccountHolder).trim() || null;
     if (charterAcceptedAt !== undefined) updates.charter_accepted_at = charterAcceptedAt ? String(charterAcceptedAt).trim() : null;
+    // Reject duplicate alias, email, or phone (must be unique across users)
+    if (updates.email !== undefined && updates.email) {
+      const { data: existing } = await supabaseAdmin.from('profiles').select('id').ilike('email', updates.email).neq('id', user.id).limit(1).maybeSingle();
+      if (existing) return res.status(400).json({ error: 'This email is already in use by another account.' });
+    }
+    if (updates.alias !== undefined && updates.alias) {
+      const { data: existing } = await supabaseAdmin.from('profiles').select('id').ilike('alias', updates.alias).neq('id', user.id).limit(1).maybeSingle();
+      if (existing) return res.status(400).json({ error: 'This nickname is already taken.' });
+    }
+    if (updates.phone !== undefined && updates.phone) {
+      const { data: existing } = await supabaseAdmin.from('profiles').select('id').eq('phone', updates.phone).neq('id', user.id).limit(1).maybeSingle();
+      if (existing) return res.status(400).json({ error: 'This phone number is already in use by another account.' });
+    }
     // When user accepts charter for the first time, bump trust_score (max 10)
     if (charterAcceptedAt && String(charterAcceptedAt).trim()) {
       const { data: current } = await supabaseAdmin.from('profiles').select('charter_accepted_at, trust_score').eq('id', user.id).single();
@@ -1550,7 +1582,10 @@ app.patch('/api/profile', async (req, res) => {
       }
     }
     const { data, error } = await supabaseAdmin.from('profiles').update(updates).eq('id', user.id).select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      if (error.code === '23505') return res.status(400).json({ error: 'This nickname, email, or phone number is already in use.' });
+      return res.status(500).json({ error: error.message });
+    }
     return res.status(200).json(data);
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Update failed' });

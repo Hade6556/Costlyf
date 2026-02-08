@@ -827,92 +827,24 @@ img {
   text-align: left;
 }
 
-/* FAQ – two columns, left dark box + accordion */
+/* FAQ – title above accordion, centered */
 .section-faq {
   padding: var(--space-xl) var(--space);
 }
 
 .faq-wrap {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-xl);
   max-width: 100%;
   margin: 0 auto;
 }
 
-@media (min-width: 768px) {
-  .faq-wrap {
-    grid-template-columns: 340px 1fr;
-    gap: 2.5rem;
-  }
-}
-
-.faq-left {
-  background: var(--primary);
-  border-radius: var(--radius-lg);
-  padding: 2rem 1.5rem;
-}
-
-.faq-heading {
+.faq-title {
   margin: 0 0 var(--space-lg);
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
   letter-spacing: -0.02em;
   line-height: var(--leading-tight);
-  color: #fff;
-}
-
-.faq-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.faq-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius);
-  color: #fff;
-  text-decoration: none;
-  transition: background 0.1s;
-  text-align: left;
-}
-
-.faq-card:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.faq-card-icon {
-  flex-shrink: 0;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.faq-card-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.faq-card-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.faq-card-title {
-  font-size: var(--text-base);
-  font-weight: var(--font-medium);
-  color: #fff;
-}
-
-.faq-card-desc {
-  font-size: var(--text-sm);
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--text);
+  text-align: center;
 }
 
 .faq-accordion {
