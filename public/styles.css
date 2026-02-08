@@ -840,19 +840,6 @@ img {
   margin: 0 auto;
 }
 
-@media (max-width: 767px) {
-  .faq-wrap {
-    display: flex;
-    flex-direction: column;
-  }
-  .faq-accordion {
-    order: -1;
-  }
-  .faq-left {
-    order: 0;
-  }
-}
-
 @media (min-width: 768px) {
   .faq-wrap {
     grid-template-columns: 340px 1fr;
@@ -1024,19 +1011,7 @@ img {
   line-height: var(--leading-relaxed);
 }
 
-/* How does it work – more appealing block */
-.section-how {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0%, transparent 100%);
-}
-
-.section-how .section-inner {
-  background: #fff;
-  padding: 2.5rem 2rem;
-  border-radius: 20px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
+/* How does it work */
 .section-how .section-title {
   font-size: clamp(1.5rem, 2vw + 1rem, 2rem);
   color: var(--text);
