@@ -73,6 +73,70 @@ img {
   }
 }
 
+/* Mobile: inbox chat open — full viewport, no bottom nav, chat fills screen */
+@media (max-width: 767px) {
+  .dashboard.dashboard--inbox-chat-open {
+    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
+  }
+  .dashboard.dashboard--inbox-chat-open .bottom-nav {
+    display: none;
+  }
+  .dashboard.dashboard--inbox-chat-open .dashboard-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+  }
+  .dashboard.dashboard--inbox-chat-open .dashboard-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+  .dashboard.dashboard--inbox-chat-open .inbox-page {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+  .dashboard.dashboard--inbox-chat-open .inbox-chat-view {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .dashboard.dashboard--inbox-chat-open .inbox-chat-wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    margin-bottom: 0;
+    border: none;
+  }
+  .dashboard.dashboard--inbox-chat-open .subscription-chat-header {
+    flex-shrink: 0;
+  }
+  .dashboard.dashboard--inbox-chat-open .subscription-chat-messages {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .dashboard.dashboard--inbox-chat-open .inbox-chat-actions {
+    flex-shrink: 0;
+  }
+  .dashboard.dashboard--inbox-chat-open .subscription-chat-input-bar {
+    flex-shrink: 0;
+  }
+}
+
 /* Left sidebar: desktop only */
 .sidebar {
   display: none;
@@ -4622,7 +4686,8 @@ button.profile-nav-item {
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: opacity 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .subscription-chat-send--hidden {
   opacity: 0;
@@ -4632,12 +4697,17 @@ button.profile-nav-item {
   opacity: 0.4;
   color: var(--dash-text-muted);
 }
-.subscription-chat-send--empty:hover,
-.subscription-chat-send--empty:active {
-  opacity: 0.7;
-}
-.subscription-chat-send:hover {
-  opacity: 0.85;
+@media (hover: hover) {
+  .subscription-chat-send {
+    transition: opacity 0.1s;
+  }
+  .subscription-chat-send--empty:hover,
+  .subscription-chat-send--empty:active {
+    opacity: 0.7;
+  }
+  .subscription-chat-send:hover {
+    opacity: 0.85;
+  }
 }
 .subscription-chat-send svg {
   display: block;
@@ -4652,6 +4722,7 @@ button.profile-nav-item {
     right: 0;
     min-width: 44px;
     min-height: 44px;
+    transition: none;
   }
 }
 .subscription-chat-mic {

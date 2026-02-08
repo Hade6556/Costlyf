@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useInboxUnread } from './contexts/InboxUnreadContext'
@@ -96,6 +97,17 @@ export default function Layout() {
   const isPublicRoute = isAuthPage || isJoinPage || (segments[0] && PUBLIC_SEGMENTS.has(segments[0]))
   const inboxBadge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
 
+  const [hash, setHash] = useState(() => (typeof window !== 'undefined' ? window.location.hash : ''))
+  useEffect(() => {
+    setHash(window.location.hash)
+  }, [location.pathname])
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  const isInboxChatOpen = location.pathname.startsWith('/inbox') && /^#thread-/.test(hash)
+
   if (isAuthPage) {
     const isLoginOrSignup = segments.includes('login') || segments.includes('signup')
     if (!loading && user && isLoginOrSignup) {
@@ -111,7 +123,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${isInboxChatOpen ? 'dashboard--inbox-chat-open' : ''}`}>
       <aside className="sidebar" aria-label="Navigation">
         <div className="sidebar-header">
           <a href="/" className="sidebar-logo">
