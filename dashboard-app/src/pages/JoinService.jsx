@@ -352,11 +352,11 @@ export default function JoinService() {
       <button
         type="button"
         className="service-filter-float"
-        aria-label={t('dashboard.filter', 'Filter')}
+        aria-label={t('dashboard.filter')}
         aria-expanded={filterSheetOpen}
         onClick={() => setFilterSheetOpen(true)}
       >
-        <span className="service-filter-float-text">{t('dashboard.filter', 'Filter')}</span>
+        <span className="service-filter-float-text">{t('dashboard.filter')}</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="16" y2="12" /><line x1="4" y1="18" x2="12" y2="18" />
         </svg>
@@ -368,7 +368,7 @@ export default function JoinService() {
           className="service-filter-sheet"
           role="dialog"
           aria-modal="true"
-          aria-label={t('dashboard.filter', 'Filter')}
+          aria-label={t('dashboard.filter')}
           onClick={() => setFilterSheetOpen(false)}
         >
           <div className="service-filter-sheet__panel" onClick={(e) => e.stopPropagation()}>
@@ -422,7 +422,7 @@ export default function JoinService() {
                 ))}
               </div>
               <button type="button" className="service-filter-sheet-done" onClick={() => setFilterSheetOpen(false)}>
-                {t('dashboard.done', 'Done')}
+                {t('dashboard.close')}
               </button>
             </div>
           </div>

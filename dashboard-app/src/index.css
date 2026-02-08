@@ -318,8 +318,10 @@
     justify-content: center;
     gap: 0.5rem;
     position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: max-content;
     bottom: calc(var(--dash-nav-h, 64px) + 12px);
     z-index: 100;
     padding: 0.75rem 1.5rem;
@@ -332,6 +334,10 @@
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  .service-filter-float:hover {
+    /* Prevent layout shift on hover (e.g. touch devices) */
+    transform: none;
   }
   .service-filter-float-text {
     font-weight: 600;
