@@ -245,7 +245,19 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
   const sendMessage = (overrideText) => {
     const text = (overrideText !== undefined ? overrideText : input).trim()
     if (!text) return
-    if (overrideText !== undefined) setInput('')
+    const tempId = `opt-${Date.now()}`
+    const optimisticMsg = {
+      _optimistic: true,
+      _tempId: tempId,
+      id: tempId,
+      sender_id: myUserId,
+      content: text,
+      created_at: new Date().toISOString(),
+      read_at: null,
+    }
+    setMessages((prev) => [optimisticMsg, ...prev])
+    if (overrideText === undefined) setInput('')
+    else setInput('')
     fetchWithAuth(`/api/chat/threads/${encodeURIComponent(threadId)}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -255,12 +267,16 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
         if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Send failed') })
         return r.json()
       })
-      .then(() => {
-        if (overrideText === undefined) setInput('')
-        fetchMessages()
+      .then((serverMsg) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._tempId === tempId ? { ...serverMsg } : m))
+        )
         onThreadsRefresh()
       })
-      .catch((e) => alert(e.message || 'Could not send message'))
+      .catch((e) => {
+        setMessages((prev) => prev.filter((m) => m._tempId !== tempId))
+        alert(e.message || 'Could not send message')
+      })
   }
 
   const CONFIRM_CREDENTIALS_TEXT = 'I confirm I received the credentials and everything is working.'
@@ -327,8 +343,6 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
   const showConfirm = !isOwner && slotBelongsToMe && !alreadyConfirmed
   const slotTakenByOther = slots.some((s) => s.status === 'taken' && s.user_id && String(s.user_id) === otherId)
   const chatInputDisabled = (isOwner && reservedSlotForOther) || (slotBelongsToMe && mySlot?.status === 'reserved')
-  const showHostWaitingTip = isOwner && slotTakenByOther && !alreadyConfirmed
-  const showSubscriberConfirmTip = showConfirm
 
   return (
     <div className="inbox-chat-view">
@@ -363,7 +377,11 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
                   <span className="subscription-chat-msg-text">{m.content || ''}</span>
                   <span className="subscription-chat-msg-meta">
                     <span className="subscription-chat-msg-time">{formatTime(m.created_at)}</span>
-                    {isMe && <span className="subscription-chat-msg-checks" aria-hidden="true"><span className={`subscription-chat-msg-check ${m.read_at ? 'subscription-chat-msg-check--seen' : ''}`}>{m.read_at ? '✓✓' : '✓'}</span></span>}
+                    {isMe && (
+                      <span className="subscription-chat-msg-status">
+                        {m._optimistic ? 'Sending' : m.read_at ? 'Read' : 'Sent'}
+                      </span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -392,9 +410,6 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, myUserId, myAvata
               </>
             )}
           </div>
-        )}
-        {showHostWaitingTip && (
-          <p className="inbox-chat-actions-hint" style={{ marginTop: 0, marginBottom: '0.5rem' }}>Waiting for subscriber&apos;s confirmation. Share login details in the chat when ready.</p>
         )}
         {chatInputDisabled ? (
           <div className="inbox-chat-input-bar" style={{ opacity: 0.8, pointerEvents: 'none' }}>
