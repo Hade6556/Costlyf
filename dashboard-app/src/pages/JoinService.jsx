@@ -220,14 +220,6 @@ export default function JoinService() {
           <h1 className="service-title">{meta.name}</h1>
           <p className="service-desc">{meta.description}</p>
         </div>
-        <div className="service-header-actions">
-          <a href={typeof window !== 'undefined' ? window.location.href : '#'} className="service-header-btn" aria-label={t('dashboard.shareLink', 'Share link')} onClick={(e) => { e.preventDefault(); if (typeof navigator !== 'undefined' && navigator.clipboard) navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : ''); }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-          </a>
-          <Link to="/help" className="service-header-btn" aria-label="Help">
-            <img src="/media/icons/mingcute--question-2-fill.svg" alt="" width="20" height="20" className="service-header-btn-img" />
-          </Link>
-        </div>
       </header>
 
       {/* Service title (prominent on mobile) + offer cards */}

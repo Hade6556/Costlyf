@@ -2035,13 +2035,19 @@ img {
   color: var(--dash-text-muted);
   font-size: 0.6875rem;
   font-weight: 500;
-  transition: color 0.15s;
   min-width: 56px;
+  transform: scale(1);
+  transform-origin: center;
+  transition: color 0.25s ease, transform 0.25s ease;
 }
 
 .bottom-nav-item:hover,
 .bottom-nav-item--active {
   color: var(--dash-text);
+}
+
+.bottom-nav-item--active {
+  transform: scale(1.12);
 }
 
 .bottom-nav-icon {
@@ -2051,6 +2057,7 @@ img {
   width: 24px;
   height: 24px;
   color: inherit;
+  transition: color 0.25s ease;
 }
 
 .bottom-nav-icon img {
@@ -2071,6 +2078,7 @@ img {
   background: transparent;
   border: 1.5px solid var(--dash-text-muted);
   color: var(--dash-text-muted);
+  transition: border-color 0.25s ease, color 0.25s ease;
 }
 
 .bottom-nav-icon--circle svg {
