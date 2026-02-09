@@ -656,18 +656,42 @@ img {
 }
 
 .owner-user-card {
-  background: #f2f2f2;
   border-radius: var(--radius-lg);
   padding: 2rem 1.75rem 1.5rem;
   display: flex;
   flex-direction: column;
 }
 
+.owner-user-card--owner {
+  background: radial-gradient(ellipse 120% 100% at 100% 50%, #c00 0%, #600 40%, #1a1a1a 100%);
+}
+
+.owner-user-card--user {
+  background: radial-gradient(ellipse 120% 100% at 0% 50%, #1a5fb4 0%, #0d3a6e 40%, #1a1a1a 100%);
+}
+
+.owner-user-card--owner .owner-user-label,
+.owner-user-card--owner .owner-user-desc {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.owner-user-card--owner .owner-user-title {
+  color: #fff;
+}
+
+.owner-user-card--user .owner-user-label,
+.owner-user-card--user .owner-user-desc {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.owner-user-card--user .owner-user-title {
+  color: #fff;
+}
+
 .owner-user-label {
   margin: 0 0 0.5rem;
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
-  color: var(--text-muted);
   max-width: 14em;
 }
 
@@ -677,14 +701,12 @@ img {
   font-weight: var(--font-bold);
   letter-spacing: -0.02em;
   line-height: var(--leading-tight);
-  color: var(--text);
   max-width: 12em;
 }
 
 .owner-user-desc {
   margin: 0 0 var(--space-lg);
   font-size: var(--text-base);
-  color: var(--text-muted);
   line-height: var(--leading-relaxed);
   flex: 1;
   max-width: 20em;
