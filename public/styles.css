@@ -432,7 +432,9 @@ img {
 .btn-hero {
   padding: 0.875rem 1.5rem;
   font-size: var(--text-lg);
-  margin-top: var(--space-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-hero .arrow {
@@ -474,81 +476,76 @@ img {
   letter-spacing: -0.03em;
 }
 
-.hero-rotating-wrap {
-  display: inline-block;
-  overflow: hidden;
-  height: 1.25em;
-  min-width: 200px;
-  text-align: center;
-  vertical-align: bottom;
-}
-
-.hero-rotating-track {
-  display: inline-block;
-  transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.hero-rotating-item {
-  display: block;
-  height: 1.25em;
-  line-height: 1.25em;
-  color: var(--text);
-  min-width: 200px;
-}
-
 .hero-subtitle {
   margin: var(--space) 0 0;
   font-size: var(--text-lg);
   color: var(--text-muted);
   line-height: var(--leading-relaxed);
-  max-width: 480px;
+  max-width: 520px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Profile circles – overlapping row, ~80% width max */
-.hero-profiles {
+.hero-ctas {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   align-items: center;
-  gap: -8px;
+  justify-content: center;
+  gap: var(--space);
   margin-top: var(--space-lg);
-  max-width: 80%;
+}
+
+.hero-cta-label--mobile {
+  display: none;
+}
+
+.hero-cta-label--desktop {
+  display: inline;
+}
+
+.hero-cta-secondary-wrap {
+  /* on mobile, revealed by JS after first scroll */
+}
+
+.hero-reassurance {
+  margin: var(--space) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.hero-objections {
+  list-style: none;
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  text-align: left;
+  max-width: 420px;
   margin-left: auto;
   margin-right: auto;
 }
 
-.hero-profile-circle {
-  width: clamp(80px, 22vw, 96px);
-  height: clamp(80px, 22vw, 96px);
-  border-radius: 50%;
-  background: var(--circle-color, #eee);
-  overflow: hidden;
-  border: 4px solid var(--bg);
-  margin-left: -20px;
+.hero-objection {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-snug);
+  margin-bottom: 0.75rem;
+}
+
+.hero-objection:last-child {
+  margin-bottom: 0;
+}
+
+.hero-objection-icon {
   flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+  margin-top: 0.1em;
 }
 
-.hero-profile-circle:first-child {
-  margin-left: 0;
-}
-
-.hero-profile-circle img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-@media (min-width: 480px) {
-  .hero-profile-circle {
-    width: clamp(80px, 18vw, 112px);
-    height: clamp(80px, 18vw, 112px);
-    margin-left: -24px;
-  }
-}
-
-/* Trust badge */
-.trust-badge {
+.hero-proof {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -557,62 +554,74 @@ img {
   margin-top: var(--space-lg);
 }
 
-.trust-text {
+.hero-proof-rating {
   font-size: var(--text-sm);
-  color: var(--text-muted);
+  font-weight: var(--font-medium);
+  color: var(--text);
 }
 
-/* Hero: mobile – full-width CTA with glow, bigger title, hide trust */
-@media (max-width: 767px) {
-  .btn-hero {
-    width: 100%;
-    max-width: 100%;
-    padding: 1rem 1.5rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    box-shadow: 0 0 0 1px rgba(29, 29, 31, 0.1), 0 4px 20px rgba(29, 29, 31, 0.25);
-  }
-  .trust-badge {
-    display: none;
-  }
-  .hero-heading {
-    font-size: clamp(2.75rem, 12vw, 3.5rem);
-  }
-  .hero-rotating-wrap {
-    height: 1.3em;
-    min-width: 260px;
-  }
-  .hero-rotating-item {
-    height: 1.3em;
-    line-height: 1.3em;
-    min-width: 260px;
-    font-size: inherit;
-  }
-}
-
-.trust-google {
+.hero-proof-source {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
 }
 
-.trust-stars {
-  width: 18px;
-  height: 18px;
-  color: #f9ab00;
-}
-
-.trust-google-text {
-  font-size: var(--text-base);
-  font-weight: var(--font-medium);
-  color: var(--text);
-}
-
-.trust-google-logo {
-  height: 1.25rem;
+.hero-proof-logo {
+  height: 1rem;
   width: auto;
   display: block;
   object-fit: contain;
+}
+
+.hero-proof-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Hero: mobile – one CTA first, secondary after scroll; shorter label */
+@media (max-width: 767px) {
+  .btn-hero {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+  }
+  .btn-hero--primary {
+    box-shadow: 0 0 0 1px rgba(29, 29, 31, 0.1), 0 4px 20px rgba(29, 29, 31, 0.25);
+  }
+  .hero-ctas {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .hero-cta-label--desktop {
+    display: none;
+  }
+  .hero-cta-label--mobile {
+    display: inline;
+  }
+  .hero-cta-secondary-wrap {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+  .hero-cta-secondary-wrap.hero-cta-secondary-wrap--visible {
+    max-height: 80px;
+    opacity: 1;
+  }
+  .hero-cta-secondary-wrap .btn-hero {
+    width: 100%;
+  }
+  .hero-heading {
+    font-size: clamp(1.75rem, 8vw, 2.5rem);
+  }
+  .hero-objections {
+    margin-top: var(--space);
+  }
+  .hero-objection {
+    font-size: 0.8125rem;
+  }
 }
 
 /* Section – Owner / Co-subscriber cards */
@@ -874,7 +883,7 @@ img {
   border: none;
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  font-weight: var(--font-normal);
+  font-weight: var(--font-bold);
   color: var(--text);
   text-align: left;
   cursor: pointer;
