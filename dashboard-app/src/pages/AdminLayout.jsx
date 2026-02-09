@@ -10,11 +10,15 @@ const ADMIN_NAV = [
 ]
 
 export default function AdminLayout() {
-  const { user, fetchWithAuth } = useAuth()
+  const { user, loading: authLoading, fetchWithAuth } = useAuth()
   const [adminCheck, setAdminCheck] = useState(null) // null = loading, { admin: true } = ok, { admin: false, message, yourEmail, reason } = denied
 
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setAdminCheck(null)
+      return
+    }
+    setAdminCheck(null)
     fetchWithAuth('/api/admin/check', {})
       .then((r) => r.json().then((data) => ({ status: r.status, data })))
       .then(({ status, data }) => {
@@ -24,6 +28,16 @@ export default function AdminLayout() {
       .catch(() => setAdminCheck({ admin: false, message: 'Could not verify admin access.', yourEmail: null, reason: 'error' }))
   }, [user, fetchWithAuth])
 
+  // Wait for auth to finish before redirecting; avoids flash to /login then /home
+  if (authLoading) {
+    return (
+      <main className="dashboard-main">
+        <div className="admin-layout">
+          <p className="dash-muted">Loading…</p>
+        </div>
+      </main>
+    )
+  }
   if (!user) return <Navigate to="/login" replace />
 
   if (adminCheck === null) {
