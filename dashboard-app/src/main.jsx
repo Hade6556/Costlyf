@@ -22,6 +22,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import PaymentMethod from './pages/PaymentMethod'
 import AdminLayout from './pages/AdminLayout'
+import AdminHome from './pages/AdminHome'
 import AdminWithdrawals from './pages/AdminWithdrawals'
 import AdminChats from './pages/AdminChats'
 import AdminTickets from './pages/AdminTickets'
@@ -54,7 +55,7 @@ const router = createBrowserRouter(
         { path: 'profile/trust', element: <ProfileTrust /> },
         { path: 'profile/payment-method', element: <PaymentMethod /> },
         { path: 'admin', element: <AdminLayout />, children: [
-          { index: true, element: <Navigate to="withdrawals" replace /> },
+          { index: true, element: <AdminHome /> },
           { path: 'withdrawals', element: <AdminWithdrawals /> },
           { path: 'chats', element: <AdminChats /> },
           { path: 'tickets', element: <AdminTickets /> },

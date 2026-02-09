@@ -6177,3 +6177,4 @@ button.profile-nav-item {
 .admin-tabs a.admin-tab.active,
 .admin-tabs a.admin-tab[aria-current="page"] { background: var(--dash-primary); color: #fff; }
 .admin-content { min-height: 200px; }
+.admin-home-card:hover { border-color: var(--dash-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }

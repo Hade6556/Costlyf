@@ -114,11 +114,13 @@ app.get('/profile/payment-method/', function (req, res) {
   const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
   res.redirect(302, '/profile/payment-method' + q);
 });
-app.get('/admin/withdrawals', sendDashboard);
-app.get('/admin/withdrawals/', function (req, res) {
+// Admin SPA: all /admin/* routes serve the dashboard (client-side routing)
+app.get('/admin', sendDashboard);
+app.get('/admin/', function (req, res) {
   const q = req.url.indexOf('?') >= 0 ? req.url.slice(req.url.indexOf('?')) : '';
-  res.redirect(302, '/admin/withdrawals' + q);
+  res.redirect(302, '/admin' + q);
 });
+app.get('/admin/*', sendDashboard);
 app.get('/guides/:slug', sendDashboard);
 app.get('/guides/:slug/', function (req, res) {
   const slug = req.params.slug || '';
@@ -1913,18 +1915,57 @@ app.post('/api/wallet/setup-intent', async (req, res) => {
 });
 
 // --- Admin: withdrawal requests (confirm payout to IBAN, e.g. via Stripe Dashboard) ---
+function getAdminListEmails() {
+  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '';
+  return raw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+}
+
+function getUserEmail(user) {
+  if (!user) return '';
+  const fromMeta = user.user_metadata && (user.user_metadata.email || user.user_metadata.email_address);
+  const fromIdentity = Array.isArray(user.identities) && user.identities[0] && user.identities[0].identity_data && (user.identities[0].identity_data.email || user.identities[0].identity_data.email_address);
+  return (user.email || fromMeta || fromIdentity || '').trim().toLowerCase();
+}
+
 function isAdmin(user) {
   if (!user) return false;
   const ids = (process.env.ADMIN_USER_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const emails = (process.env.ADMIN_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const emails = getAdminListEmails();
   if (ids.includes(user.id)) return true;
-  if (user.email && emails.includes(user.email.toLowerCase())) return true;
+  const userEmail = getUserEmail(user);
+  if (userEmail && emails.includes(userEmail)) return true;
+  if (process.env.NODE_ENV !== 'production' && userEmail) {
+    if (!emails.length) console.warn('[Admin] ADMIN_EMAILS (or ADMIN_EMAIL) is not set in env; add your email to grant admin access.');
+    else console.warn('[Admin] User email "%s" is not in admin list. Set ADMIN_EMAILS=%s (comma-separated).', userEmail, emails.join(','));
+  }
   return false;
 }
 
-app.get('/api/admin/withdrawal-requests', async (req, res) => {
+// Shared async admin check: resolves user + email (auth + profile fallback). Returns { ok, user?, email?, reason?, yourEmail?, message? }.
+async function checkAdmin(req) {
   const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const emails = getAdminListEmails();
+  if (!user) return { ok: false, reason: 'no-auth', message: 'Not logged in.' };
+  let userEmail = getUserEmail(user);
+  if (!userEmail && supabaseAdmin && user.id) {
+    const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user.id).single();
+    if (profile && profile.email) userEmail = String(profile.email).trim().toLowerCase();
+  }
+  if (emails.length === 0) return { ok: false, reason: 'env-not-set', yourEmail: userEmail || null, message: 'ADMIN_EMAILS is not set on the server. Add your email in the server environment (e.g. Vercel → Project → Environment Variables).' };
+  if (!userEmail || !emails.includes(userEmail)) return { ok: false, reason: 'not-in-list', yourEmail: userEmail || null, message: `Your login email is not in the admin list. Set ADMIN_EMAILS to include: ${userEmail || '(no email on account)'}` };
+  return { ok: true, user, email: userEmail };
+}
+
+app.get('/api/admin/check', async (req, res) => {
+  const result = await checkAdmin(req);
+  if (result.ok) return res.status(200).json({ admin: true, email: result.email });
+  return res.status(403).json({ admin: false, reason: result.reason, yourEmail: result.yourEmail, message: result.message });
+});
+
+app.get('/api/admin/withdrawal-requests', async (req, res) => {
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   try {
     const status = (req.query.status || 'pending').toString();
     const { data: rows, error } = await supabaseAdmin
@@ -1945,8 +1986,9 @@ app.get('/api/admin/withdrawal-requests', async (req, res) => {
 });
 
 app.patch('/api/admin/withdrawal-requests/:id', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const id = (req.params && req.params.id) || '';
   const { status: newStatus, stripe_payout_id: stripePayoutId, admin_notes: adminNotes } = req.body || {};
   if (!id) return res.status(400).json({ error: 'Missing withdrawal request id' });
@@ -1969,8 +2011,9 @@ app.patch('/api/admin/withdrawal-requests/:id', async (req, res) => {
 
 // --- Admin: list all chat threads (search/filter), get messages, post as support ---
 app.get('/api/admin/chat/threads', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const q = (req.query.q && String(req.query.q).trim()) || '';
   try {
     let threadsQuery = supabaseAdmin.from('chat_threads').select('id, offer_id, user1_id, user2_id, created_at, updated_at').order('updated_at', { ascending: false }).limit(200);
@@ -2003,8 +2046,9 @@ app.get('/api/admin/chat/threads', async (req, res) => {
 });
 
 app.get('/api/admin/chat/threads/:id/messages', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const threadId = req.params.id;
   const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
   try {
@@ -2025,8 +2069,9 @@ app.get('/api/admin/chat/threads/:id/messages', async (req, res) => {
 });
 
 app.post('/api/admin/chat/threads/:id/messages', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const threadId = req.params.id;
   const { content } = req.body || {};
   const text = typeof content === 'string' ? content.trim() : '';
@@ -2110,8 +2155,9 @@ app.post('/api/support/tickets/:id/messages', async (req, res) => {
 });
 
 app.get('/api/admin/tickets', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const status = (req.query.status && String(req.query.status).trim()) || '';
   const q = (req.query.q && String(req.query.q).trim()) || '';
   try {
@@ -2139,8 +2185,9 @@ app.get('/api/admin/tickets', async (req, res) => {
 });
 
 app.get('/api/admin/tickets/:id', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const id = req.params.id;
   try {
     const { data: ticket, error: tErr } = await supabaseAdmin.from('support_tickets').select('id, user_id, subject, status, created_at, updated_at').eq('id', id).single();
@@ -2155,8 +2202,9 @@ app.get('/api/admin/tickets/:id', async (req, res) => {
 });
 
 app.patch('/api/admin/tickets/:id', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const id = req.params.id;
   const { status: newStatus } = req.body || {};
   if (!newStatus || !['open', 'in_progress', 'resolved', 'closed'].includes(newStatus)) return res.status(400).json({ error: 'status must be open, in_progress, resolved, or closed' });
@@ -2170,8 +2218,9 @@ app.patch('/api/admin/tickets/:id', async (req, res) => {
 });
 
 app.post('/api/admin/tickets/:id/messages', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const id = req.params.id;
   const { content } = req.body || {};
   const text = typeof content === 'string' ? content.trim() : '';
@@ -2190,8 +2239,9 @@ app.post('/api/admin/tickets/:id/messages', async (req, res) => {
 
 // --- Admin: list users, get user detail (profile, balance, subscriptions, withdrawals) ---
 app.get('/api/admin/users', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const q = (req.query.q && String(req.query.q).trim()).toLowerCase() || '';
   try {
     const { data: profiles, error } = await supabaseAdmin.from('profiles').select('id, email, phone, alias, first_name, last_name, created_at, updated_at, trust_score, charter_accepted_at, avatar_url').order('created_at', { ascending: false }).limit(500);
@@ -2207,8 +2257,9 @@ app.get('/api/admin/users', async (req, res) => {
 });
 
 app.get('/api/admin/users/:id', async (req, res) => {
-  const user = await getCurrentUser(req);
-  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = await checkAdmin(req);
+  if (!admin.ok || !supabaseAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const user = admin.user;
   const userId = req.params.id;
   try {
     const { data: profile, error: pErr } = await supabaseAdmin.from('profiles').select('*').eq('id', userId).single();
