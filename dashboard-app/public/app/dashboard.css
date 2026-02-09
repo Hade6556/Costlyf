@@ -1180,14 +1180,13 @@ img {
 .category-head {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   margin-bottom: 0.75rem;
-  padding-left: calc(40px + 1.25rem + 1.5rem);
 }
 
 .category-head .category-title {
   margin-bottom: 0;
-  text-align: left;
+  text-align: center;
 }
 
 .category-see-all-link {
@@ -3515,6 +3514,198 @@ img {
 }
 .join-offer-gpay-next--visible {
   display: block;
+}
+
+/* Join: Securing + Instant Access + Issue flow */
+.join-offer-step--securing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.join-offer-securing-wrap {
+  text-align: center;
+}
+.join-offer-securing-text {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--dash-text-muted);
+}
+.join-offer-access-logo {
+  margin: 0 0 1rem;
+  text-align: center;
+}
+.join-offer-access-logo img {
+  display: inline-block;
+}
+.join-offer-access-details {
+  margin-bottom: 1rem;
+}
+.join-offer-access-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+.join-offer-access-label {
+  flex: 0 0 100%;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--dash-text-muted);
+}
+.join-offer-access-value {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9375rem;
+  color: var(--dash-text);
+  word-break: break-all;
+}
+.join-offer-copy-btn {
+  flex-shrink: 0;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.join-offer-open-service {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--dash-primary);
+}
+.join-offer-access-instruction {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+  text-align: center;
+}
+.join-offer-issue-btn {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  font-size: 0.9375rem;
+  color: var(--dash-text-muted);
+  cursor: pointer;
+}
+.join-offer-success-message {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--dash-text);
+  text-align: center;
+}
+.join-offer-success-sub {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+  text-align: center;
+}
+.join-offer-issue-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+.join-offer-issue-option {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.join-offer-issue-option--active {
+  border-color: var(--dash-primary);
+  background: rgba(0,0,0,0.03);
+}
+.join-offer-reassurance {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--dash-text);
+  text-align: center;
+}
+.join-offer-reassurance-sub {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+  text-align: center;
+}
+
+/* Subscription page: status, next billing, report issue */
+.subscription-helper {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--dash-text-muted);
+}
+.subscription-report-helper {
+  margin-top: 1.5rem;
+  font-size: 0.9375rem;
+  color: var(--dash-text-muted);
+}
+.subscription-report-helper a {
+  color: var(--dash-primary);
+}
+.my-offer-card--subscription .my-offer-card-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+}
+.my-offer-card--subscription {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.my-sub-status--active { color: var(--dash-text); font-weight: 500; }
+.my-sub-status--pending { color: var(--dash-text-muted); }
+.my-sub-days-label,
+.my-sub-next-billing {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--dash-text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Share: credentials step, visibility helper, fee copy */
+.share-credentials-helper {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+}
+.share-visibility-helper {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+}
+.share-slots-helper {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+}
+.share-phone-helper {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--dash-text-muted);
+}
+.share-publish-reassurance {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+  text-align: center;
 }
 
 /* Profile page */

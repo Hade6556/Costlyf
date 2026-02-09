@@ -127,7 +127,7 @@ export default function Layout() {
       <aside className="sidebar" aria-label="Navigation">
         <div className="sidebar-header">
           <a href="/" className="sidebar-logo">
-            <img src="/media/iconlogo.webp" alt="" className="sidebar-logo-icon" />
+            <img src="/media/iconlogo.png" alt="" className="sidebar-logo-icon" />
             <img src="/media/logo.svg" alt="CostLyf" />
           </a>
         </div>

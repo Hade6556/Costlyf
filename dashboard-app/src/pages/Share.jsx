@@ -6,7 +6,7 @@ import { useNotification } from '../contexts/NotificationContext'
 import { SHARE_CATEGORIES, SHARE_SERVICES } from '../data/shareServices'
 import { getServiceBySlug, getPlanPriceTotal, getPriceBreakdown } from '../data/services'
 
-const STEPS = ['service', 'how', 'offer', 'slots', 'confirm']
+const STEPS = ['service', 'how', 'offer', 'slots', 'credentials', 'confirm']
 
 export default function Share() {
   const { t } = useI18n()
@@ -26,6 +26,8 @@ export default function Share() {
     offerSeatPrice: 0,
     offerMaxUsers: 1,
     slots: 1,
+    loginEmail: '',
+    loginPassword: '',
   })
 
   // Restore from charter return or hash
@@ -166,7 +168,7 @@ export default function Share() {
           <button type="button" className="share-back" aria-label={t('dashboard.back')} onClick={goBack}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           </button>
-          <h2 className="share-step-title">{t('dashboard.howWouldYouLikeToShare')}</h2>
+          <h2 className="share-step-title">Who can join your subscription?</h2>
           <div className="share-options">
             <button type="button" className="share-option-card" data-type="public" onClick={() => handleHowSelect('public')}>
               <span className="share-option-emoji">🌐</span>
@@ -179,6 +181,7 @@ export default function Share() {
               <p className="share-option-desc">{t('dashboard.createPrivateShareDesc')}</p>
             </button>
           </div>
+          <p className="share-visibility-helper">Public listings fill faster and recover more of your monthly cost.</p>
           <p className="share-disclaimer">{t('dashboard.shareDisclaimer')}</p>
         </section>
 
@@ -271,6 +274,7 @@ export default function Share() {
             </button>
           </div>
           <p className="share-slots-earnings">{t('dashboard.youllGetBack')} <strong className="share-slots-price">{earnings} €</strong> {t('dashboard.perMonth')}</p>
+          <p className="share-slots-helper">You stay in full control. Seats can be removed anytime.</p>
           <button type="button" className="share-next-btn" onClick={() => showStep(4)}>{t('dashboard.nextLabel')}</button>
           <div className="share-easy-box">
             <strong className="share-easy-title">{t('dashboard.easy')}</strong>
@@ -278,8 +282,42 @@ export default function Share() {
           </div>
         </section>
 
-        {/* Step 5: Confirm */}
-        <section className={`share-step ${stepIndex !== 4 ? 'share-step--hidden' : ''}`} data-step="confirm">
+        {/* Step 5: Secure access details (login email, password) */}
+        <section className={`share-step ${stepIndex !== 4 ? 'share-step--hidden' : ''}`} data-step="credentials">
+          <button type="button" className="share-back" aria-label={t('dashboard.back')} onClick={goBack}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          </button>
+          <h2 className="share-step-title">Secure access details</h2>
+          <p className="share-credentials-helper">These details will be shared securely with co-subscribers.</p>
+          <div className="share-form-group">
+            <label htmlFor="share-login-email">Login email</label>
+            <input
+              type="email"
+              id="share-login-email"
+              className="share-input"
+              placeholder="email@example.com"
+              autoComplete="email"
+              value={state.loginEmail}
+              onChange={(e) => setState((s) => ({ ...s, loginEmail: e.target.value }))}
+            />
+          </div>
+          <div className="share-form-group">
+            <label htmlFor="share-login-password">Password</label>
+            <input
+              type="password"
+              id="share-login-password"
+              className="share-input"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              value={state.loginPassword}
+              onChange={(e) => setState((s) => ({ ...s, loginPassword: e.target.value }))}
+            />
+          </div>
+          <button type="button" className="share-next-btn" onClick={() => showStep(5)}>{t('dashboard.nextLabel')}</button>
+        </section>
+
+        {/* Step 6: Confirm */}
+        <section className={`share-step ${stepIndex !== 5 ? 'share-step--hidden' : ''}`} data-step="confirm">
           <ConfirmStep
             t={t}
             state={state}
@@ -353,10 +391,10 @@ function ConfirmStep({ t = (k) => k, state, serviceName, onBack, fetchWithAuth, 
       <button type="button" className="share-back" aria-label={t('dashboard.back')} onClick={onBack}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
       </button>
-      <h2 className="share-step-title">{t('dashboard.almostThere')}</h2>
+      <h2 className="share-step-title">Almost there – fees & security</h2>
       <div className="share-fees-box">
-        <p className="share-fees-line">{t('dashboard.connectionFee')} : <span className="share-fees-amount">0.99€</span></p>
-        <p className="share-fees-note">{t('dashboard.onlyFirstMonth')}</p>
+        <p className="share-fees-line">Connection fee <span className="share-fees-amount">€0.99</span> — applied only when a new co-subscriber joins</p>
+        <p className="share-fees-note">Once per co-subscriber, first month only.</p>
       </div>
       <div className="share-form-group">
         <label htmlFor="share-phone">{t('dashboard.phoneNumber')}</label>
@@ -369,14 +407,16 @@ function ConfirmStep({ t = (k) => k, state, serviceName, onBack, fetchWithAuth, 
           value={phone}
           onChange={handlePhoneInput}
         />
+        <p className="share-phone-helper">Used only for security and recovery if access issues occur.</p>
       </div>
       <label className={`share-terms-label ${wiggle ? 'share-terms-label--wiggle' : ''}`}>
         <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} />
-        <span>{t('dashboard.shareTermsText', { service: serviceName })}</span>
+        <span>I confirm this subscription supports sharing and I agree to the relevant terms. <a href="/terms" target="_blank" rel="noopener noreferrer">Costlyf Terms</a> · <a href="/legal" target="_blank" rel="noopener noreferrer">Service Terms</a></span>
       </label>
       <button type="button" className="share-create-btn" onClick={handleCreate} disabled={creating}>
-        {creating ? t('dashboard.creating') : t('dashboard.createOffer')}
+        {creating ? t('dashboard.creating') : 'Publish listing'}
       </button>
+      <p className="share-publish-reassurance">You&apos;re in control. You can remove seats anytime.</p>
     </>
   )
 }

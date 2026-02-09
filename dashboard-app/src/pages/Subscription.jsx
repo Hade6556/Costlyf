@@ -56,38 +56,50 @@ export default function Subscription() {
           <p className="my-offers-empty">{t('dashboard.noSubscriptionsJoinHint')}</p>
         )}
         {!loading && joined.length > 0 && (
-          <div className="my-offers-list" style={{ marginTop: '1rem' }}>
-            {joined.map((sub) => {
-              const logo = LOGO_MAP[sub.service] || '/media/logo.svg'
-              const daysLeft = typeof sub.days_left === 'number' ? Math.max(0, sub.days_left) : 0
-              const isTaken = sub.my_slot_status === 'taken'
-              const statusLine = isTaken ? t('dashboard.activeDaysLeft', { n: daysLeft }) : t('dashboard.pending')
-              const maxDays = 30
-              const fractionLeft = Math.min(1, daysLeft / maxDays)
-              const progressColor = getMonthProgressColor(fractionLeft)
-              const circumference = 2 * Math.PI * 18
-              const strokeDash = circumference * fractionLeft
-              return (
-                <Link key={sub.id} to={`/offer?id=${encodeURIComponent(sub.id)}`} className="my-offer-card">
-                  <img src={logo} alt="" className="my-offer-logo" />
-                  <div className="my-offer-info">
-                    <span className="my-offer-name">{sub.service_name || sub.service || 'Subscription'}</span>
-                    <span className="my-sub-status">{statusLine}</span>
+          <>
+            <p className="subscription-helper">Cancel anytime. You stay in control.</p>
+            <div className="my-offers-list" style={{ marginTop: '1rem' }}>
+              {joined.map((sub) => {
+                const logo = LOGO_MAP[sub.service] || '/media/logo.svg'
+                const daysLeft = typeof sub.days_left === 'number' ? Math.max(0, sub.days_left) : 0
+                const isTaken = sub.my_slot_status === 'taken'
+                const statusLabel = isTaken ? 'Active' : 'Pending'
+                const statusLine = isTaken ? t('dashboard.activeDaysLeft', { n: daysLeft }) : t('dashboard.pending')
+                const nextBilling = sub.period_end ? new Date(sub.period_end).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
+                const maxDays = 30
+                const fractionLeft = Math.min(1, daysLeft / maxDays)
+                const progressColor = getMonthProgressColor(fractionLeft)
+                const circumference = 2 * Math.PI * 18
+                const strokeDash = circumference * fractionLeft
+                return (
+                  <div key={sub.id} className="my-offer-card my-offer-card--subscription">
+                    <Link to={`/offer?id=${encodeURIComponent(sub.id)}`} className="my-offer-card-link">
+                      <img src={logo} alt="" className="my-offer-logo" />
+                      <div className="my-offer-info">
+                        <span className="my-offer-name">{sub.service_name || sub.service || 'Subscription'}</span>
+                        <span className={`my-sub-status my-sub-status--${isTaken ? 'active' : 'pending'}`}>{statusLabel}</span>
+                        {statusLine && <span className="my-sub-days-label">{statusLine}</span>}
+                        {nextBilling && <span className="my-sub-next-billing">Next billing: {nextBilling}</span>}
+                      </div>
+                      <div className="my-sub-days" aria-label={`${daysLeft} days left`}>
+                        <div className="my-sub-days-wheel" style={{ '--sub-progress-color': progressColor, '--sub-stroke-dash': strokeDash, '--sub-stroke-circumference': circumference }}>
+                          <svg className="my-sub-days-svg" viewBox="0 0 40 40" aria-hidden="true">
+                            <circle className="my-sub-days-bg" cx="20" cy="20" r="18" fill="none" strokeWidth="3" />
+                            <circle className="my-sub-days-fill" cx="20" cy="20" r="18" fill="none" strokeWidth="3" stroke="var(--sub-progress-color)" strokeDasharray={`${strokeDash} ${circumference}`} strokeDashoffset="0" transform="rotate(-90 20 20)" />
+                          </svg>
+                          <span className="my-sub-days-num" style={{ color: progressColor }}>{daysLeft}</span>
+                        </div>
+                      </div>
+                      <span className="my-offer-chevron">›</span>
+                    </Link>
                   </div>
-                  <div className="my-sub-days" aria-label={`${daysLeft} days left`}>
-                    <div className="my-sub-days-wheel" style={{ '--sub-progress-color': progressColor, '--sub-stroke-dash': strokeDash, '--sub-stroke-circumference': circumference }}>
-                      <svg className="my-sub-days-svg" viewBox="0 0 40 40" aria-hidden="true">
-                        <circle className="my-sub-days-bg" cx="20" cy="20" r="18" fill="none" strokeWidth="3" />
-                        <circle className="my-sub-days-fill" cx="20" cy="20" r="18" fill="none" strokeWidth="3" stroke="var(--sub-progress-color)" strokeDasharray={`${strokeDash} ${circumference}`} strokeDashoffset="0" transform="rotate(-90 20 20)" />
-                      </svg>
-                      <span className="my-sub-days-num" style={{ color: progressColor }}>{daysLeft}</span>
-                    </div>
-                  </div>
-                  <span className="my-offer-chevron">›</span>
-                </Link>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+            <p className="subscription-report-helper">
+              <Link to="/inbox">Report an issue</Link> — always visible when you need help.
+            </p>
+          </>
         )}
       </div>
     </main>

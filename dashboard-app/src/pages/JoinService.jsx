@@ -427,7 +427,7 @@ export default function JoinService() {
           serviceName={meta.name}
           serviceSlug={serviceSlug}
           onClose={() => setJoinModal(null)}
-          onSuccess={(offerId) => { setJoinModal(null); navigate(`/offer?id=${encodeURIComponent(offerId)}`); }}
+          onSuccess={(offerId, opts) => { setJoinModal(null); navigate(opts?.redirect || `/offer?id=${encodeURIComponent(offerId)}`); }}
           fetchWithAuth={fetchWithAuth}
         />
       )}
@@ -456,6 +456,24 @@ export default function JoinService() {
   }
 }
 
+const SERVICE_LOGIN_URL = {
+  netflix: 'https://www.netflix.com/login',
+  spotify: 'https://accounts.spotify.com/login',
+  disney: 'https://www.disneyplus.com/login',
+  'prime-video': 'https://www.primevideo.com',
+  'youtube-premium': 'https://www.youtube.com',
+  'apple-music': 'https://music.apple.com',
+  'hbo-max': 'https://www.max.com',
+  default: 'https://www.netflix.com/login',
+}
+
+const ISSUE_OPTIONS = [
+  { id: 'cant_login', label: "Can't log in" },
+  { id: 'password_wrong', label: "Password doesn't work" },
+  { id: 'verification', label: 'Account asks for verification' },
+  { id: 'other', label: 'Other issue' },
+]
+
 export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuccess, fetchWithAuth }) {
   const { t, locale } = useI18n()
   const [step, setStep] = useState(1)
@@ -469,6 +487,10 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const [topupCents, setTopupCents] = useState(5000)
   const [topupLoading, setTopupLoading] = useState(false)
   const [topupError, setTopupError] = useState('')
+  const [accessDetails, setAccessDetails] = useState({ email: '', password: '' })
+  const [confirmSuccess, setConfirmSuccess] = useState(false)
+  const [issueType, setIssueType] = useState('')
+  const [issueSubmitted, setIssueSubmitted] = useState(false)
   const topupClientSecretRef = useRef(null)
   const topupPublishableKeyRef = useRef(null)
   const topupCardNumberRef = useRef(null)
@@ -506,6 +528,14 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       .catch(() => setBalanceCents(0))
   }, [step, fetchWithAuth])
 
+  const goToInstantAccess = (email = '', password = '') => {
+    setAccessDetails({
+      email: email || "You'll receive login details from the owner in Inbox",
+      password: password || '—',
+    })
+    setStep(5)
+  }
+
   const handlePay = () => {
     setPayError('')
     if (paymentMethod === 'wallet' && slotIndex != null) {
@@ -520,7 +550,9 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/reserve-with-balance`, { method: 'POST' })
         .then((r) => {
           if (r.ok) {
-            onSuccess(offer.id)
+            setStep(4)
+            setLoading(false)
+            setTimeout(() => goToInstantAccess(), 2000)
             return
           }
           return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
@@ -533,7 +565,9 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/reserve`, { method: 'POST' })
         .then((r) => {
           if (r.ok) {
-            onSuccess(offer.id)
+            setStep(4)
+            setLoading(false)
+            setTimeout(() => goToInstantAccess(), 2000)
             return
           }
           return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
@@ -609,7 +643,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
               )}
             </div>
             <p className="join-offer-disclaimer">{t('dashboard.noStringsAttached')}</p>
-            <button type="button" className="join-offer-next" onClick={() => setStep(2)}>{t('dashboard.nextLabel')}</button>
+            <button type="button" className="join-offer-next" onClick={() => setStep(2)}>Pay & Get Access</button>
           </div>
         )}
 
@@ -727,6 +761,81 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                 }}
               />
             )}
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="join-offer-step join-offer-step--securing">
+            <div className="join-offer-securing-wrap">
+              <p className="join-offer-securing-text">Securing your access…</p>
+            </div>
+          </div>
+        )}
+
+        {step === 5 && !confirmSuccess && !issueSubmitted && (
+          <div className="join-offer-step">
+            <h2 className="join-offer-title">Your access is ready</h2>
+            <div className="join-offer-access-logo">
+              <img src={logo} alt="" width="48" height="48" />
+            </div>
+            <div className="join-offer-access-details">
+              <div className="join-offer-access-row">
+                <span className="join-offer-access-label">Login email</span>
+                <span className="join-offer-access-value" data-access="email">{accessDetails.email}</span>
+                <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(accessDetails.email); }}>Copy</button>
+              </div>
+              <div className="join-offer-access-row">
+                <span className="join-offer-access-label">Password</span>
+                <span className="join-offer-access-value" data-access="password">{accessDetails.password}</span>
+                <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(accessDetails.password); }}>Copy</button>
+              </div>
+            </div>
+            <a href={SERVICE_LOGIN_URL[serviceSlug] || SERVICE_LOGIN_URL.default} target="_blank" rel="noopener noreferrer" className="join-offer-open-service">Open {offer.service_name || serviceName}</a>
+            <p className="join-offer-access-instruction">Log in now and check if everything works. This usually takes under 30 seconds.</p>
+            <button type="button" className="join-offer-next" onClick={async () => {
+              try {
+                await fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/confirm-details`, { method: 'POST' })
+              } catch (_) { /* slot may still be reserved; show success anyway */ }
+              setConfirmSuccess(true)
+              setTimeout(() => {
+                if (typeof onSuccess === 'function') onSuccess(offer.id, { redirect: '/subscription' })
+              }, 1500)
+            }}>Confirm Access Works</button>
+            <button type="button" className="join-offer-issue-btn" onClick={() => setStep(6)}>I have an issue</button>
+          </div>
+        )}
+
+        {step === 5 && confirmSuccess && (
+          <div className="join-offer-step">
+            <p className="join-offer-success-message">Perfect! Your subscription is now active.</p>
+            <p className="join-offer-success-sub">Redirecting to your subscriptions…</p>
+          </div>
+        )}
+
+        {step === 6 && !issueSubmitted && (
+          <div className="join-offer-step">
+            <button type="button" className="join-offer-back" aria-label={t('dashboard.back')} onClick={() => setStep(5)}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></button>
+            <h2 className="join-offer-title">Let&apos;s fix this</h2>
+            <p className="join-offer-subtitle">What&apos;s the issue?</p>
+            <ul className="join-offer-issue-list">
+              {ISSUE_OPTIONS.map((opt) => (
+                <li key={opt.id}>
+                  <button type="button" className={`join-offer-issue-option ${issueType === opt.id ? 'join-offer-issue-option--active' : ''}`} onClick={() => setIssueType(opt.id)}>{opt.label}</button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="join-offer-next" disabled={!issueType} onClick={() => {
+              setIssueSubmitted(true)
+              fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/request-removal`, { method: 'POST' }).catch(() => {})
+            }}>Submit</button>
+          </div>
+        )}
+
+        {step === 6 && issueSubmitted && (
+          <div className="join-offer-step">
+            <p className="join-offer-reassurance">Your payment is protected. You won&apos;t be charged while this is being resolved.</p>
+            <p className="join-offer-reassurance-sub">We&apos;ve marked this subscription as Pending. Check Inbox for updates.</p>
+            <button type="button" className="join-offer-next" onClick={() => { if (typeof onSuccess === 'function') onSuccess(offer.id, { redirect: '/subscription' }) }}>Go to My Subscriptions</button>
           </div>
         )}
       </div>

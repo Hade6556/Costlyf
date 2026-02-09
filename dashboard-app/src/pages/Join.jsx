@@ -132,9 +132,9 @@ export default function Join() {
           serviceName={offerForModal.service_name || offerForModal.service || 'Offer'}
           serviceSlug={offerForModal.service || 'netflix'}
           onClose={() => setOfferForModal(null)}
-          onSuccess={(offerId) => {
+          onSuccess={(offerId, opts) => {
             setOfferForModal(null)
-            navigate(`/offer?id=${encodeURIComponent(offerId)}`)
+            navigate(opts?.redirect || `/offer?id=${encodeURIComponent(offerId)}`)
           }}
           fetchWithAuth={fetchWithAuth}
         />
