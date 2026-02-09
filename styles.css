@@ -713,13 +713,13 @@ img {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  min-height: 140px;
+  min-height: 240px;
 }
 
 .owner-user-illus img {
   max-width: 100%;
   height: auto;
-  max-height: 180px;
+  max-height: 320px;
   object-fit: contain;
 }
 
