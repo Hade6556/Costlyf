@@ -84,44 +84,54 @@ export default function Charter() {
         <Link to={backTo} className="charter-back">
           ‹ {t('dashboard.back')}
         </Link>
-        <h1 className="charter-title">{t('dashboard.charterTitle')}</h1>
-        <p className="charter-subtitle">
-          {t('dashboard.charterSubtitle1')}
+        <h1 className="charter-title">CostLyf Charter</h1>
+        <p className="charter-intro">
+          Sharing subscriptions should feel easy, fair, and stress-free.
+          That’s the whole point of CostLyf.
         </p>
-        <p className="charter-subtitle">
-          {t('dashboard.charterSubtitle2')}
+        <p className="charter-intro charter-intro--secondary">
+          This charter exists to make sure owners and co-subscribers know what to expect from each other — so everyone can enjoy their services with confidence.
         </p>
-        <p className="charter-subtitle">
-          {t('dashboard.charterSubtitle3')}
-        </p>
+        <p className="charter-lead">Everything here boils down to three ideas:</p>
+        <div className="charter-pillars">
+          <span className="charter-pillar">Kindness.</span>
+          <span className="charter-pillar">Transparency.</span>
+          <span className="charter-pillar">Mutual respect.</span>
+        </div>
 
         <div className="charter-content">
-          <h2>Subscription Owner 👑</h2>
-          <p>Thank you for making sharing possible. A few simple commitments help keep everything smooth:</p>
-          <ul>
-            <li><strong>You must be the real owner</strong><br />Only the subscription owner can create a split. In some cases, an invoice may be requested for verification.</li>
-            <li><strong>Make sure your plan supports sharing</strong><br />Your subscription must allow simultaneous users and match the service listed on CostLyf.</li>
-            <li><strong>Fair pricing only</strong><br />Subscriptions must be shared at the official price in your country. CostLyf exists for fairness — not resale or profit.</li>
-            <li><strong>Minimum 30 days of access</strong><br />Co-subscribers must receive at least 30 full days of access. If a split ends early, future payments are automatically canceled.</li>
-            <li><strong>Trials must lead to real subscriptions</strong><br />Free trials can be shared only if they convert into a paid plan. Chaining free trials is not allowed.</li>
-            <li><strong>Keep it secure</strong><br />Login details and invitation links must be shared only through CostLyf. Use the secure vault to protect credentials.</li>
-            <li><strong>Respect the number of seats</strong><br />Only offer the number of spots your subscription allows.</li>
-          </ul>
+          <section className="charter-section">
+            <h2 className="charter-section-title">For Subscription Owners 👑</h2>
+            <p className="charter-section-intro">Thanks for making sharing possible. To keep things running smoothly, a few simple rules apply:</p>
+            <ul className="charter-list">
+              <li><strong>Be the real owner</strong> — Only the actual subscription owner can create a split. In some cases, we may ask for proof (like an invoice).</li>
+              <li><strong>Make sure your plan allows sharing</strong> — Your subscription must support multiple users and match the service listed on CostLyf.</li>
+              <li><strong>Keep pricing fair</strong> — Subscriptions must be shared at the official price in your country. CostLyf is about splitting costs — not reselling for profit.</li>
+              <li><strong>Guarantee at least 30 days of access</strong> — Co-subscribers must receive a full 30 days. If a split ends early, future payments are automatically canceled.</li>
+              <li><strong>Trials must turn into real subscriptions</strong> — Free trials can only be shared if they convert into a paid plan. Chaining trials is not allowed.</li>
+              <li><strong>Share securely</strong> — Login details and invite links must be shared only through CostLyf. Use the secure vault to protect credentials.</li>
+              <li><strong>Respect seat limits</strong> — Only offer the number of spots your subscription actually allows.</li>
+            </ul>
+          </section>
 
-          <h2>Messages 💬</h2>
-          <p>Messages exist to make communication easy and safe for everyone.</p>
-          <ul>
-            <li><strong>Be respectful</strong><br />Kind, polite communication is expected at all times — even when resolving issues.</li>
-            <li><strong>Keep payments on CostLyf</strong><br />Never ask users to pay outside the platform.</li>
-            <li><strong>Protect privacy</strong><br />Do not request or misuse personal information.</li>
-            <li><strong>Be considerate with timing</strong><br />Avoid late-night or very early messages. Not everyone replies instantly — patience matters.</li>
-            <li><strong>No discrimination</strong><br />Any form of discriminatory behavior will not be tolerated.</li>
-          </ul>
+          <section className="charter-section">
+            <h2 className="charter-section-title">Messages & Communication 💬</h2>
+            <p className="charter-section-intro">Messages exist to keep everyone safe, informed, and comfortable.</p>
+            <ul className="charter-list">
+              <li><strong>Be respectful</strong> — Polite, calm communication is expected — even when something goes wrong.</li>
+              <li><strong>Keep payments on CostLyf</strong> — Never ask for payments outside the platform.</li>
+              <li><strong>Protect privacy</strong> — Do not request or misuse personal information.</li>
+              <li><strong>Be mindful of timing</strong> — Avoid late-night or very early messages. Not everyone replies instantly — patience matters.</li>
+              <li><strong>Zero tolerance for discrimination</strong> — Any discriminatory behavior is not allowed.</li>
+            </ul>
+          </section>
 
-          <h2>In short 😎</h2>
-          <p>CostLyf is built on a simple idea: sharing should feel safe, fair, and human.</p>
-          <p>By following this charter, you help create a friendly community where everyone enjoys their subscriptions with peace of mind.</p>
-          <p><strong>— The CostLyf Team</strong></p>
+          <section className="charter-section charter-section--closing">
+            <h2 className="charter-section-title">In short 😎</h2>
+            <p className="charter-closing">CostLyf is built on a simple belief: sharing should feel human, safe, and fair.</p>
+            <p className="charter-closing">By following this charter, you help create a community where everyone enjoys their subscriptions with peace of mind.</p>
+            <p className="charter-signature">— The CostLyf Team</p>
+          </section>
         </div>
 
         {!alreadyAccepted && (
