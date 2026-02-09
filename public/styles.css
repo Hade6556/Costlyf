@@ -589,44 +589,6 @@ img {
   margin-top: 0.1em;
 }
 
-.hero-proof {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem 0.75rem;
-  margin-top: var(--space-lg);
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: var(--radius);
-}
-
-.hero-proof-count {
-  font-size: var(--text-base);
-  font-weight: var(--font-bold);
-  color: var(--text);
-  letter-spacing: -0.02em;
-}
-
-.hero-proof-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.hero-proof-logo {
-  height: 1.125rem;
-  width: auto;
-  display: block;
-  object-fit: contain;
-}
-
-.hero-proof-label {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  font-weight: var(--font-normal);
-}
-
 /* Hero: mobile – one CTA first, secondary after scroll; shorter label */
 @media (max-width: 767px) {
   .btn-hero {
