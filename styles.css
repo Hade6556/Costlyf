@@ -1207,8 +1207,8 @@ img {
 
 @media (min-width: 768px) {
   .footer-nav-cols {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem 3rem;
     justify-content: start;
   }
 }
