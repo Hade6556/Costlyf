@@ -273,9 +273,9 @@
     margin-right: auto;
     width: 100%;
   }
-  /* Wide enough to show ~⅓ of the next/prev card on the sides (200px card → ~67px peek) */
+  /* Carousel total width: scroll area 692px (3 cards + ~⅓ peek) + left btn 40px + gaps 1.25rem×2 + right btn 40px ≈ 812px */
   .dashboard-content--join .card-carousel--centered {
-    max-width: 692px;
+    max-width: 820px;
     margin-left: auto;
     margin-right: auto;
   }
