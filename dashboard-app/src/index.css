@@ -272,8 +272,9 @@
     margin-right: auto;
     width: 100%;
   }
+  /* Slightly wider than 3 cards so a sliver of the next/prev card is visible (shows it's scrollable) */
   .dashboard-content--join .card-carousel--centered {
-    max-width: 640px;
+    max-width: 656px;
     margin-left: auto;
     margin-right: auto;
   }
