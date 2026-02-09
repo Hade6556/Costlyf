@@ -48,8 +48,19 @@ function Carousel({ children }) {
     requestAnimationFrame(run)
   }, [startScroll])
 
+  const scrollBy = (delta) => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollBy({ left: delta, behavior: 'smooth' })
+  }
+
+  const step = CARD_WIDTH_PX + CARD_GAP_PX
+
   return (
     <div className="card-carousel card-carousel--centered">
+      <button type="button" className="carousel-btn carousel-btn--prev" aria-label="Previous" onClick={() => scrollBy(-step)}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
+      </button>
       <div className="card-scroll card-scroll--centered" ref={scrollRef}>
         <div className="card-scroll-inner" ref={innerRef}>
           <div className="card-scroll-spacer" aria-hidden="true" />
@@ -61,6 +72,9 @@ function Carousel({ children }) {
           <div className="card-scroll-spacer" aria-hidden="true" />
         </div>
       </div>
+      <button type="button" className="carousel-btn carousel-btn--next" aria-label="Next" onClick={() => scrollBy(step)}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6" /></svg>
+      </button>
     </div>
   )
 }

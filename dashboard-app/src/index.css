@@ -224,6 +224,7 @@
 }
 
 /* Join page: centered carousel, one card in center, one left/right, infinite scroll */
+/* Join: hide arrows on mobile */
 .dashboard-content--join .carousel-btn {
   display: none;
 }
@@ -277,6 +278,12 @@
     max-width: 692px;
     margin-left: auto;
     margin-right: auto;
+  }
+  /* Join: show left/right arrows on desktop only */
+  .dashboard-content--join .carousel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
