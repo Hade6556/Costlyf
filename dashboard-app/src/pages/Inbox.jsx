@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useInboxUnread } from '../contexts/InboxUnreadContext'
 import { useI18n } from '../contexts/I18nContext'
+import { ChatImage } from '../components/ChatImage'
 
 const SYSTEM_THREAD_ID = 'system'
 const POLL_INTERVAL_MS = 5000
@@ -354,7 +355,7 @@ function ChatView({ thread, threadId, isSystem, fetchWithAuth, getToken, myUserI
                 <div className="subscription-chat-msg-content">
                   {isImageMsg ? (
                     <span className="subscription-chat-msg-text subscription-chat-msg-text--img">
-                      <img src={msgContent} alt="Attached" loading="lazy" />
+                      <ChatImage url={msgContent} alt="Attached" loading="lazy" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '6px' }} />
                     </span>
                   ) : (
                     <span className="subscription-chat-msg-text">{msgContent}</span>

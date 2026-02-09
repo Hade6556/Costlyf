@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useI18n } from '../contexts/I18nContext'
 import { useAuth } from '../contexts/AuthContext'
+
+const TICKET_POLL_MS = 5000
 
 function formatDate(iso) {
   if (!iso) return '—'
@@ -21,6 +24,22 @@ export default function Help() {
   const [reply, setReply] = useState('')
   const [sendingReply, setSendingReply] = useState(false)
 
+  const fetchTickets = () => {
+    if (!user) return
+    fetchWithAuth('/api/support/tickets', {})
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setTickets)
+      .catch(() => setTickets([]))
+  }
+
+  const fetchTicketDetail = (id) => {
+    if (!id) return
+    fetchWithAuth(`/api/support/tickets/${id}`, {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setTicketDetail)
+      .catch(() => setTicketDetail(null))
+  }
+
   useEffect(() => {
     if (!user) return
     setLoading(true)
@@ -33,11 +52,18 @@ export default function Help() {
 
   useEffect(() => {
     if (!selectedTicketId) { setTicketDetail(null); return }
-    fetchWithAuth(`/api/support/tickets/${selectedTicketId}`, {})
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setTicketDetail)
-      .catch(() => setTicketDetail(null))
+    fetchTicketDetail(selectedTicketId)
   }, [selectedTicketId, fetchWithAuth])
+
+  // Poll ticket list and open ticket so new admin replies appear without refresh
+  useEffect(() => {
+    if (!user || !fetchWithAuth) return
+    const interval = setInterval(() => {
+      fetchTickets()
+      if (selectedTicketId) fetchTicketDetail(selectedTicketId)
+    }, TICKET_POLL_MS)
+    return () => clearInterval(interval)
+  }, [user, fetchWithAuth, selectedTicketId])
 
   const createTicket = (e) => {
     e.preventDefault()
@@ -84,24 +110,54 @@ export default function Help() {
       .finally(() => setSendingReply(false))
   }
 
+  // Ticket conversation as separate “page” with back button
+  if (user && selectedTicketId && ticketDetail) {
+    return (
+      <div className="help-page">
+        <Link to="/help" className="help-back" onClick={(e) => { e.preventDefault(); setSelectedTicketId(null); setTicketDetail(null); setReply(''); }}>
+          <span className="profile-nav-icon" aria-hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></span>
+          <span>Back to tickets</span>
+        </Link>
+        <div className="help-ticket-view">
+          <h2 className="help-ticket-subject">{ticketDetail.subject}</h2>
+          <span className={`help-ticket-status help-ticket-status--${(ticketDetail.status || '').toLowerCase().replace(/\s+/g, '-')}`}>{ticketDetail.status}</span>
+          <div className="help-ticket-messages">
+            {(ticketDetail.messages || []).map((m) => (
+              <div key={m.id} className={`help-ticket-msg ${m.is_admin ? 'help-ticket-msg--support' : 'help-ticket-msg--you'}`}>
+                <span className="help-ticket-msg-meta">{m.is_admin ? 'Support' : 'You'} · {formatDate(m.created_at)}</span>
+                <div className="help-ticket-msg-body">{m.content}</div>
+              </div>
+            ))}
+          </div>
+          <div className="help-ticket-reply-bar">
+            <input type="text" placeholder="Reply…" value={reply} onChange={(e) => setReply(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendReply())} className="subscription-chat-input help-ticket-input" />
+            <button type="button" className="profile-btn profile-btn--primary" disabled={!reply.trim() || sendingReply} onClick={sendReply}>{sendingReply ? '…' : 'Send'}</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div>
-      <h1 className="dashboard-title">{t('dashboard.helpTitle')}</h1>
-      <p className="dash-muted">{t('dashboard.helpSubtitle')}</p>
+    <div className="help-page">
+      <Link to="/home" className="help-back">
+        <span className="profile-nav-icon" aria-hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></span>
+        <span>Back</span>
+      </Link>
 
       {user && (
-        <section style={{ marginTop: '1.5rem', maxWidth: '600px' }}>
-          <h2 className="profile-main-title" style={{ fontSize: '1.25rem' }}>Support tickets</h2>
+        <section className="help-section">
+          <h2 className="profile-main-title">Support tickets</h2>
           <p className="profile-panel-desc">Having a problem (e.g. joining a subscription)? Open a ticket and we’ll get back to you.</p>
           {!showForm ? (
             <button type="button" className="profile-btn profile-btn--primary" onClick={() => setShowForm(true)}>New ticket</button>
           ) : (
-            <form onSubmit={createTicket} style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Subject</label>
-              <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Problem joining Netflix offer" className="subscription-chat-input" style={{ width: '100%', padding: '8px 12px', marginBottom: '0.75rem' }} required />
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Message</label>
-              <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Describe your issue…" className="subscription-chat-input" style={{ width: '100%', padding: '8px 12px', minHeight: '100px', marginBottom: '0.75rem' }} required />
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <form onSubmit={createTicket} className="help-new-ticket-form">
+              <label className="help-form-label">Subject</label>
+              <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Problem joining Netflix offer" className="subscription-chat-input help-form-input" required />
+              <label className="help-form-label">Message</label>
+              <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Describe your issue…" className="subscription-chat-input help-form-textarea" required />
+              <div className="help-form-actions">
                 <button type="submit" className="profile-btn profile-btn--primary" disabled={submitting}>{submitting ? '…' : 'Create ticket'}</button>
                 <button type="button" className="profile-btn" onClick={() => { setShowForm(false); setSubject(''); setContent(''); }}>Cancel</button>
               </div>
@@ -110,31 +166,15 @@ export default function Help() {
 
           {loading && <p className="dash-muted">Loading your tickets…</p>}
           {!loading && tickets.length > 0 && (
-            <div style={{ marginTop: '1rem' }}>
-              <p style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Your tickets</p>
+            <div className="help-ticket-list">
+              <p className="help-ticket-list-title">Your tickets</p>
               {tickets.map((t) => (
-                <button key={t.id} type="button" onClick={() => setSelectedTicketId(t.id)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem', marginBottom: '0.4rem', border: selectedTicketId === t.id ? '2px solid var(--dash-primary)' : '1px solid #eee', borderRadius: '8px', background: selectedTicketId === t.id ? '#f0f9ff' : '#fff', cursor: 'pointer' }}>
-                  {t.subject} — {t.status} · {formatDate(t.updated_at)}
+                <button key={t.id} type="button" className="help-ticket-card" onClick={() => setSelectedTicketId(t.id)}>
+                  <span className="help-ticket-card-subject">{t.subject}</span>
+                  <span className={`help-ticket-card-status help-ticket-card-status--${(t.status || '').toLowerCase().replace(/\s+/g, '-')}`}>{t.status}</span>
+                  <span className="help-ticket-card-date">{formatDate(t.updated_at)}</span>
                 </button>
               ))}
-            </div>
-          )}
-
-          {ticketDetail && (
-            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #eee', borderRadius: '12px', background: '#fafafa' }}>
-              <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{ticketDetail.subject} — {ticketDetail.status}</p>
-              <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '0.75rem' }}>
-                {(ticketDetail.messages || []).map((m) => (
-                  <div key={m.id} style={{ marginBottom: '0.5rem', padding: '0.5rem', background: m.is_admin ? '#e0f2fe' : '#fff', borderRadius: '8px', border: '1px solid #eee' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.is_admin ? 'Support' : 'You'} · {formatDate(m.created_at)}</span>
-                    <div style={{ marginTop: '0.25rem', whiteSpace: 'pre-wrap' }}>{m.content}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input type="text" placeholder="Reply…" value={reply} onChange={(e) => setReply(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendReply())} className="subscription-chat-input" style={{ flex: 1, padding: '8px 12px' }} />
-                <button type="button" className="profile-btn profile-btn--primary" disabled={!reply.trim() || sendingReply} onClick={sendReply}>{sendingReply ? '…' : 'Send'}</button>
-              </div>
             </div>
           )}
         </section>

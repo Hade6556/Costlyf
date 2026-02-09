@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { ChatImage } from '../components/ChatImage'
 
 function formatTime(iso) {
   if (!iso) return '—'
@@ -133,34 +134,84 @@ export default function AdminChats() {
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
             {!selectedThreadId && <p className="dash-muted">Select a thread.</p>}
             {selectedThreadId && messagesLoading && <p className="dash-muted">Loading messages…</p>}
-            {selectedThreadId && threadDetail && !messagesLoading && (
+            {selectedThreadId && threadDetail && !messagesLoading && (() => {
+              const thread = threadDetail.thread || {}
+              const getSenderName = (senderId) => {
+                if (!senderId) return 'Support'
+                if (senderId === thread.user1_id) return thread.user1_name || 'User 1'
+                if (senderId === thread.user2_id) return thread.user2_name || 'User 2'
+                return 'User'
+              }
+              return (
               <>
                 <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-                  <strong>{threadDetail.thread?.user1_name} ↔ {threadDetail.thread?.user2_name}</strong>
-                  <span style={{ marginLeft: '0.5rem', color: '#666', fontSize: '0.9rem' }}>{threadDetail.thread?.subscription_label}</span>
+                  <strong>{thread.user1_name} ↔ {thread.user2_name}</strong>
+                  <span style={{ marginLeft: '0.5rem', color: '#666', fontSize: '0.9rem' }}>{thread.subscription_label}</span>
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', maxHeight: '400px', padding: '0.5rem 0', marginBottom: '0.75rem' }}>
-                  {(threadDetail.messages || []).map((m) => (
+                  {(threadDetail.messages || []).map((m) => {
+                    const senderName = m.is_system || !m.sender_id ? 'Support' : getSenderName(m.sender_id)
+                    const isSupport = m.is_system || !m.sender_id
+                    const isUser2 = m.sender_id === thread.user2_id
+                    return (
                     <div
                       key={m.id}
                       style={{
+                        display: 'flex',
+                        flexDirection: isSupport ? 'row' : (isUser2 ? 'row-reverse' : 'row'),
+                        alignItems: 'flex-start',
+                        gap: '0.5rem',
                         marginBottom: '0.5rem',
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: '8px',
-                        background: m.is_system ? '#fef3c7' : (m.sender_id ? '#f5f5f5' : '#e0f2fe'),
-                        maxWidth: '85%',
-                        marginLeft: m.is_system || !m.sender_id ? 0 : 'auto',
-                        marginRight: m.is_system || !m.sender_id ? 'auto' : 0,
+                        maxWidth: '90%',
+                        marginLeft: isUser2 ? 'auto' : 0,
+                        marginRight: isUser2 ? 0 : 'auto',
                       }}
                     >
-                      <span style={{ fontSize: '0.75rem', color: '#666' }}>
-                        {m.is_system || !m.sender_id ? 'Support' : 'User'} · {formatTime(m.created_at)}
-                      </span>
-                      <div style={{ marginTop: '0.25rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {(m.content || '').startsWith('[img]') ? <img src={(m.content || '').slice(5)} alt="Attached" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '6px' }} /> : m.content}
+                      {isSupport ? (
+                        <div
+                          title="Support"
+                          style={{
+                            flexShrink: 0,
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            background: '#f59e0b',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.9rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          !
+                        </div>
+                      ) : (
+                        <div style={{ width: 28, flexShrink: 0 }} />
+                      )}
+                      <div
+                        style={{
+                          padding: '0.5rem 0.75rem',
+                          borderRadius: '8px',
+                          background: isSupport ? '#fef3c7' : (m.sender_id === thread.user1_id ? '#f0f9ff' : '#f5f5f5'),
+                          minWidth: 0,
+                        }}
+                      >
+                        <span style={{ fontSize: '0.75rem', color: '#666', fontWeight: 600 }}>
+                          {senderName}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#999', marginLeft: '0.35rem' }}>{formatTime(m.created_at)}</span>
+                        <div style={{ marginTop: '0.25rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {(m.content || '').startsWith('[img]') ? (
+                            <ChatImage url={(m.content || '').slice(5)} alt="Attached" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '6px' }} />
+                          ) : (
+                            m.content
+                          )}
+                        </div>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                   <div ref={messagesEndRef} />
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>

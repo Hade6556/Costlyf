@@ -1,4 +1,4 @@
-import { useEffect, useState, Fragment } from 'react'
+import { useEffect, useState, Fragment, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -27,22 +27,27 @@ export default function AdminUsers() {
   const [selectedId, setSelectedId] = useState(null)
   const [detail, setDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const fetchRef = useRef(fetchWithAuth)
+  const navigateRef = useRef(navigate)
+  fetchRef.current = fetchWithAuth
+  navigateRef.current = navigate
 
   useEffect(() => {
     setLoading(true)
-    const qs = search ? `?q=${encodeURIComponent(search)}` : ''
-    fetchWithAuth(`/api/admin/users${qs}`, {})
+    setError(null)
+    const qs = search.trim() ? `?q=${encodeURIComponent(search.trim())}` : ''
+    fetchRef.current(`/api/admin/users${qs}`, {})
       .then((r) => {
         if (r.status === 403) throw new Error('Forbidden')
         return r.ok ? r.json() : []
       })
-      .then(setUsers)
+      .then((data) => setUsers(Array.isArray(data) ? data : []))
       .catch((e) => {
         setError(e.message || 'Failed to load')
-        if (e.message === 'Forbidden') navigate('/home', { replace: true })
+        if (e.message === 'Forbidden') navigateRef.current('/home', { replace: true })
       })
       .finally(() => setLoading(false))
-  }, [fetchWithAuth, search, navigate])
+  }, [search])
 
   useEffect(() => {
     if (!selectedId) {
