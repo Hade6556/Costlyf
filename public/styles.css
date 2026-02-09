@@ -1330,34 +1330,6 @@ img {
   margin-right: auto;
 }
 
-/* Chat FAB */
-.chat-fab {
-  position: fixed;
-  bottom: var(--space);
-  right: var(--space);
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-xl);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  z-index: 50;
-}
-
-.chat-fab:hover {
-  background: #333;
-}
-
-.chat-fab svg {
-  width: 30px;
-  height: 30px;
-  color: #fff;
-}
-
 /* Typography utility classes – use when you need a designated size */
 .text-xs { font-size: var(--text-xs); }
 .text-sm { font-size: var(--text-sm); }

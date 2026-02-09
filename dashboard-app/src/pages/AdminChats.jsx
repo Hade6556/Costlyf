@@ -229,7 +229,8 @@ export default function AdminChats() {
                   </button>
                 </div>
               </>
-            )}
+            )
+            })()}
           </div>
         </div>
       )}
