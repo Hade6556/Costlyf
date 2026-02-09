@@ -181,7 +181,6 @@ export default function Share() {
               <p className="share-option-desc">{t('dashboard.createPrivateShareDesc')}</p>
             </button>
           </div>
-          <p className="share-visibility-helper">Public listings fill faster and recover more of your monthly cost.</p>
           <p className="share-disclaimer">{t('dashboard.shareDisclaimer')}</p>
         </section>
 
@@ -283,37 +282,39 @@ export default function Share() {
         </section>
 
         {/* Step 5: Secure access details (login email, password) */}
-        <section className={`share-step ${stepIndex !== 4 ? 'share-step--hidden' : ''}`} data-step="credentials">
+        <section className={`share-step share-step--credentials ${stepIndex !== 4 ? 'share-step--hidden' : ''}`} data-step="credentials">
           <button type="button" className="share-back" aria-label={t('dashboard.back')} onClick={goBack}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           </button>
-          <h2 className="share-step-title">Secure access details</h2>
-          <p className="share-credentials-helper">These details will be shared securely with co-subscribers.</p>
-          <div className="share-form-group">
-            <label htmlFor="share-login-email">Login email</label>
-            <input
-              type="email"
-              id="share-login-email"
-              className="share-input"
-              placeholder="email@example.com"
-              autoComplete="email"
-              value={state.loginEmail}
-              onChange={(e) => setState((s) => ({ ...s, loginEmail: e.target.value }))}
-            />
+          <div className="share-step-inner share-step-inner--narrow">
+            <h2 className="share-step-title">Secure access {state.serviceName || 'service'} details</h2>
+            <p className="share-credentials-helper">Enter the email and password you use to sign in to {state.serviceName || 'the service'}. Co-subscribers will receive these after payment so they can log in. Type the password in full so you can confirm it&apos;s correct.</p>
+            <div className="share-form-group">
+              <label htmlFor="share-login-email">Login email</label>
+              <input
+                type="email"
+                id="share-login-email"
+                className="share-input"
+                placeholder="email@example.com"
+                autoComplete="email"
+                value={state.loginEmail}
+                onChange={(e) => setState((s) => ({ ...s, loginEmail: e.target.value }))}
+              />
+            </div>
+            <div className="share-form-group">
+              <label htmlFor="share-login-password">Password</label>
+              <input
+                type="text"
+                id="share-login-password"
+                className="share-input"
+                placeholder="Subscription password"
+                autoComplete="off"
+                value={state.loginPassword}
+                onChange={(e) => setState((s) => ({ ...s, loginPassword: e.target.value }))}
+              />
+            </div>
+            <button type="button" className="share-next-btn" onClick={() => showStep(5)} disabled={!state.loginEmail.trim() || !state.loginPassword.trim()}>{t('dashboard.nextLabel')}</button>
           </div>
-          <div className="share-form-group">
-            <label htmlFor="share-login-password">Password</label>
-            <input
-              type="password"
-              id="share-login-password"
-              className="share-input"
-              placeholder="••••••••"
-              autoComplete="current-password"
-              value={state.loginPassword}
-              onChange={(e) => setState((s) => ({ ...s, loginPassword: e.target.value }))}
-            />
-          </div>
-          <button type="button" className="share-next-btn" onClick={() => showStep(5)}>{t('dashboard.nextLabel')}</button>
         </section>
 
         {/* Step 6: Confirm */}
@@ -369,6 +370,8 @@ function ConfirmStep({ t = (k) => k, state, serviceName, onBack, fetchWithAuth, 
       visibility,
       instant: false,
       verified: false,
+      login_email: (state.loginEmail || '').trim() || undefined,
+      login_password: (state.loginPassword || '').trim() || undefined,
     }
     fetchWithAuth('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then((r) => r.json().then((data) => ({ status: r.status, data })))

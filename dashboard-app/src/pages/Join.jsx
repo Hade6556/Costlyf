@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
@@ -34,18 +34,15 @@ function Carousel({ children }) {
   const singleBlockWidth = total * (CARD_WIDTH_PX + CARD_GAP_PX) - CARD_GAP_PX
   const startScroll = singleBlockWidth * Math.floor(REPEAT / 2)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = scrollRef.current
     const inner = innerRef.current
     if (!el || !inner) return
-    const run = () => {
-      const spacer = inner.firstElementChild
-      const spacerWidth = spacer ? spacer.offsetWidth : 0
-      const viewportWidth = el.clientWidth
-      const firstCardOfBlockLeft = spacerWidth + startScroll
-      el.scrollLeft = firstCardOfBlockLeft - viewportWidth / 2 + CARD_WIDTH_PX / 2
-    }
-    requestAnimationFrame(run)
+    const spacer = inner.firstElementChild
+    const spacerWidth = spacer ? spacer.offsetWidth : 0
+    const viewportWidth = el.clientWidth
+    const firstCardOfBlockLeft = spacerWidth + startScroll
+    el.scrollLeft = firstCardOfBlockLeft - viewportWidth / 2 + CARD_WIDTH_PX / 2
   }, [startScroll])
 
   const scrollBy = (delta) => {

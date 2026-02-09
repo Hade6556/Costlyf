@@ -52,6 +52,12 @@ if (fs.existsSync(iconLogo)) {
   fs.copyFileSync(iconLogo, path.join(publicDir, 'favicon.ico'));
   console.log('Copied favicon.webp, favicon.ico');
 }
+// Fix 404 for /media/iconlogo.webp (some clients request this path)
+const publicMedia = path.join(publicDir, 'media');
+if (fs.existsSync(iconLogo) && fs.existsSync(publicMedia)) {
+  fs.copyFileSync(iconLogo, path.join(publicMedia, 'iconlogo.webp'));
+  console.log('Copied media/iconlogo.webp');
+}
 
 const dashboardBuild = path.join(root, 'dashboard-build');
 const publicDashboard = path.join(publicDir, 'dashboard-app');

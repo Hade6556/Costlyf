@@ -12,6 +12,60 @@ const LOGO_MAP = {
   'prime-video': '/media/brand-logos/prime-video.svg',
 }
 
+const TIP_CARDS = [
+  {
+    id: 'netflix',
+    bg: '#171946',
+    image: '/media/tips/monke.png',
+    class: 'home-tip-card--netflix',
+    content: (
+      <>
+        <p className="home-tip-main">Save 120€<span className="home-tip-year">/year</span></p>
+        <p className="home-tip-sub">by sharing <strong className="home-tip-brand">NETFLIX</strong> with others</p>
+      </>
+    ),
+  },
+  {
+    id: 'spotify',
+    bg: 'linear-gradient(90deg, #0d3320 0%, #0a1f14 50%, #061a10 100%)',
+    image: '/media/tips/shark.png',
+    class: 'home-tip-card--spotify',
+    content: (
+      <>
+        <div className="home-tip-spotify-head">
+          <img src="/media/brand-logos/spotify.svg" alt="Spotify" className="home-tip-spotify-logo" />
+          <span className="home-tip-spotify-name">Spotify®</span>
+        </div>
+        <p className="home-tip-slogan">You don&apos;t have to pay <strong>full price</strong> for this</p>
+      </>
+    ),
+  },
+  {
+    id: 'banana',
+    bg: '#e8b742',
+    image: '/media/tips/banana.png',
+    class: 'home-tip-card--banana',
+    content: (
+      <>
+        <p className="home-tip-dyk">Did you know?</p>
+        <p className="home-tip-main-text">You can <strong>reserve</strong> seats for your friends</p>
+      </>
+    ),
+  },
+  {
+    id: 'cat',
+    bg: '#5B4F46',
+    image: '/media/tips/cat.png',
+    class: 'home-tip-card--cat',
+    content: (
+      <>
+        <p className="home-tip-dyk home-tip-dyk--gray">Did you know?</p>
+        <p className="home-tip-headline">Sharing <strong>doesn&apos;t</strong> limit features — only the <strong>price</strong></p>
+      </>
+    ),
+  },
+]
+
 const HERO_AVATAR_COLORS = ['#a8e6cf', '#d4b5ff', '#a8d4f0', '#fff4b8', '#ffc8d4']
 function getDefaultHeroIndex(userId) {
   if (!userId) return 1
@@ -45,6 +99,14 @@ export default function Home() {
   const [balanceCents, setBalanceCents] = useState(null)
   const [loadingOffers, setLoadingOffers] = useState(true)
   const [loadingJoined, setLoadingJoined] = useState(true)
+  const [tipIndex, setTipIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((i) => (i + 1) % TIP_CARDS.length)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     setLoadingOffers(true)
@@ -98,6 +160,24 @@ export default function Home() {
           <span className="home-balance-chevron" aria-hidden="true">›</span>
         </span>
       </Link>
+
+      <div className="home-tip-card-wrap" aria-label="Tip">
+        {TIP_CARDS.map((tip, i) => (
+          <div
+            key={tip.id}
+            className={`home-tip-card ${tip.class} ${i === tipIndex ? 'home-tip-card--active' : ''}`}
+            style={{ background: tip.bg }}
+            aria-hidden={i !== tipIndex}
+          >
+            <div className="home-tip-card-inner">
+              <div className="home-tip-text">{tip.content}</div>
+              <div className="home-tip-image-wrap">
+                <img src={tip.image} alt="" className="home-tip-image" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {(loadingOffers || offers.length > 0) && (
         <section className="my-offers" id="my-offers-section">
@@ -175,7 +255,7 @@ export default function Home() {
                 const logo = LOGO_MAP[sub.service] || '/media/logo.svg'
                 const daysLeft = typeof sub.days_left === 'number' ? Math.max(0, sub.days_left) : 0
                 const isTaken = sub.my_slot_status === 'taken'
-                const statusLine = isTaken ? t('dashboard.activeDaysLeft', { n: daysLeft }) : t('dashboard.pending')
+                const statusLine = isTaken ? t('dashboard.activeDaysLeft', { n: daysLeft }) : t('dashboard.active')
                 const maxDays = 30
                 const fractionLeft = Math.min(1, daysLeft / maxDays)
                 const progressColor = getMonthProgressColor(fractionLeft)

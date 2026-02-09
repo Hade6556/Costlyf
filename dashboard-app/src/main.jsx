@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { InboxUnreadProvider } from './contexts/InboxUnreadContext'
 import { NotificationProvider } from './contexts/NotificationContext'
@@ -13,7 +13,6 @@ import Share from './pages/Share'
 import Wallet from './pages/Wallet'
 import Offer from './pages/Offer'
 import Profile, { ProfilePersonal, ProfilePrivacy, ProfileTrust } from './pages/Profile'
-import Subscription from './pages/Subscription'
 import Help from './pages/Help'
 import Inbox from './pages/Inbox'
 import Login from './pages/Login'
@@ -22,7 +21,11 @@ import Charter from './pages/Charter'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import PaymentMethod from './pages/PaymentMethod'
+import AdminLayout from './pages/AdminLayout'
 import AdminWithdrawals from './pages/AdminWithdrawals'
+import AdminChats from './pages/AdminChats'
+import AdminTickets from './pages/AdminTickets'
+import AdminUsers from './pages/AdminUsers'
 import StaticPage from './pages/StaticPage'
 import NotFound from './pages/NotFound'
 import { I18nProvider } from './contexts/I18nContext'
@@ -50,8 +53,14 @@ const router = createBrowserRouter(
         { path: 'profile/privacy', element: <ProfilePrivacy /> },
         { path: 'profile/trust', element: <ProfileTrust /> },
         { path: 'profile/payment-method', element: <PaymentMethod /> },
-        { path: 'admin/withdrawals', element: <AdminWithdrawals /> },
-        { path: 'subscription', element: <Subscription /> },
+        { path: 'admin', element: <AdminLayout />, children: [
+          { index: true, element: <Navigate to="withdrawals" replace /> },
+          { path: 'withdrawals', element: <AdminWithdrawals /> },
+          { path: 'chats', element: <AdminChats /> },
+          { path: 'tickets', element: <AdminTickets /> },
+          { path: 'users', element: <AdminUsers /> },
+        ] },
+        { path: 'subscription', element: <Navigate to="/home" replace /> },
         { path: 'help', element: <Help /> },
         { path: 'inbox', element: <Inbox /> },
         { path: 'login', element: <Login /> },

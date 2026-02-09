@@ -16,11 +16,13 @@ function loadStripeScript() {
   })
 }
 
-const TOPUP_AMOUNTS = [
-  { cents: 1000, label: '10€' },
+const TOPUP_MIN_CENTS = 1000   // 10€
+const TOPUP_MAX_CENTS = 15000  // 150€
+const TOPUP_PRESETS = [
   { cents: 2000, label: '20€' },
+  { cents: 3000, label: '30€' },
   { cents: 5000, label: '50€' },
-  { cents: 10000, label: '100€' },
+  { cents: 8000, label: '80€' },
 ]
 
 function JoinModalTopupCard({
@@ -484,7 +486,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const [breakdownOpen, setBreakdownOpen] = useState(false)
   const [payError, setPayError] = useState('')
   const [topupSubStep, setTopupSubStep] = useState(1)
-  const [topupCents, setTopupCents] = useState(5000)
+  const [topupCents, setTopupCents] = useState(5000) // used for join modal top-up; constrained by TOPUP_MIN/MAX
   const [topupLoading, setTopupLoading] = useState(false)
   const [topupError, setTopupError] = useState('')
   const [accessDetails, setAccessDetails] = useState({ email: '', password: '' })
@@ -536,13 +538,22 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
     setStep(5)
   }
 
+  const fetchAccessDetailsAndGo = () => {
+    fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/access-details`, {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        goToInstantAccess(d?.login_email ?? '', d?.login_password ?? '')
+      })
+      .catch(() => goToInstantAccess())
+  }
+
   const handlePay = () => {
     setPayError('')
     if (paymentMethod === 'wallet' && slotIndex != null) {
       if (!canPayWithWallet) {
         setTopupError('')
         setTopupSubStep(1)
-        setTopupCents(TOPUP_AMOUNTS.find((a) => a.cents >= amountCents)?.cents ?? 1000)
+        setTopupCents(Math.max(TOPUP_MIN_CENTS, Math.min(TOPUP_MAX_CENTS, Math.ceil(amountCents / 100) * 100)) || TOPUP_MIN_CENTS)
         setStep(3)
         return
       }
@@ -552,7 +563,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           if (r.ok) {
             setStep(4)
             setLoading(false)
-            setTimeout(() => goToInstantAccess(), 2000)
+            setTimeout(() => fetchAccessDetailsAndGo(), 2000)
             return
           }
           return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
@@ -567,7 +578,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           if (r.ok) {
             setStep(4)
             setLoading(false)
-            setTimeout(() => goToInstantAccess(), 2000)
+            setTimeout(() => fetchAccessDetailsAndGo(), 2000)
             return
           }
           return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
@@ -597,11 +608,11 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           <div className="join-offer-step">
             <h2 className="join-offer-title" id="join-offer-title">{t('dashboard.join')}</h2>
             <div className={`join-offer-avatar-wrap ${trustScore >= 1 && trustScore <= 10 ? `service-offer-trust-ring--${trustScore}` : ''}`}>
-              <div className="join-offer-avatar"><img src={ownerAvatar} alt="" width="80" height="80" /></div>
+              <div className="join-offer-avatar"><img src={ownerAvatar} alt="" width="64" height="64" /></div>
               <span className="join-offer-score service-offer-trust">{scoreDisplay}</span>
             </div>
             <p className="join-offer-owner-name">{ownerName}</p>
-            <span className="join-offer-verified-badge">{t('dashboard.verifiedProfile')} <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><g fill="none" fillRule="evenodd"><path d="m12.593 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M21.546 5.111a1.5 1.5 0 0 1 0 2.121L10.303 18.475a1.6 1.6 0 0 1-2.263 0L2.454 12.89a1.5 1.5 0 1 1 2.121-2.121l4.596 4.596L19.424 5.111a1.5 1.5 0 0 1 2.122 0"/></g></svg></span>
+            <span className="join-offer-verified-badge">{t('dashboard.verifiedProfile')} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="currentColor" d="M9.765 3.205a.75.75 0 0 1 .03 1.06l-4.25 4.5a.75.75 0 0 1-1.075.015L2.22 6.53a.75.75 0 0 1 1.06-1.06l1.705 1.704l3.72-3.939a.75.75 0 0 1 1.06-.03"/></svg></span>
             {memberSince && <p className="join-offer-member-since">{memberSince}</p>}
             <div className={`join-offer-box ${boxCollapsed ? 'join-offer-box--collapsed' : ''}`}>
               <button type="button" className="join-offer-box-head" onClick={() => setBoxCollapsed(!boxCollapsed)} aria-label={t('dashboard.expandCollapseDetails')} aria-expanded={!boxCollapsed}>
@@ -702,20 +713,41 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
             {topupSubStep === 1 && (
               <>
                 <p className="join-offer-subtitle">Insufficient balance. Choose amount to add (€):</p>
-                <div className="join-offer-topup-amounts" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                  {TOPUP_AMOUNTS.map(({ cents, label }) => (
+                <div className="join-offer-topup-stepper">
+                  <button
+                    type="button"
+                    className="join-offer-topup-btn join-offer-topup-btn--minus"
+                    aria-label="Decrease amount"
+                    disabled={topupCents <= TOPUP_MIN_CENTS}
+                    onClick={() => setTopupCents((c) => Math.max(TOPUP_MIN_CENTS, c - 100))}
+                  >
+                    −
+                  </button>
+                  <span className="join-offer-topup-value">{topupCents / 100}€</span>
+                  <button
+                    type="button"
+                    className="join-offer-topup-btn join-offer-topup-btn--plus"
+                    aria-label="Increase amount"
+                    disabled={topupCents >= TOPUP_MAX_CENTS}
+                    onClick={() => setTopupCents((c) => Math.min(TOPUP_MAX_CENTS, c + 100))}
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="join-offer-topup-hint">Enter an amount between €10 and €150</p>
+                <div className="join-offer-topup-presets">
+                  {TOPUP_PRESETS.map(({ cents, label }) => (
                     <button
                       key={cents}
                       type="button"
-                      className={`join-offer-payment-option ${topupCents === cents ? 'join-offer-payment-option--selected' : ''}`}
-                      style={{ flex: '1 1 auto', minWidth: '4rem' }}
+                      className={`join-offer-topup-preset ${topupCents === cents ? 'join-offer-topup-preset--active' : ''}`}
                       onClick={() => setTopupCents(cents)}
                     >
                       {label}
                     </button>
                   ))}
                 </div>
-                <button type="button" className="join-offer-pay" disabled={topupLoading} onClick={() => {
+                <button type="button" className="join-offer-pay join-offer-next--block" disabled={topupLoading} onClick={() => {
                   setTopupError('')
                   setTopupLoading(true)
                   fetchWithAuth('/api/wallet/topup-intent', {
@@ -773,24 +805,27 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
         )}
 
         {step === 5 && !confirmSuccess && !issueSubmitted && (
-          <div className="join-offer-step">
-            <h2 className="join-offer-title">Your access is ready</h2>
+          <div className="join-offer-step join-offer-step--access">
+            <h2 className="join-offer-title">Secure access {offer.service_name || serviceName || 'service'} details</h2>
+            <p className="join-offer-access-intro">Use these credentials to sign in. Copy the email and password below, then open the service and log in. Your password is shown in full so you can copy it.</p>
             <div className="join-offer-access-logo">
               <img src={logo} alt="" width="48" height="48" />
             </div>
-            <div className="join-offer-access-details">
-              <div className="join-offer-access-row">
-                <span className="join-offer-access-label">Login email</span>
-                <span className="join-offer-access-value" data-access="email">{accessDetails.email}</span>
-                <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(accessDetails.email); }}>Copy</button>
+            <div className="join-offer-access-details-box">
+              <div className="join-offer-access-details">
+                <div className="join-offer-access-row">
+                  <span className="join-offer-access-label">Login email</span>
+                  <span className="join-offer-access-value join-offer-access-value--plain" data-access="email">{accessDetails.email}</span>
+                  <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(accessDetails.email); }}>Copy</button>
+                </div>
+                <div className="join-offer-access-row">
+                  <span className="join-offer-access-label">Password</span>
+                  <span className="join-offer-access-value join-offer-access-value--plain" data-access="password">{accessDetails.password}</span>
+                  <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(accessDetails.password); }}>Copy</button>
+                </div>
               </div>
-              <div className="join-offer-access-row">
-                <span className="join-offer-access-label">Password</span>
-                <span className="join-offer-access-value" data-access="password">{accessDetails.password}</span>
-                <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(accessDetails.password); }}>Copy</button>
-              </div>
+              <a href={SERVICE_LOGIN_URL[serviceSlug] || SERVICE_LOGIN_URL.default} target="_blank" rel="noopener noreferrer" className="join-offer-open-service">Open {offer.service_name || serviceName}</a>
             </div>
-            <a href={SERVICE_LOGIN_URL[serviceSlug] || SERVICE_LOGIN_URL.default} target="_blank" rel="noopener noreferrer" className="join-offer-open-service">Open {offer.service_name || serviceName}</a>
             <p className="join-offer-access-instruction">Log in now and check if everything works. This usually takes under 30 seconds.</p>
             <button type="button" className="join-offer-next" onClick={async () => {
               try {
@@ -798,7 +833,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
               } catch (_) { /* slot may still be reserved; show success anyway */ }
               setConfirmSuccess(true)
               setTimeout(() => {
-                if (typeof onSuccess === 'function') onSuccess(offer.id, { redirect: '/subscription' })
+                if (typeof onSuccess === 'function') onSuccess(offer.id, { redirect: `/offer?id=${offer.id}` })
               }, 1500)
             }}>Confirm Access Works</button>
             <button type="button" className="join-offer-issue-btn" onClick={() => setStep(6)}>I have an issue</button>
@@ -808,7 +843,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
         {step === 5 && confirmSuccess && (
           <div className="join-offer-step">
             <p className="join-offer-success-message">Perfect! Your subscription is now active.</p>
-            <p className="join-offer-success-sub">Redirecting to your subscriptions…</p>
+            <p className="join-offer-success-sub">Redirecting to subscription management…</p>
           </div>
         )}
 
@@ -835,7 +870,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           <div className="join-offer-step">
             <p className="join-offer-reassurance">Your payment is protected. You won&apos;t be charged while this is being resolved.</p>
             <p className="join-offer-reassurance-sub">We&apos;ve marked this subscription as Pending. Check Inbox for updates.</p>
-            <button type="button" className="join-offer-next" onClick={() => { if (typeof onSuccess === 'function') onSuccess(offer.id, { redirect: '/subscription' }) }}>Go to My Subscriptions</button>
+            <button type="button" className="join-offer-next" onClick={() => { if (typeof onSuccess === 'function') onSuccess(offer.id, { redirect: `/offer?id=${offer.id}` }) }}>Go to subscription management</button>
           </div>
         )}
       </div>

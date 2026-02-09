@@ -190,6 +190,21 @@ const uploadAvatar = multer({ storage: avatarStorage, limits: { fileSize: 5 * 10
   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/gif') return cb(null, true);
   cb(new Error('Only JPEG, PNG and GIF allowed'));
 } }).single('avatar');
+
+const chatUploadsDir = path.join(uploadsBase, 'chat');
+try { if (!fs.existsSync(chatUploadsDir)) fs.mkdirSync(chatUploadsDir, { recursive: true }); } catch (_) {}
+const chatImageStorage = multer.diskStorage({
+  destination: function (_req, _file, cb) { cb(null, chatUploadsDir); },
+  filename: function (_req, file, cb) {
+    const ext = (file.mimetype === 'image/png') ? 'png' : (file.mimetype === 'image/gif') ? 'gif' : 'jpg';
+    cb(null, 'img-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '.' + ext);
+  }
+});
+const uploadChatImage = multer({ storage: chatImageStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: function (_req, file, cb) {
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/gif') return cb(null, true);
+  cb(new Error('Only images allowed (JPEG, PNG, GIF)'));
+} }).single('image');
+
 app.use('/uploads', express.static(uploadsBase));
 
 // Redirect old dashboard URL to home
@@ -493,6 +508,9 @@ app.get('/api/offers/:id', async (req, res) => {
       trust_score: ownerTrust
     };
     if (!isOwner && out.share_token) delete out.share_token;
+    // Never expose login credentials in list response; joiners get them via GET access-details
+    delete out.login_email;
+    delete out.login_password;
     return res.status(200).json(out);
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Get offer failed' });
@@ -503,7 +521,7 @@ app.get('/api/offers/:id', async (req, res) => {
 app.post('/api/offers', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
-  const { service, service_name, plan, price, max_slots, visibility, instant, verified } = req.body || {};
+  const { service, service_name, plan, price, max_slots, visibility, instant, verified, login_email, login_password } = req.body || {};
   if (!service || !service_name || price == null) return res.status(400).json({ error: 'service, service_name and price are required' });
   const serviceSlug = String(service).trim();
   const maxSlots = Math.max(1, parseInt(max_slots, 10) || 1);
@@ -538,6 +556,8 @@ app.post('/api/offers', async (req, res) => {
       share_token: crypto.randomUUID(),
       updated_at: new Date().toISOString()
     };
+    if (login_email !== undefined) row.login_email = login_email ? String(login_email).trim() : null;
+    if (login_password !== undefined) row.login_password = login_password ? String(login_password) : null;
     const { data: created, error: insertErr } = await supabaseAdmin.from('offers').insert(row).select().single();
     if (insertErr) return res.status(500).json({ error: insertErr.message });
     const slotRows = [];
@@ -555,7 +575,7 @@ app.patch('/api/offers/:id', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
   const id = req.params.id;
-  const { service, service_name, plan, price, max_slots, visibility, instant, verified } = req.body || {};
+  const { service, service_name, plan, price, max_slots, visibility, instant, verified, login_email, login_password } = req.body || {};
   try {
     const { data: existing, error: fetchErr } = await supabaseAdmin.from('offers').select('id, owner_id, max_slots').eq('id', id).single();
     if (fetchErr || !existing) return res.status(404).json({ error: 'Offer not found' });
@@ -573,6 +593,8 @@ app.patch('/api/offers/:id', async (req, res) => {
     if (visibility !== undefined) updates.visibility = (visibility === 'public') ? 'public' : 'private';
     if (instant !== undefined) updates.instant = Boolean(instant);
     if (verified !== undefined) updates.verified = Boolean(verified);
+    if (login_email !== undefined) updates.login_email = login_email ? String(login_email).trim() : null;
+    if (login_password !== undefined) updates.login_password = login_password ? String(login_password) : null;
     const { data: updated, error: updateErr } = await supabaseAdmin.from('offers').update(updates).eq('id', id).select().single();
     if (updateErr) return res.status(500).json({ error: updateErr.message });
     return res.status(200).json(updated);
@@ -774,6 +796,38 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, re
     if (e.message && e.message.indexOf('balance would go negative') !== -1) return res.status(400).json({ error: 'Insufficient balance. Top up your wallet or pay by card.' });
     if (e.message && e.message.indexOf('idempotency') !== -1) return res.status(409).json({ error: 'This slot was already reserved.' });
     return res.status(500).json({ error: e.message || 'Reserve failed' });
+  }
+});
+
+// Get login credentials for the subscription (joiner only, after they have reserved or taken the slot).
+app.get('/api/offers/:id/slots/:slotIndex/access-details', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  const offerId = req.params.id;
+  const slotIndex = parseInt(req.params.slotIndex, 10);
+  if (!offerId || !slotIndex || slotIndex < 1) return res.status(400).json({ error: 'Invalid offer or slot' });
+  try {
+    const { data: slot, error: slotErr } = await supabaseAdmin
+      .from('offer_slots')
+      .select('id, user_id, status')
+      .eq('offer_id', offerId)
+      .eq('slot_index', slotIndex)
+      .single();
+    if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
+    if (!slot.user_id || String(slot.user_id) !== String(user.id)) return res.status(403).json({ error: 'Not your slot' });
+    if (slot.status !== 'reserved' && slot.status !== 'taken') return res.status(403).json({ error: 'Slot not active' });
+    const { data: offer, error: offerErr } = await supabaseAdmin
+      .from('offers')
+      .select('login_email, login_password')
+      .eq('id', offerId)
+      .single();
+    if (offerErr || !offer) return res.status(404).json({ error: 'Offer not found' });
+    return res.status(200).json({
+      login_email: offer.login_email || '',
+      login_password: offer.login_password || ''
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to load access details' });
   }
 });
 
@@ -1354,6 +1408,84 @@ app.post('/api/chat/threads/:id/messages', async (req, res) => {
   }
 });
 
+// Upload chat image (images only; returns URL to use in message content as [img]url)
+const CHAT_IMAGES_BUCKET = 'chat-images';
+const CHAT_IMAGE_RETENTION_MS = 5 * 24 * 60 * 60 * 1000; // 5 days
+
+function cleanupChatImagesOlderThan5Days() {
+  const cutoff = Date.now() - CHAT_IMAGE_RETENTION_MS;
+  // Local disk: filenames are img-{timestamp}-{random}.ext
+  try {
+    if (fs.existsSync(chatUploadsDir)) {
+      const files = fs.readdirSync(chatUploadsDir);
+      for (const name of files) {
+        const m = /^img-(\d+)-/.exec(name);
+        if (m) {
+          const ts = parseInt(m[1], 10);
+          if (ts < cutoff) {
+            try { fs.unlinkSync(path.join(chatUploadsDir, name)); } catch (_) {}
+          }
+        }
+      }
+    }
+  } catch (_) {}
+  // Supabase Storage (e.g. on Vercel)
+  if (supabaseAdmin && process.env.VERCEL) {
+    supabaseAdmin.storage.from(CHAT_IMAGES_BUCKET).list('', { limit: 1000 })
+      .then(({ data: roots }) => {
+        (roots || []).forEach((root) => {
+          if (!root.name) return;
+          supabaseAdmin.storage.from(CHAT_IMAGES_BUCKET).list(root.name, { limit: 1000 })
+            .then(({ data: files }) => {
+              (files || []).forEach((file) => {
+                const updated = file.updated_at ? new Date(file.updated_at).getTime() : 0;
+                if (updated && updated < cutoff) {
+                  supabaseAdmin.storage.from(CHAT_IMAGES_BUCKET).remove([root.name + '/' + file.name]).catch(() => {});
+                }
+              });
+            })
+            .catch(() => {});
+        });
+      })
+      .catch(() => {});
+  }
+}
+
+// Run cleanup every 6 hours
+setInterval(cleanupChatImagesOlderThan5Days, 6 * 60 * 60 * 1000);
+
+app.post('/api/chat/upload-image', uploadChatImage, async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) {
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    if (!req.file || !req.file.filename) return res.status(400).json({ error: 'No image file' });
+    let imageUrl;
+    if (process.env.VERCEL && req.file.path && fs.existsSync(req.file.path)) {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const ext = path.extname(req.file.filename) || '.jpg';
+      const storagePath = user.id + '/img-' + Date.now() + ext;
+      const { error: uploadErr } = await supabaseAdmin.storage.from(CHAT_IMAGES_BUCKET).upload(storagePath, fileBuffer, {
+        contentType: req.file.mimetype || 'image/jpeg',
+        upsert: false
+      });
+      fs.unlinkSync(req.file.path);
+      if (uploadErr) return res.status(500).json({ error: uploadErr.message || 'Storage upload failed' });
+      const { data: urlData } = supabaseAdmin.storage.from(CHAT_IMAGES_BUCKET).getPublicUrl(storagePath);
+      imageUrl = urlData.publicUrl;
+    } else {
+      imageUrl = '/uploads/chat/' + req.file.filename;
+    }
+    setImmediate(cleanupChatImagesOlderThan5Days);
+    return res.status(200).json({ url: imageUrl });
+  } catch (e) {
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(500).json({ error: e.message || 'Upload failed' });
+  }
+});
+
 // --- Auth API (Supabase) ---
 
 // Sign up: create auth user + profile (Phone, E-mail, DOB, Alias, First/Last name, password)
@@ -1411,14 +1543,14 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
-// Login: email + password
+// Login: email + password (401 = Supabase rejected credentials: wrong email/password or unconfirmed email)
 app.post('/api/auth/login', async (req, res) => {
   if (!supabaseAuth) return res.status(503).json({ error: 'Auth not configured' });
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   try {
     const { data, error } = await supabaseAuth.auth.signInWithPassword({ email: String(email).trim(), password: String(password) });
-    if (error) return res.status(401).json({ error: error.message });
+    if (error) return res.status(401).json({ error: error.message || 'Invalid login credentials' });
     return res.status(200).json({ access_token: data.session?.access_token, refresh_token: data.session?.refresh_token, user: data.user });
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Login failed' });
@@ -1722,7 +1854,7 @@ app.post('/api/wallet/withdraw', async (req, res) => {
   try {
     const { data: profile } = await supabaseAdmin.from('profiles').select('withdrawal_iban, withdrawal_account_holder').eq('id', user.id).single();
     const iban = profile && profile.withdrawal_iban && String(profile.withdrawal_iban).trim().replace(/\s/g, '');
-    if (!iban || iban.length < 15) return res.status(400).json({ error: 'Add your bank IBAN on the Payment method page first' });
+    if (!iban || iban.length < 15) return res.status(400).json({ error: 'Add your bank IBAN on the Payment method page in profile first' });
     const { data: balanceRow } = await supabaseAdmin.from('user_balances').select('balance_cents').eq('user_id', user.id).single();
     const balance_cents = (balanceRow && balanceRow.balance_cents != null) ? balanceRow.balance_cents : 0;
     if (balance_cents < amount_cents) return res.status(400).json({ error: 'Insufficient balance' });
@@ -1797,7 +1929,7 @@ app.get('/api/admin/withdrawal-requests', async (req, res) => {
     const status = (req.query.status || 'pending').toString();
     const { data: rows, error } = await supabaseAdmin
       .from('withdrawal_requests')
-      .select('id, user_id, amount_cents, iban_snapshot, account_holder_snapshot, status, stripe_payout_id, created_at, updated_at')
+      .select('id, user_id, amount_cents, iban_snapshot, account_holder_snapshot, status, stripe_payout_id, admin_notes, created_at, updated_at')
       .in('status', status === 'all' ? ['pending', 'paid', 'cancelled'] : [status])
       .order('created_at', { ascending: false })
       .limit(200);
@@ -1816,20 +1948,286 @@ app.patch('/api/admin/withdrawal-requests/:id', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
   const id = (req.params && req.params.id) || '';
-  const { status: newStatus, stripe_payout_id: stripePayoutId } = req.body || {};
+  const { status: newStatus, stripe_payout_id: stripePayoutId, admin_notes: adminNotes } = req.body || {};
   if (!id) return res.status(400).json({ error: 'Missing withdrawal request id' });
   try {
     const { data: row, error: fetchErr } = await supabaseAdmin.from('withdrawal_requests').select('id, status').eq('id', id).single();
     if (fetchErr || !row) return res.status(404).json({ error: 'Withdrawal request not found' });
-    if (row.status !== 'pending') return res.status(400).json({ error: 'Only pending requests can be updated' });
-    if (newStatus !== 'paid' && newStatus !== 'cancelled') return res.status(400).json({ error: 'status must be paid or cancelled' });
-    const updates = { status: newStatus, updated_at: new Date().toISOString() };
-    if (stripePayoutId !== undefined) updates.stripe_payout_id = String(stripePayoutId).trim() || null;
+    const updates = { updated_at: new Date().toISOString() };
+    if (adminNotes !== undefined) updates.admin_notes = typeof adminNotes === 'string' ? adminNotes.trim() || null : null;
+    if (row.status === 'pending' && (newStatus === 'paid' || newStatus === 'cancelled')) {
+      updates.status = newStatus;
+      if (stripePayoutId !== undefined) updates.stripe_payout_id = String(stripePayoutId).trim() || null;
+    }
     const { error: updateErr } = await supabaseAdmin.from('withdrawal_requests').update(updates).eq('id', id);
     if (updateErr) return res.status(500).json({ error: updateErr.message });
-    return res.status(200).json({ message: newStatus === 'paid' ? 'Marked as paid' : 'Cancelled' });
+    return res.status(200).json({ message: updates.status ? (updates.status === 'paid' ? 'Marked as paid' : 'Cancelled') : 'Updated' });
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Update failed' });
+  }
+});
+
+// --- Admin: list all chat threads (search/filter), get messages, post as support ---
+app.get('/api/admin/chat/threads', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const q = (req.query.q && String(req.query.q).trim()) || '';
+  try {
+    let threadsQuery = supabaseAdmin.from('chat_threads').select('id, offer_id, user1_id, user2_id, created_at, updated_at').order('updated_at', { ascending: false }).limit(200);
+    const { data: threads, error: threadsErr } = await threadsQuery;
+    if (threadsErr) return res.status(500).json({ error: threadsErr.message });
+    if (!threads || threads.length === 0) return res.status(200).json([]);
+    const offerIds = [...new Set(threads.map(t => t.offer_id))];
+    const userIds = [...new Set(threads.flatMap(t => [t.user1_id, t.user2_id]))];
+    const { data: offers } = await supabaseAdmin.from('offers').select('id, service, service_name, plan').in('id', offerIds);
+    const { data: profiles } = await supabaseAdmin.from('profiles').select('id, email, alias, first_name, last_name').in('id', userIds);
+    const offerById = (offers || []).reduce((acc, o) => { acc[o.id] = o; return acc; }, {});
+    const profileById = (profiles || []).reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+    const searchLower = q ? q.toLowerCase() : '';
+    const out = threads.map(t => {
+      const o = offerById[t.offer_id] || {};
+      const subLabel = [o.service_name || o.service, o.plan].filter(Boolean).join(' ') || 'Subscription';
+      const p1 = profileById[t.user1_id] || {};
+      const p2 = profileById[t.user2_id] || {};
+      const name1 = [p1.alias, [p1.first_name, p1.last_name].filter(Boolean).join(' '), p1.email].find(Boolean) || 'User';
+      const name2 = [p2.alias, [p2.first_name, p2.last_name].filter(Boolean).join(' '), p2.email].find(Boolean) || 'User';
+      const match = !searchLower || [name1, name2, p1.email, p2.email, subLabel, (o.service_name || o.service || '')].some(s => (s || '').toLowerCase().includes(searchLower));
+      return { id: t.id, offer_id: t.offer_id, user1_id: t.user1_id, user2_id: t.user2_id, user1_name: name1, user2_name: name2, user1_email: p1.email, user2_email: p2.email, subscription_label: subLabel, created_at: t.created_at, updated_at: t.updated_at, _match: match };
+    });
+    const filtered = q ? out.filter(r => r._match) : out;
+    filtered.forEach(r => delete r._match);
+    return res.status(200).json(filtered);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'List threads failed' });
+  }
+});
+
+app.get('/api/admin/chat/threads/:id/messages', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const threadId = req.params.id;
+  const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+  try {
+    const { data: thread, error: threadErr } = await supabaseAdmin.from('chat_threads').select('id, user1_id, user2_id, offer_id').eq('id', threadId).single();
+    if (threadErr || !thread) return res.status(404).json({ error: 'Thread not found' });
+    const { data: rows, error: msgErr } = await supabaseAdmin.from('chat_messages').select('id, thread_id, sender_id, content, created_at, read_at, is_system').eq('thread_id', threadId).order('created_at', { ascending: true }).limit(limit);
+    if (msgErr) return res.status(500).json({ error: msgErr.message });
+    const messages = rows || [];
+    const offerIds = [thread.offer_id];
+    const { data: offers } = await supabaseAdmin.from('offers').select('id, service_name, service').in('id', offerIds);
+    const offer = (offers || [])[0] || {};
+    const { data: profs } = await supabaseAdmin.from('profiles').select('id, alias, first_name, last_name, email').in('id', [thread.user1_id, thread.user2_id]);
+    const byId = (profs || []).reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+    return res.status(200).json({ thread: { id: thread.id, user1_id: thread.user1_id, user2_id: thread.user2_id, user1_name: [byId[thread.user1_id]?.alias, [byId[thread.user1_id]?.first_name, byId[thread.user1_id]?.last_name].filter(Boolean).join(' '), byId[thread.user1_id]?.email].find(Boolean) || 'User', user2_name: [byId[thread.user2_id]?.alias, [byId[thread.user2_id]?.first_name, byId[thread.user2_id]?.last_name].filter(Boolean).join(' '), byId[thread.user2_id]?.email].find(Boolean) || 'User', subscription_label: [offer.service_name || offer.service].filter(Boolean).join(' ') || 'Subscription' }, messages });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'List messages failed' });
+  }
+});
+
+app.post('/api/admin/chat/threads/:id/messages', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const threadId = req.params.id;
+  const { content } = req.body || {};
+  const text = typeof content === 'string' ? content.trim() : '';
+  if (!text) return res.status(400).json({ error: 'content required' });
+  try {
+    const { data: thread, error: threadErr } = await supabaseAdmin.from('chat_threads').select('id').eq('id', threadId).single();
+    if (threadErr || !thread) return res.status(404).json({ error: 'Thread not found' });
+    const supportContent = '[Support] ' + text;
+    const { data: msg, error: insertErr } = await supabaseAdmin.from('chat_messages').insert({ thread_id: threadId, sender_id: null, content: supportContent, read_at: null, is_system: true }).select().single();
+    if (insertErr) return res.status(500).json({ error: insertErr.message });
+    await supabaseAdmin.from('chat_threads').update({ updated_at: new Date().toISOString() }).eq('id', threadId);
+    return res.status(201).json(msg);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Send failed' });
+  }
+});
+
+// --- Support tickets: user creates and replies; admin lists, replies, sets status ---
+app.post('/api/support/tickets', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  const { subject, content } = req.body || {};
+  const subj = typeof subject === 'string' ? subject.trim() : '';
+  const text = typeof content === 'string' ? content.trim() : '';
+  if (!subj || !text) return res.status(400).json({ error: 'subject and content required' });
+  try {
+    const { data: ticket, error: ticketErr } = await supabaseAdmin.from('support_tickets').insert({ user_id: user.id, subject: subj, status: 'open' }).select().single();
+    if (ticketErr) return res.status(500).json({ error: ticketErr.message });
+    const { error: msgErr } = await supabaseAdmin.from('support_ticket_messages').insert({ ticket_id: ticket.id, sender_id: user.id, is_admin: false, content: text });
+    if (msgErr) return res.status(500).json({ error: msgErr.message });
+    return res.status(201).json(ticket);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Create failed' });
+  }
+});
+
+app.get('/api/support/tickets', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const { data: rows, error } = await supabaseAdmin.from('support_tickets').select('id, subject, status, created_at, updated_at').eq('user_id', user.id).order('updated_at', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json(rows || []);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'List failed' });
+  }
+});
+
+app.get('/api/support/tickets/:id', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  const id = req.params.id;
+  try {
+    const { data: ticket, error: tErr } = await supabaseAdmin.from('support_tickets').select('id, subject, status, created_at, updated_at').eq('id', id).eq('user_id', user.id).single();
+    if (tErr || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+    const { data: messages, error: mErr } = await supabaseAdmin.from('support_ticket_messages').select('id, sender_id, is_admin, content, created_at').eq('ticket_id', id).order('created_at', { ascending: true });
+    if (mErr) return res.status(500).json({ error: mErr.message });
+    return res.status(200).json({ ...ticket, messages: messages || [] });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed' });
+  }
+});
+
+app.post('/api/support/tickets/:id/messages', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  const id = req.params.id;
+  const { content } = req.body || {};
+  const text = typeof content === 'string' ? content.trim() : '';
+  if (!text) return res.status(400).json({ error: 'content required' });
+  try {
+    const { data: ticket, error: tErr } = await supabaseAdmin.from('support_tickets').select('id').eq('id', id).eq('user_id', user.id).single();
+    if (tErr || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+    const { data: msg, error: mErr } = await supabaseAdmin.from('support_ticket_messages').insert({ ticket_id: id, sender_id: user.id, is_admin: false, content: text }).select().single();
+    if (mErr) return res.status(500).json({ error: mErr.message });
+    await supabaseAdmin.from('support_tickets').update({ updated_at: new Date().toISOString() }).eq('id', id);
+    return res.status(201).json(msg);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Send failed' });
+  }
+});
+
+app.get('/api/admin/tickets', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const status = (req.query.status && String(req.query.status).trim()) || '';
+  const q = (req.query.q && String(req.query.q).trim()) || '';
+  try {
+    let query = supabaseAdmin.from('support_tickets').select('id, user_id, subject, status, created_at, updated_at').order('updated_at', { ascending: false }).limit(200);
+    if (status && ['open', 'in_progress', 'resolved', 'closed'].includes(status)) query = query.eq('status', status);
+    const { data: tickets, error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+    if (!tickets || tickets.length === 0) return res.status(200).json([]);
+    const userIds = [...new Set(tickets.map(t => t.user_id))];
+    const { data: profiles } = await supabaseAdmin.from('profiles').select('id, email, alias, first_name, last_name').in('id', userIds);
+    const byId = (profiles || []).reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+    const searchLower = q ? q.toLowerCase() : '';
+    const out = (tickets || []).map(t => {
+      const p = byId[t.user_id] || {};
+      const name = [p.alias, [p.first_name, p.last_name].filter(Boolean).join(' '), p.email].find(Boolean) || 'User';
+      const match = !searchLower || [name, p.email, t.subject].some(s => (s || '').toLowerCase().includes(searchLower));
+      return { ...t, user_email: p.email, user_name: name, _match: match };
+    });
+    const filtered = q ? out.filter(r => r._match) : out;
+    filtered.forEach(r => delete r._match);
+    return res.status(200).json(filtered);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'List failed' });
+  }
+});
+
+app.get('/api/admin/tickets/:id', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const id = req.params.id;
+  try {
+    const { data: ticket, error: tErr } = await supabaseAdmin.from('support_tickets').select('id, user_id, subject, status, created_at, updated_at').eq('id', id).single();
+    if (tErr || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+    const { data: messages } = await supabaseAdmin.from('support_ticket_messages').select('id, sender_id, is_admin, content, created_at').eq('ticket_id', id).order('created_at', { ascending: true });
+    const { data: profile } = await supabaseAdmin.from('profiles').select('id, email, alias, first_name, last_name').eq('id', ticket.user_id).single();
+    const userName = [profile?.alias, [profile?.first_name, profile?.last_name].filter(Boolean).join(' '), profile?.email].find(Boolean) || 'User';
+    return res.status(200).json({ ...ticket, user_name: userName, user_email: profile?.email, messages: messages || [] });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed' });
+  }
+});
+
+app.patch('/api/admin/tickets/:id', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const id = req.params.id;
+  const { status: newStatus } = req.body || {};
+  if (!newStatus || !['open', 'in_progress', 'resolved', 'closed'].includes(newStatus)) return res.status(400).json({ error: 'status must be open, in_progress, resolved, or closed' });
+  try {
+    const { error } = await supabaseAdmin.from('support_tickets').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ message: 'Updated' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Update failed' });
+  }
+});
+
+app.post('/api/admin/tickets/:id/messages', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const id = req.params.id;
+  const { content } = req.body || {};
+  const text = typeof content === 'string' ? content.trim() : '';
+  if (!text) return res.status(400).json({ error: 'content required' });
+  try {
+    const { data: ticket, error: tErr } = await supabaseAdmin.from('support_tickets').select('id').eq('id', id).single();
+    if (tErr || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+    const { data: msg, error: mErr } = await supabaseAdmin.from('support_ticket_messages').insert({ ticket_id: id, sender_id: user.id, is_admin: true, content: text }).select().single();
+    if (mErr) return res.status(500).json({ error: mErr.message });
+    await supabaseAdmin.from('support_tickets').update({ updated_at: new Date().toISOString() }).eq('id', id);
+    return res.status(201).json(msg);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Send failed' });
+  }
+});
+
+// --- Admin: list users, get user detail (profile, balance, subscriptions, withdrawals) ---
+app.get('/api/admin/users', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const q = (req.query.q && String(req.query.q).trim()).toLowerCase() || '';
+  try {
+    const { data: profiles, error } = await supabaseAdmin.from('profiles').select('id, email, phone, alias, first_name, last_name, created_at, updated_at, trust_score, charter_accepted_at, avatar_url').order('created_at', { ascending: false }).limit(500);
+    if (error) return res.status(500).json({ error: error.message });
+    let list = profiles || [];
+    if (q) {
+      list = list.filter(p => [p.email, p.phone, p.alias, p.first_name, p.last_name].some(v => (v || '').toLowerCase().includes(q)));
+    }
+    return res.status(200).json(list);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'List failed' });
+  }
+});
+
+app.get('/api/admin/users/:id', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !isAdmin(user)) return res.status(403).json({ error: 'Forbidden' });
+  const userId = req.params.id;
+  try {
+    const { data: profile, error: pErr } = await supabaseAdmin.from('profiles').select('*').eq('id', userId).single();
+    if (pErr || !profile) return res.status(404).json({ error: 'User not found' });
+    const { data: balance } = await supabaseAdmin.from('user_balances').select('balance_cents').eq('user_id', userId).single();
+    const { data: txs } = await supabaseAdmin.from('balance_transactions').select('id, amount_cents, type, reference_type, reference_id, metadata, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(100);
+    const { data: offers } = await supabaseAdmin.from('offers').select('id, service, service_name, plan, price, max_slots, visibility, created_at').eq('owner_id', userId).order('created_at', { ascending: false });
+    const { data: slots } = await supabaseAdmin.from('offer_slots').select('offer_id, slot_index, status, user_id, reserved_at, accepted_at').eq('user_id', userId);
+    const { data: withdrawals } = await supabaseAdmin.from('withdrawal_requests').select('id, amount_cents, status, created_at, updated_at').eq('user_id', userId).order('created_at', { ascending: false });
+    return res.status(200).json({
+      profile,
+      balance_cents: balance?.balance_cents ?? 0,
+      balance_transactions: txs || [],
+      offers_owned: offers || [],
+      slots_joined: slots || [],
+      withdrawal_requests: withdrawals || []
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed' });
   }
 });
 

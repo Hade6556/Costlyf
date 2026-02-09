@@ -248,12 +248,11 @@ export default function Offer() {
               <div className="offer-row-main">
                 <h2 className="offer-row-title">{t('dashboard.yourSlot')}</h2>
                 <p className="offer-row-meta">
-                  <span className={mySlot.status === 'taken' && !mySlot.removal_effective_at ? 'offer-my-slot-status--active' : ''}>
-                    {mySlot.status === 'taken' ? (mySlot.removal_effective_at ? 'Canceled' : 'Active') : 'Pending'}
-                    {mySlot.status === 'taken' && !mySlot.removal_effective_at && typeof mySlot.days_left === 'number' && mySlot.days_left >= 0 ? ` · ${mySlot.days_left} days left` : ''}
+                  <span className={(mySlot.status === 'taken' || mySlot.status === 'reserved') && !mySlot.removal_effective_at ? 'offer-my-slot-status--active' : ''}>
+                    {mySlot.removal_effective_at ? 'Canceled' : 'Active'}
+                    {(mySlot.status === 'taken' || mySlot.status === 'reserved') && !mySlot.removal_effective_at && typeof mySlot.days_left === 'number' && mySlot.days_left >= 0 ? ` · ${mySlot.days_left} days left` : ''}
                   </span>
                 </p>
-                {mySlot.status === 'reserved' && <p className="offer-row-meta offer-row-meta--muted">{t('dashboard.pendingUntilOwnerAccepts')}</p>}
                 {mySlot.removal_effective_at && (
                   <p className="offer-row-meta offer-cancel-effective offer-cancel-effective--scheduled">
                     Cancels on {formatDate(mySlot.removal_effective_at)}. <strong>{daysLeftUntil(mySlot.removal_effective_at)} days left.</strong>
@@ -404,13 +403,24 @@ function OwnerAvatar({ offer }) {
 
 function OfferCosubsModal({ offer, user, onClose, onAction, fetchWithAuth }) {
   const { t: tf } = useI18n()
+  const [loadingState, setLoadingState] = useState(null) // { slotIndex, action: 'reserve' | 'unreserve' }
   const slots = offer?.slots || []
   const offerId = offer?.id
   const myId = user?.id != null ? String(user.id) : ''
   const ownerId = offer?.owner_id != null ? String(offer.owner_id) : ''
   const isOwner = ownerId && myId && ownerId === myId
 
+  useEffect(() => {
+    if (!loadingState || !slots.length) return
+    const slot = slots.find((s) => s.slot_index === loadingState.slotIndex)
+    if (!slot) return
+    const currentStatus = slot.status || 'available'
+    const expected = loadingState.action === 'reserve' ? 'reserved' : 'available'
+    if (currentStatus === expected) setLoadingState(null)
+  }, [loadingState, slots])
+
   const doSlotAction = (slotIndex, action) => {
+    if (action === 'reserve' || action === 'unreserve') setLoadingState({ slotIndex, action })
     const url = `/api/offers/${encodeURIComponent(offerId)}/slots/${slotIndex}`
     let method = 'POST'
     let path = url
@@ -421,8 +431,14 @@ function OfferCosubsModal({ offer, user, onClose, onAction, fetchWithAuth }) {
     else if (action === 'schedule-removal') path = url + '/schedule-removal'
     else path = url + '/reserve'
     fetchWithAuth(path, { method })
-      .then((r) => { if (r.ok) onAction(); else return r.json().then((d) => { throw new Error(d.error) }) })
-      .catch((e) => alert(e.message || 'Action failed'))
+      .then((r) => {
+        if (r.ok) onAction()
+        else return r.json().then((d) => { throw new Error(d.error) })
+      })
+      .catch((e) => {
+        setLoadingState(null)
+        alert(e.message || 'Action failed')
+      })
   }
 
   return (
@@ -436,31 +452,37 @@ function OfferCosubsModal({ offer, user, onClose, onAction, fetchWithAuth }) {
             const status = slot.status || 'available'
             const isMine = slot.user_id && String(slot.user_id) === myId
             const reservedByOwner = isOwner && slot.user_id && String(slot.user_id) === myId
-            let statusLabel = status === 'available' ? tf('dashboard.available') : status === 'reserved' ? (reservedByOwner ? tf('dashboard.reserved') : tf('dashboard.pending')) : (slot.removal_effective_at ? tf('dashboard.canceled') : tf('dashboard.active'))
+            const statusLabel = status === 'available' ? tf('dashboard.available') : status === 'reserved' ? tf('dashboard.reserved') : (slot.removal_effective_at ? tf('dashboard.canceled') : tf('dashboard.active'))
             const slotUserName = (slot.slot_user_name && slot.slot_user_name.trim()) ? slot.slot_user_name : (slot.user_id ? 'User' : '')
-            const canAcceptDecline = isOwner && status === 'reserved' && slot.user_id && !reservedByOwner
             const canUnreserve = status === 'reserved' && isMine
             const canRequestRemoval = status === 'taken' && isMine
             const canOwnerRemove = isOwner && status === 'taken' && slot.user_id && !reservedByOwner && !slot.removal_effective_at
             const canReserve = status === 'available' && user
+            const isSlotLoading = loadingState?.slotIndex === slot.slot_index
+            const showReservedOnly = status === 'reserved'
             return (
               <div key={slot.slot_index} className={`offer-cosubs-slot offer-cosubs-slot--${status}`}>
                 <div>
                   <span className="offer-cosubs-slot-label">{tf('dashboard.slotN', { n: slot.slot_index })}</span>
                   <span className="offer-cosubs-slot-status">{statusLabel}</span>
-                  {slotUserName && (status === 'reserved' || status === 'taken') && <div className="offer-cosubs-slot-user">{slotUserName}</div>}
-                  {status === 'taken' && slotUserName && (
+                  {!showReservedOnly && slotUserName && (status === 'taken') && <div className="offer-cosubs-slot-user">{slotUserName}</div>}
+                  {!showReservedOnly && (status === 'taken') && slotUserName && (
                     <div className="offer-cosubs-slot-taken-meta">
                       {slot.reserved_at ? tf('dashboard.sinceDate', { date: formatDate(slot.reserved_at) }) : ''}
                       {slot.removal_effective_at ? ` · ${tf('dashboard.canceledRemoval', { date: formatDate(slot.removal_effective_at) })}` : ''}
                     </div>
                   )}
                 </div>
-                {canAcceptDecline && <div className="offer-cosubs-slot-hint">{tf('dashboard.acceptDeclineHint')}</div>}
                 <div className="offer-cosubs-slot-actions">
-                  {canReserve && <button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--primary" onClick={() => doSlotAction(slot.slot_index, 'reserve')}>{tf('dashboard.reserve')}</button>}
-                  {canAcceptDecline && <><button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--primary" onClick={() => doSlotAction(slot.slot_index, 'accept')}>{tf('dashboard.accept')}</button><button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--danger" onClick={() => doSlotAction(slot.slot_index, 'decline')}>{tf('dashboard.decline')}</button></>}
-                  {canUnreserve && <button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--secondary" onClick={() => doSlotAction(slot.slot_index, 'unreserve')}>{tf('dashboard.unreserve')}</button>}
+                  {canReserve && !isSlotLoading && <button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--primary" onClick={() => doSlotAction(slot.slot_index, 'reserve')}>{tf('dashboard.reserve')}</button>}
+                  {canUnreserve && !isSlotLoading && <button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--secondary" onClick={() => doSlotAction(slot.slot_index, 'unreserve')}>{tf('dashboard.unreserve')}</button>}
+                  {isSlotLoading && (
+                    <span className="offer-cosubs-slot-loading" aria-label="Loading">
+                      <span className="offer-cosubs-slot-bubble" />
+                      <span className="offer-cosubs-slot-bubble" />
+                      <span className="offer-cosubs-slot-bubble" />
+                    </span>
+                  )}
                   {canRequestRemoval && <button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--danger" onClick={() => doSlotAction(slot.slot_index, 'request-removal')}>{tf('dashboard.requestRemoval')}</button>}
                   {canOwnerRemove && <button type="button" className="offer-cosubs-slot-btn offer-cosubs-slot-btn--danger" onClick={() => doSlotAction(slot.slot_index, 'schedule-removal')}>{tf('dashboard.remove')}</button>}
                 </div>

@@ -176,6 +176,22 @@
   height: 24px;
 }
 
+.share-step-inner--narrow {
+  max-width: 22rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.share-step-inner--narrow .share-step-title,
+.share-step-inner--narrow .share-credentials-helper {
+  text-align: center;
+}
+.share-step-inner--narrow .share-form-group {
+  text-align: left;
+}
+.share-step-inner--narrow .share-next-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .share-step-title {
   margin: 0 0 1.5rem;
   font-size: 1.5rem;
@@ -353,6 +369,7 @@
   padding: 1rem;
   background: var(--dash-search-bg);
   border-radius: 12px;
+  text-align: center;
 }
 .share-easy-title {
   display: block;
