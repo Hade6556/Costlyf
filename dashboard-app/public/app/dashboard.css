@@ -4709,6 +4709,7 @@ button.profile-nav-item {
 @media (max-width: 767px) {
   .subscription-chat-input-wrap .subscription-chat-input {
     padding-right: 3rem;
+    font-size: 16px; /* Prevents iOS zoom on focus */
   }
   .subscription-chat-send {
     width: 44px;
