@@ -27,7 +27,7 @@ function ProfileAvatar({ profile, user, className = 'sidebar-user-avatar' }) {
   return (
     <span className={`${className} ${className}--default`} aria-hidden="true" style={{ '--circle-color': color }}>
       <span className="profile-avatar-circle">
-        <img src={`/media/hero-profiles/${heroIndex}.png`} alt="" />
+        <img src={`/media/hero-profiles/${heroIndex}.webp`} alt="" />
       </span>
     </span>
   )
@@ -127,7 +127,7 @@ export default function Layout() {
       <aside className="sidebar" aria-label="Navigation">
         <div className="sidebar-header">
           <a href="/" className="sidebar-logo">
-            <img src="/media/iconlogo.png" alt="" className="sidebar-logo-icon" />
+            <img src="/media/iconlogo.webp" alt="" className="sidebar-logo-icon" />
             <img src="/media/logo.svg" alt="CostLyf" />
           </a>
         </div>

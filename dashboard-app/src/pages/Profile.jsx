@@ -85,7 +85,7 @@ function AvatarDisplay({ avatarUrl, userId, size = 'sidebar' }) {
   return (
     <span className={isCard ? 'profile-card-avatar profile-card-avatar--default' : 'profile-avatar profile-avatar--default'}>
       <span className="profile-avatar-circle" style={{ '--circle-color': color }}>
-        <img src={`/media/hero-profiles/${heroIndex}.png`} alt="" />
+        <img src={`/media/hero-profiles/${heroIndex}.webp`} alt="" />
       </span>
     </span>
   )

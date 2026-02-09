@@ -45,12 +45,12 @@ if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
   }
 });
 
-// Favicon (fix 404 for /favicon.ico and /favicon.png)
-const iconLogo = path.join(root, 'media', 'iconlogo.png');
+// Favicon (fix 404 for /favicon.ico and /favicon.webp)
+const iconLogo = path.join(root, 'media', 'iconlogo.webp');
 if (fs.existsSync(iconLogo)) {
-  fs.copyFileSync(iconLogo, path.join(publicDir, 'favicon.png'));
+  fs.copyFileSync(iconLogo, path.join(publicDir, 'favicon.webp'));
   fs.copyFileSync(iconLogo, path.join(publicDir, 'favicon.ico'));
-  console.log('Copied favicon.png, favicon.ico');
+  console.log('Copied favicon.webp, favicon.ico');
 }
 
 const dashboardBuild = path.join(root, 'dashboard-build');

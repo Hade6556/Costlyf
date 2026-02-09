@@ -84,7 +84,7 @@ export default function Home() {
             <img src={avatarUrl} alt="" />
           ) : (
             <span className="home-profile-avatar-placeholder" style={{ '--hero-color': heroColor }}>
-              <img src={`/media/hero-profiles/${heroIndex}.png`} alt="" />
+              <img src={`/media/hero-profiles/${heroIndex}.webp`} alt="" />
             </span>
           )}
         </span>
@@ -211,7 +211,7 @@ export default function Home() {
           <div className="home-card-inner">
             <h2 className="home-card-title">{t('dashboard.joinASubscription')}</h2>
             <div className="home-card-illus">
-              <img src="/media/home/chairs.png" alt="" className="home-card-illus-img" />
+              <img src="/media/home/chairs.webp" alt="" className="home-card-illus-img" />
             </div>
             <Link to="/join" className="home-pill">
               <svg className="home-pill-icon home-pill-icon--svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
@@ -223,7 +223,7 @@ export default function Home() {
           <div className="home-card-inner">
             <h2 className="home-card-title">{t('dashboard.shareASubscription')}</h2>
             <div className="home-card-illus">
-              <img src="/media/home/openhouse.png" alt="" className="home-card-illus-img" />
+              <img src="/media/home/openhouse.webp" alt="" className="home-card-illus-img" />
             </div>
             <Link to="/share" className="home-pill">
               <span className="home-pill-icon home-pill-icon--plus">+</span>

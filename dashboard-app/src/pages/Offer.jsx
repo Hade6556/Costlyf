@@ -397,7 +397,7 @@ function OwnerAvatar({ offer }) {
   }
   return (
     <span className="offer-owner-avatar subscription-owner-avatar subscription-owner-avatar--default" style={{ '--circle-color': color }}>
-      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${idx}.png`} alt="" /></span>
+      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${idx}.webp`} alt="" /></span>
     </span>
   )
 }

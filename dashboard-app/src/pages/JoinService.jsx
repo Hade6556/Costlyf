@@ -306,7 +306,7 @@ export default function JoinService() {
                 const trust = o.trust_score != null ? o.trust_score : 0
                 const trustDisplay = trust > 0 ? String(trust) : '—'
                 const displayName = o.owner_name || 'Host'
-                const avatarSrc = (o.owner_avatar_url && o.owner_avatar_url.trim()) ? o.owner_avatar_url : '/media/hero-profiles/1.png'
+                const avatarSrc = (o.owner_avatar_url && o.owner_avatar_url.trim()) ? o.owner_avatar_url : '/media/hero-profiles/1.webp'
                 const isOwner = user && o.owner_id === user.id
                 const isJoined = joinedIds.has(o.id)
                 return (
@@ -490,7 +490,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const amountToOwner = totalPrice > 0 ? breakdown.amountToOwner.toFixed(2) : '0.00'
   const operatingCostsVal = totalPrice > 0 ? breakdown.operatingFee.toFixed(2) : '0.00'
   const ownerName = offer.owner_name || 'Host'
-  const ownerAvatar = (offer.owner_avatar_url && offer.owner_avatar_url.trim()) ? offer.owner_avatar_url : '/media/hero-profiles/2.png'
+  const ownerAvatar = (offer.owner_avatar_url && offer.owner_avatar_url.trim()) ? offer.owner_avatar_url : '/media/hero-profiles/2.webp'
   const trustScore = offer.trust_score != null ? offer.trust_score : 0
   const scoreDisplay = trustScore > 0 ? String(trustScore) : '—'
   const logo = LOGO_MAP[serviceSlug] || LOGO_MAP.netflix

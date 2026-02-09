@@ -110,7 +110,7 @@ export default function Inbox() {
             <>
             <Link to="/inbox#thread-system" className="inbox-contact-card" onClick={() => setHashThreadId(SYSTEM_THREAD_ID)}>
               <span className="inbox-contact-avatar inbox-contact-avatar--default" style={{ '--circle-color': '#ffc8d4' }} aria-hidden="true">
-                <span className="inbox-avatar-circle"><img src="/media/hero-profiles/5.png" alt="" /></span>
+                <span className="inbox-avatar-circle"><img src="/media/hero-profiles/5.webp" alt="" /></span>
               </span>
               <span className="inbox-contact-info">
                 <span className="inbox-contact-name">{t('dashboard.costlyfTeam')}</span>
@@ -181,7 +181,7 @@ function ContactAvatar({ thread }) {
   }
   return (
     <span className="inbox-contact-avatar inbox-contact-avatar--default" aria-hidden="true" style={{ '--circle-color': color }}>
-      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${heroIndex}.png`} alt="" /></span>
+      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${heroIndex}.webp`} alt="" /></span>
     </span>
   )
 }
@@ -199,7 +199,7 @@ function ChatHeaderAvatar({ thread, isSystem }) {
   }
   return (
     <span className="inbox-chat-header-avatar inbox-chat-header-avatar--default" style={{ '--circle-color': color }}>
-      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${heroIndex}.png`} alt="" /></span>
+      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${heroIndex}.webp`} alt="" /></span>
     </span>
   )
 }
@@ -442,7 +442,7 @@ function MsgAvatar({ avatarUrl, seed }) {
   }
   return (
     <span className="subscription-chat-msg-avatar subscription-chat-msg-avatar--default" style={{ '--circle-color': color }}>
-      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${heroIndex}.png`} alt="" /></span>
+      <span className="inbox-avatar-circle"><img src={`/media/hero-profiles/${heroIndex}.webp`} alt="" /></span>
     </span>
   )
 }
