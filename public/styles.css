@@ -471,9 +471,19 @@ img {
 .hero-heading {
   margin: 0;
   font-size: var(--text-hero);
-  font-weight: var(--font-bold);
   line-height: var(--leading-tight);
   letter-spacing: -0.03em;
+}
+
+.hero-heading-line1 {
+  font-style: italic;
+  font-weight: var(--font-normal);
+}
+
+.hero-heading-line2 {
+  display: block;
+  font-weight: var(--font-bold);
+  color: var(--text);
 }
 
 .hero-subtitle {
