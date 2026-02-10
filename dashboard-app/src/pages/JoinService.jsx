@@ -616,6 +616,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const joinCardExpressCheckoutRef = useRef(null)
   const joinCardStripeRef = useRef(null)
   const joinCardElementsRef = useRef(null)
+  const joinCardMountedSecretRef = useRef(null)
 
   const slots = offer.slots || []
   const available = slots.filter((s) => s.status === 'available')
@@ -677,12 +678,14 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
     return () => clearTimeout(t)
   }, [cardPaymentSuccess])
 
-  // Mount Stripe Payment Element + Express Checkout when join card payment step is shown
+  // Mount Stripe Payment Element + Express Checkout when join card payment step is shown. Only mount once per client secret so React re-renders don't destroy the element.
   useEffect(() => {
     if (!joinCardPaymentActive || !joinCardClientSecretRef.current || !joinCardPublishableKeyRef.current || !joinCardPaymentElementRef.current) return
+    const secret = joinCardClientSecretRef.current
+    if (joinCardMountedSecretRef.current === secret) return
+    joinCardMountedSecretRef.current = secret
     setJoinCardElementReady(false)
     const key = joinCardPublishableKeyRef.current
-    const secret = joinCardClientSecretRef.current
     loadStripeScript().then((Stripe) => {
       if (!joinCardPaymentElementRef.current) return
       joinCardPaymentElementRef.current.innerHTML = ''
@@ -748,8 +751,8 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           prButton.mount(joinCardExpressCheckoutRef.current)
         }
       })
-    }).catch((e) => setJoinCardError(e.message || 'Failed to load payment form'))
-  }, [joinCardPaymentActive, amountCents, offer.id, slotIndex, fetchWithAuth])
+    }).catch((e) => { setJoinCardError(e.message || 'Failed to load payment form'); joinCardMountedSecretRef.current = null })
+  }, [joinCardPaymentActive, amountCents, offer.id, slotIndex])
 
   const goToInstantAccess = (email = '', password = '') => {
     setAccessDetails({
@@ -982,6 +985,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                   setJoinCardError('')
                   joinCardClientSecretRef.current = null
                   joinCardPublishableKeyRef.current = null
+                  joinCardMountedSecretRef.current = null
                   if (joinCardPaymentElementRef.current) joinCardPaymentElementRef.current.innerHTML = ''
                   if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''
                 } else {
@@ -1006,7 +1010,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                 )}
                 <p className="join-offer-payment-hint">If the form doesn&apos;t load or payment fails, try disabling ad or tracking blockers for this site.</p>
                 <div className="wallet-modal-actions wallet-modal-actions--step2" style={{ marginTop: '1rem' }}>
-                  <button type="button" className="wallet-modal-back" onClick={() => { setJoinCardPaymentActive(false); setJoinCardError(''); joinCardClientSecretRef.current = null; joinCardPublishableKeyRef.current = null; if (joinCardPaymentElementRef.current) joinCardPaymentElementRef.current.innerHTML = ''; if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''; }}>
+                  <button type="button" className="wallet-modal-back" onClick={() => { setJoinCardPaymentActive(false); setJoinCardError(''); joinCardClientSecretRef.current = null; joinCardPublishableKeyRef.current = null; joinCardMountedSecretRef.current = null; if (joinCardPaymentElementRef.current) joinCardPaymentElementRef.current.innerHTML = ''; if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''; }}>
                     Back
                   </button>
                   <button type="button" className="wallet-modal-pay" onClick={doJoinCardPay} disabled={!joinCardElementReady || joinCardPayLoading}>
