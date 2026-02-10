@@ -89,42 +89,66 @@ export default function Join() {
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // After Stripe redirect (e.g. 3DS): complete reserve and reopen modal at access step
+  // After Stripe redirect (e.g. 3DS): complete reserve and reopen modal at access step.
+  // Stripe may put payment_intent/redirect_status in query or hash; use join-from-payment-intent if join_offer/join_slot are missing.
   useEffect(() => {
-    const joinOffer = searchParams.get('join_offer')
-    const joinSlot = searchParams.get('join_slot')
-    const hash = location.hash && location.hash.slice(1)
-    if (!joinOffer || joinSlot == null || !hash) return
-    const hashParams = new URLSearchParams(hash)
-    if (hashParams.get('redirect_status') !== 'succeeded' || !hashParams.get('payment_intent')) return
+    const queryParams = new URLSearchParams(location.search)
+    const hashParams = new URLSearchParams((location.hash && location.hash.slice(1)) || '')
+    const redirectStatus = queryParams.get('redirect_status') || hashParams.get('redirect_status')
+    const paymentIntentId = queryParams.get('payment_intent') || hashParams.get('payment_intent')
+    if (redirectStatus !== 'succeeded' || !paymentIntentId) return
     if (!user || !fetchWithAuth) return
 
     let cancelled = false
-    fetchWithAuth(`/api/offers/${encodeURIComponent(joinOffer)}`, {})
-      .then((r) => (r.ok ? r.json() : null))
-      .then((full) => {
-        if (cancelled || !full) return
-        return fetchWithAuth(`/api/offers/${encodeURIComponent(joinOffer)}/slots/${joinSlot}/reserve-after-card`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payment_intent_id: hashParams.get('payment_intent') }),
-        }).then((r) => {
-          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
-          setOfferForModal(full)
-          setOfferModalResumeStep(4)
+    function runReserveAndOpenModal(offerId, slotIdx, piId) {
+      return fetchWithAuth(`/api/offers/${encodeURIComponent(offerId)}`, {})
+        .then((r) => (r.ok ? r.json() : null))
+        .then((full) => {
+          if (cancelled || !full) return
+          return fetchWithAuth(`/api/offers/${encodeURIComponent(offerId)}/slots/${slotIdx}/reserve-after-card`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_intent_id: piId }),
+          }).then((r) => {
+            if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
+            setOfferForModal(full)
+            setOfferModalResumeStep(4)
+          })
         })
-      })
-      .then(() => {
-        if (cancelled) return
-        const nextSearch = new URLSearchParams(searchParams)
-        nextSearch.delete('join_offer')
-        nextSearch.delete('join_slot')
-        const qs = nextSearch.toString()
-        navigate(`${location.pathname}${qs ? '?' + qs : ''}`, { replace: true })
-      })
+    }
+    function clearRedirectUrl() {
+      const nextSearch = new URLSearchParams(searchParams)
+      nextSearch.delete('join_offer')
+      nextSearch.delete('join_slot')
+      nextSearch.delete('payment_intent')
+      nextSearch.delete('payment_intent_client_secret')
+      nextSearch.delete('redirect_status')
+      const qs = nextSearch.toString()
+      navigate(`${location.pathname}${qs ? '?' + qs : ''}`, { replace: true })
+      if (typeof window !== 'undefined' && window.history.replaceState && location.hash) {
+        window.history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''))
+      }
+    }
+
+    let joinOffer = searchParams.get('join_offer')
+    let joinSlot = searchParams.get('join_slot')
+    if (!joinOffer || joinSlot == null) {
+      fetchWithAuth(`/api/offers/join-from-payment-intent?payment_intent_id=${encodeURIComponent(paymentIntentId)}`, {})
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (cancelled || !data || !data.offer_id) return
+          return runReserveAndOpenModal(data.offer_id, data.slot_index, paymentIntentId)
+        })
+        .then(() => { if (!cancelled) clearRedirectUrl() })
+        .catch(() => {})
+      return () => { cancelled = true }
+    }
+
+    runReserveAndOpenModal(joinOffer, joinSlot, paymentIntentId)
+      .then(() => { if (!cancelled) clearRedirectUrl() })
       .catch(() => {})
     return () => { cancelled = true }
-  }, [searchParams, location.hash, location.pathname, user, fetchWithAuth, navigate])
+  }, [searchParams, location.search, location.hash, location.pathname, user, fetchWithAuth, navigate])
 
   useEffect(() => {
     if (!offerIdFromUrl) return

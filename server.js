@@ -693,6 +693,7 @@ app.post('/api/offers/:id/slots/:slotIndex/create-payment-intent', async (req, r
     const pi = await stripe.paymentIntents.create({
       amount: amount_cents,
       currency: stripeCurrency,
+      customer: customerId,
       automatic_payment_methods: { enabled: true },
       metadata: { user_id: user.id, purpose: 'join', offer_id: offerId, slot_index: String(slotIndex) }
     });
@@ -702,6 +703,26 @@ app.post('/api/offers/:id/slots/:slotIndex/create-payment-intent', async (req, r
     });
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Failed to create payment intent' });
+  }
+});
+
+// Get offer_id and slot_index from a successful join PaymentIntent (for redirect resume when URL params are lost).
+app.get('/api/offers/join-from-payment-intent', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !stripe) return res.status(401).json({ error: 'Unauthorized' });
+  const paymentIntentId = req.query && req.query.payment_intent_id;
+  if (!paymentIntentId) return res.status(400).json({ error: 'Missing payment_intent_id' });
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (pi.status !== 'succeeded') return res.status(400).json({ error: 'Payment not completed' });
+    const meta = pi.metadata || {};
+    if (meta.purpose !== 'join' || String(meta.user_id) !== String(user.id)) return res.status(400).json({ error: 'Invalid payment' });
+    const offer_id = meta.offer_id;
+    const slot_index = meta.slot_index;
+    if (!offer_id || slot_index == null) return res.status(400).json({ error: 'Payment has no offer/slot' });
+    return res.status(200).json({ offer_id, slot_index: String(slot_index) });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Failed to get payment details' });
   }
 });
 
@@ -1894,6 +1915,7 @@ app.post('/api/wallet/topup-intent', async (req, res) => {
     const pi = await stripe.paymentIntents.create({
       amount: amount_cents,
       currency: stripeCurrency,
+      customer: customerId,
       automatic_payment_methods: { enabled: true },
       metadata: { user_id: user.id, purpose: 'top_up' }
     });
