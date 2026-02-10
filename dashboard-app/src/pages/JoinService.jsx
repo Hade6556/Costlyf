@@ -950,31 +950,32 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           </div>
         )}
 
-        {step === 2 && (cardPaymentWaiting || cardPaymentSuccess) && (
-          <div className="join-offer-step join-offer-step--card-status">
-            <div className="join-offer-card-status-wrap">
-              {cardPaymentWaiting && (
-                <>
-                  <div className="join-offer-card-status-spinner" aria-hidden="true" />
-                  <p className="join-offer-card-status-text">Waiting for confirmation…</p>
-                  <p className="join-offer-card-status-sub">This may take a moment. Do not close this window.</p>
-                </>
-              )}
-              {cardPaymentSuccess && (
-                <>
-                  <div className="join-offer-card-status-check" aria-hidden="true">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                  </div>
-                  <p className="join-offer-card-status-text">Payment successful!</p>
-                  <p className="join-offer-card-status-sub">Preparing your access details…</p>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {step === 2 && !cardPaymentWaiting && !cardPaymentSuccess && (
-          <div className="join-offer-step">
+        {step === 2 && (
+          <div className="join-offer-step join-offer-step--payment" style={{ position: 'relative' }}>
+            {/* Overlay when waiting/success: keeps Payment Element mounted underneath so Stripe can complete */}
+            {(cardPaymentWaiting || cardPaymentSuccess) && (
+              <div className="join-offer-card-status-overlay">
+                <div className="join-offer-card-status-wrap">
+                  {cardPaymentWaiting && (
+                    <>
+                      <div className="join-offer-card-status-spinner" aria-hidden="true" />
+                      <p className="join-offer-card-status-text">Waiting for confirmation…</p>
+                      <p className="join-offer-card-status-sub">This may take a moment. Do not close this window.</p>
+                    </>
+                  )}
+                  {cardPaymentSuccess && (
+                    <>
+                      <div className="join-offer-card-status-check" aria-hidden="true">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                      </div>
+                      <p className="join-offer-card-status-text">Payment successful!</p>
+                      <p className="join-offer-card-status-sub">Preparing your access details…</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            <div style={{ visibility: (cardPaymentWaiting || cardPaymentSuccess) ? 'hidden' : 'visible', minHeight: (cardPaymentWaiting || cardPaymentSuccess) ? 0 : undefined }}>
             <button
               type="button"
               className="join-offer-back"
@@ -1044,6 +1045,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                 </button>
               </>
             )}
+            </div>
           </div>
         )}
 
