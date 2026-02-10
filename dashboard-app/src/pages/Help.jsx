@@ -10,6 +10,16 @@ function formatDate(iso) {
   try { return new Date(iso).toLocaleString() } catch (e) { return iso }
 }
 
+function formatTime(iso) {
+  if (!iso) return '—'
+  try {
+    const d = new Date(iso)
+    const h = d.getHours()
+    const m = d.getMinutes()
+    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m
+  } catch (e) { return iso }
+}
+
 export default function Help() {
   const { t } = useI18n()
   const { user, fetchWithAuth } = useAuth()
@@ -112,26 +122,67 @@ export default function Help() {
 
   // Ticket conversation as separate “page” with back button
   if (user && selectedTicketId && ticketDetail) {
+    const messages = ticketDetail.messages || []
     return (
-      <div className="help-page">
-        <Link to="/help" className="help-back" onClick={(e) => { e.preventDefault(); setSelectedTicketId(null); setTicketDetail(null); setReply(''); }}>
-          <span className="profile-nav-icon" aria-hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></span>
-          <span>Back to tickets</span>
-        </Link>
-        <div className="help-ticket-view">
-          <h2 className="help-ticket-subject">{ticketDetail.subject}</h2>
-          <span className={`help-ticket-status help-ticket-status--${(ticketDetail.status || '').toLowerCase().replace(/\s+/g, '-')}`}>{ticketDetail.status}</span>
-          <div className="help-ticket-messages">
-            {(ticketDetail.messages || []).map((m) => (
-              <div key={m.id} className={`help-ticket-msg ${m.is_admin ? 'help-ticket-msg--support' : 'help-ticket-msg--you'}`}>
-                <span className="help-ticket-msg-meta">{m.is_admin ? 'Support' : 'You'} · {formatDate(m.created_at)}</span>
-                <div className="help-ticket-msg-body">{m.content}</div>
-              </div>
-            ))}
+      <div className="help-page help-ticket-chat">
+        <div className="subscription-chat-wrap help-ticket-chat-wrap">
+          <div className="subscription-chat-header">
+            <Link to="/help" className="inbox-chat-back" onClick={(e) => { e.preventDefault(); setSelectedTicketId(null); setTicketDetail(null); setReply(''); }} aria-label="Back to tickets">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
+            </Link>
+            <span className="inbox-chat-header-avatar inbox-chat-header-avatar--default" style={{ background: '#f59e0b', color: '#fff' }} aria-hidden>
+              <span style={{ fontSize: '1rem', fontWeight: 700 }}>!</span>
+            </span>
+            <div>
+              <span className="subscription-chat-with">{ticketDetail.subject}</span>
+              <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--dash-text-muted)' }}>
+                <span className={`help-ticket-status-inline help-ticket-status--${(ticketDetail.status || '').toLowerCase().replace(/\s+/g, '-')}`}>{ticketDetail.status}</span>
+              </p>
+            </div>
           </div>
-          <div className="help-ticket-reply-bar">
-            <input type="text" placeholder="Reply…" value={reply} onChange={(e) => setReply(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendReply())} className="subscription-chat-input help-ticket-input" />
-            <button type="button" className="profile-btn profile-btn--primary" disabled={!reply.trim() || sendingReply} onClick={sendReply}>{sendingReply ? '…' : 'Send'}</button>
+          <div className="subscription-chat-messages">
+            {messages.length === 0 && <p className="subscription-chat-placeholder">No messages yet. Send a reply below.</p>}
+            {messages.map((m) => {
+              const isMe = !m.is_admin
+              const cls = isMe ? 'subscription-chat-msg subscription-chat-msg--me' : 'subscription-chat-msg subscription-chat-msg--owner'
+              return (
+                <div key={m.id} className={cls}>
+                  {isMe ? (
+                    <span className="subscription-chat-msg-avatar subscription-chat-msg-avatar--default" style={{ '--circle-color': '#a8d4f0' }}>
+                      <span className="inbox-avatar-circle"><span style={{ fontSize: '0.875rem', fontWeight: 600 }}>You</span></span>
+                    </span>
+                  ) : (
+                    <span className="subscription-chat-msg-avatar" style={{ background: '#f59e0b', color: '#fff', fontSize: '0.9rem', fontWeight: 700 }} title="Support">!</span>
+                  )}
+                  <div className="subscription-chat-msg-content">
+                    <span className="subscription-chat-msg-text">{m.content}</span>
+                    <span className="subscription-chat-msg-meta">{formatTime(m.created_at)}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="subscription-chat-input-bar">
+            <div className="subscription-chat-input-wrap">
+              <input
+                type="text"
+                className="subscription-chat-input"
+                placeholder="Type a message…"
+                autoComplete="off"
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendReply())}
+              />
+              <button
+                type="button"
+                className={`subscription-chat-send ${reply.trim() ? '' : 'subscription-chat-send--empty'}`}
+                aria-label="Send"
+                disabled={!reply.trim() || sendingReply}
+                onClick={sendReply}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M20.235 5.686c.432-1.195-.726-2.353-1.921-1.92L3.709 9.048c-1.199.434-1.344 2.07-.241 2.709l4.662 2.699l4.163-4.163a1 1 0 0 1 1.414 1.414L9.544 15.87l2.7 4.662c.638 1.103 2.274.957 2.708-.241z"/></g></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -158,7 +209,7 @@ export default function Help() {
               <label className="help-form-label">Message</label>
               <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Describe your issue…" className="subscription-chat-input help-form-textarea" required />
               <div className="help-form-actions">
-                <button type="submit" className="profile-btn profile-btn--primary" disabled={submitting}>{submitting ? '…' : 'Create ticket'}</button>
+                <button type="submit" className="profile-btn profile-btn--primary" disabled={submitting || !subject.trim() || !content.trim()}>{submitting ? '…' : 'Create ticket'}</button>
                 <button type="button" className="profile-btn" onClick={() => { setShowForm(false); setSubject(''); setContent(''); }}>Cancel</button>
               </div>
             </form>

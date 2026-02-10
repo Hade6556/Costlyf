@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useInboxUnread } from './contexts/InboxUnreadContext'
@@ -98,6 +98,15 @@ export default function Layout() {
   const inboxBadge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
 
   const [hash, setHash] = useState(() => (typeof window !== 'undefined' ? window.location.hash : ''))
+  const contentRef = useRef(null)
+
+  // Scroll to top on every route change (navigate or back)
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    const el = contentRef.current
+    if (el) el.scrollTop = 0
+  }, [location.pathname])
+
   useEffect(() => {
     setHash(window.location.hash)
   }, [location.pathname])
@@ -107,6 +116,12 @@ export default function Layout() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
   const isInboxChatOpen = location.pathname.startsWith('/inbox') && /^#thread-/.test(hash)
+
+  useEffect(() => {
+    if (isInboxChatOpen) document.body.classList.add('dashboard-inbox-chat-open')
+    else document.body.classList.remove('dashboard-inbox-chat-open')
+    return () => document.body.classList.remove('dashboard-inbox-chat-open')
+  }, [isInboxChatOpen])
 
   if (isAuthPage) {
     const isLoginOrSignup = segments.includes('login') || segments.includes('signup')
@@ -153,7 +168,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      <div className={`dashboard-content ${current === profilePath ? 'dashboard-content--profile' : ''} ${isJoinPage ? 'dashboard-content--join' : ''}`}>
+      <div ref={contentRef} className={`dashboard-content ${current === profilePath ? 'dashboard-content--profile' : ''} ${isJoinPage ? 'dashboard-content--join' : ''}`}>
         <main className="dashboard-main">
           <Outlet />
         </main>

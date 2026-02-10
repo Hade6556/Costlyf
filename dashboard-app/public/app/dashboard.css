@@ -73,8 +73,14 @@ img {
   }
 }
 
-/* Mobile: inbox chat open — full viewport, no bottom nav, chat fills screen */
+/* Mobile: inbox chat open — full viewport, no bottom nav, chat fills screen, single scroll */
 @media (max-width: 767px) {
+  body.dashboard-inbox-chat-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
   .dashboard.dashboard--inbox-chat-open {
     min-height: 100vh;
     height: 100vh;
@@ -88,6 +94,7 @@ img {
     flex-direction: column;
     min-height: 0;
     flex: 1;
+    overflow: hidden;
   }
   .dashboard.dashboard--inbox-chat-open .dashboard-main {
     flex: 1;
@@ -103,8 +110,12 @@ img {
     display: flex;
     flex-direction: column;
     padding: 0;
+    overflow: hidden;
   }
   .dashboard.dashboard--inbox-chat-open .inbox-chat-view {
+    position: relative;
+    inset: auto;
+    bottom: auto;
     flex: 1;
     min-height: 0;
     display: flex;
@@ -115,6 +126,7 @@ img {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     border-radius: 0;
     margin-bottom: 0;
     border: none;
@@ -6126,6 +6138,20 @@ button.profile-nav-item {
   color: #fff;
   border-color: var(--dash-primary);
 }
+@media (max-width: 767px) {
+  .wallet-topup-presets {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    padding: 0 0.5rem 0.25rem;
+  }
+  .wallet-topup-preset-btn {
+    flex-shrink: 0;
+  }
+}
 .wallet-modal-next--full { flex: 1; min-width: 0; }
 .wallet-topup-amounts { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .wallet-topup-amount-btn {
@@ -6212,8 +6238,14 @@ button.profile-nav-item {
 .help-section { margin-top: 0.5rem; }
 .help-new-ticket-form { margin-bottom: 1rem; }
 .help-form-label { display: block; margin-bottom: 0.35rem; font-weight: 500; }
-.help-form-input { width: 100%; padding: 8px 12px; margin-bottom: 0.75rem; }
-.help-form-textarea { width: 100%; padding: 8px 12px; min-height: 100px; margin-bottom: 0.75rem; }
+.help-form-input,
+.help-form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 0.75rem;
+  border-radius: 4px;
+}
+.help-form-textarea { min-height: 100px; }
 .help-form-actions { display: flex; gap: 0.5rem; }
 .help-ticket-list { margin-top: 1.25rem; }
 .help-ticket-list-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 1rem; }
@@ -6253,3 +6285,33 @@ button.profile-nav-item {
 .help-ticket-msg-body { margin-top: 0.25rem; white-space: pre-wrap; word-break: break-word; }
 .help-ticket-reply-bar { display: flex; gap: 0.5rem; }
 .help-ticket-input { flex: 1; padding: 8px 12px; }
+
+/* Ticket chat: same layout as Inbox (flex, scroll messages) */
+.help-page.help-ticket-chat {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  margin: 0 auto;
+  height: 100%;
+  min-height: 0;
+}
+.help-ticket-chat-wrap.subscription-chat-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+.help-ticket-chat-wrap .subscription-chat-messages {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.help-ticket-status-inline {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  text-transform: capitalize;
+}
