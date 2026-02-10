@@ -693,7 +693,6 @@ app.post('/api/offers/:id/slots/:slotIndex/create-payment-intent', async (req, r
     const pi = await stripe.paymentIntents.create({
       amount: amount_cents,
       currency: stripeCurrency,
-      customer: customerId,
       automatic_payment_methods: { enabled: true },
       metadata: { user_id: user.id, purpose: 'join', offer_id: offerId, slot_index: String(slotIndex) }
     });
@@ -1895,7 +1894,6 @@ app.post('/api/wallet/topup-intent', async (req, res) => {
     const pi = await stripe.paymentIntents.create({
       amount: amount_cents,
       currency: stripeCurrency,
-      customer: customerId,
       automatic_payment_methods: { enabled: true },
       metadata: { user_id: user.id, purpose: 'top_up' }
     });
