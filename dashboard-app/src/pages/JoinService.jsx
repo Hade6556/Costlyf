@@ -581,8 +581,10 @@ const ISSUE_OPTIONS = [
 
 export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuccess, fetchWithAuth, initialStep, resumeAfterPayment }) {
   const { t, locale } = useI18n()
-  const [step, setStep] = useState(resumeAfterPayment && (initialStep === 4 || initialStep == null) ? 4 : 1)
+  const [step, setStep] = useState(resumeAfterPayment ? 2 : 1)
   const resumeDoneRef = useRef(false)
+  const [cardPaymentWaiting, setCardPaymentWaiting] = useState(resumeAfterPayment || false)
+  const [cardPaymentSuccess, setCardPaymentSuccess] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState(null)
   const [loading, setLoading] = useState(false)
   const [balanceCents, setBalanceCents] = useState(null)
@@ -642,14 +644,37 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       .catch(() => setBalanceCents(0))
   }, [step, fetchWithAuth])
 
-  // After Stripe redirect: show step 4 then fetch access details and go to step 5
+  // After Stripe redirect: fetch access details then show success and go to step 5
   useEffect(() => {
     if (!resumeAfterPayment || resumeDoneRef.current || (initialStep !== 4 && initialStep != null)) return
     if (slotIndex == null) return
     resumeDoneRef.current = true
-    const t = setTimeout(() => fetchAccessDetailsAndGo(), 2000)
+    fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/access-details`, {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        setAccessDetails({
+          email: d?.login_email ?? "You'll receive login details from the owner in Inbox",
+          password: d?.login_password ?? '—',
+        })
+        setCardPaymentWaiting(false)
+        setCardPaymentSuccess(true)
+      })
+      .catch(() => {
+        setAccessDetails({ email: "You'll receive login details from the owner in Inbox", password: '—' })
+        setCardPaymentWaiting(false)
+        setCardPaymentSuccess(true)
+      })
+  }, [resumeAfterPayment, initialStep, slotIndex, offer.id, fetchWithAuth])
+
+  // When card payment success is shown, after 1.5s go to step 5 (login details)
+  useEffect(() => {
+    if (!cardPaymentSuccess) return
+    const t = setTimeout(() => {
+      setStep(5)
+      setCardPaymentSuccess(false)
+    }, 1500)
     return () => clearTimeout(t)
-  }, [resumeAfterPayment, initialStep, slotIndex])
+  }, [cardPaymentSuccess])
 
   // Mount Stripe Payment Element + Express Checkout when join card payment step is shown
   useEffect(() => {
@@ -675,11 +700,13 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
         total: { label: 'Join subscription', amount: amountCents },
       })
       paymentRequest.on('paymentmethod', (ev) => {
+        setCardPaymentWaiting(true)
         stripe.confirmCardPayment(secret, { payment_method: ev.paymentMethod.id })
           .then((result) => {
             if (result.error) {
               ev.complete('fail')
               setJoinCardError(result.error.message || 'Payment failed')
+              setCardPaymentWaiting(false)
               return
             }
             ev.complete('success')
@@ -689,14 +716,26 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
               body: JSON.stringify({ payment_intent_id: result.paymentIntent?.id }),
             })
               .then((r) => {
-                if (r.ok) {
-                  setStep(4)
-                  setTimeout(() => fetchAccessDetailsAndGo(), 2000)
-                } else return r.json().then((d) => { throw new Error(d.error || 'Could not reserve') })
+                if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve') })
+                return fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/access-details`, {})
+                  .then((res) => (res.ok ? res.json() : null))
+                  .then((d) => {
+                    setAccessDetails({
+                      email: d?.login_email ?? "You'll receive login details from the owner in Inbox",
+                      password: d?.login_password ?? '—',
+                    })
+                    setCardPaymentWaiting(false)
+                    setCardPaymentSuccess(true)
+                  })
+                  .catch(() => {
+                    setAccessDetails({ email: "You'll receive login details from the owner in Inbox", password: '—' })
+                    setCardPaymentWaiting(false)
+                    setCardPaymentSuccess(true)
+                  })
               })
-              .catch((e) => setJoinCardError(e.message || 'Reserve failed'))
+              .catch((e) => { setJoinCardError(e.message || 'Reserve failed'); setCardPaymentWaiting(false) })
           })
-          .catch((e) => { ev.complete('fail'); setJoinCardError(e.message || 'Payment failed') })
+          .catch((e) => { ev.complete('fail'); setJoinCardError(e.message || 'Payment failed'); setCardPaymentWaiting(false) })
       })
       paymentRequest.canMakePayment().then((result) => {
         if (result && joinCardExpressCheckoutRef.current) {
@@ -738,9 +777,8 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/reserve-with-balance`, { method: 'POST' })
         .then((r) => {
           if (r.ok) {
-            setStep(4)
             setLoading(false)
-            setTimeout(() => fetchAccessDetailsAndGo(), 2000)
+            fetchAccessDetailsAndGo()
             return
           }
           return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
@@ -773,6 +811,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
     if (!stripe || !secret || !elements) return
     setJoinCardError('')
     setJoinCardPayLoading(true)
+    setCardPaymentWaiting(true)
     const returnUrl = `${window.location.origin}${window.location.pathname}?join_offer=${encodeURIComponent(offer.id)}&join_slot=${slotIndex}`
     Promise.resolve()
       .then(() => elements.submit())
@@ -780,6 +819,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
         if (submitResult && submitResult.error) {
           setJoinCardError(submitResult.error.message || 'Please complete the form')
           setJoinCardPayLoading(false)
+          setCardPaymentWaiting(false)
           return null
         }
         return stripe.confirmPayment({
@@ -799,11 +839,27 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           body: JSON.stringify({ payment_intent_id: paymentIntentId }),
         }).then((r) => {
           if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
-          setStep(4)
-          setTimeout(() => fetchAccessDetailsAndGo(), 2000)
+          return fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/access-details`, {})
+            .then((res) => (res.ok ? res.json() : null))
+            .then((d) => {
+              setAccessDetails({
+                email: d?.login_email ?? "You'll receive login details from the owner in Inbox",
+                password: d?.login_password ?? '—',
+              })
+              setCardPaymentWaiting(false)
+              setCardPaymentSuccess(true)
+            })
+            .catch(() => {
+              setAccessDetails({ email: "You'll receive login details from the owner in Inbox", password: '—' })
+              setCardPaymentWaiting(false)
+              setCardPaymentSuccess(true)
+            })
         })
       })
-      .catch((e) => setJoinCardError(e.message || 'Something went wrong'))
+      .catch((e) => {
+        setJoinCardError(e.message || 'Something went wrong')
+        setCardPaymentWaiting(false)
+      })
       .finally(() => setJoinCardPayLoading(false))
   }
 
@@ -878,7 +934,30 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           </div>
         )}
 
-        {step === 2 && (
+        {step === 2 && (cardPaymentWaiting || cardPaymentSuccess) && (
+          <div className="join-offer-step join-offer-step--card-status">
+            <div className="join-offer-card-status-wrap">
+              {cardPaymentWaiting && (
+                <>
+                  <div className="join-offer-card-status-spinner" aria-hidden="true" />
+                  <p className="join-offer-card-status-text">Waiting for confirmation…</p>
+                  <p className="join-offer-card-status-sub">This may take a moment. Do not close this window.</p>
+                </>
+              )}
+              {cardPaymentSuccess && (
+                <>
+                  <div className="join-offer-card-status-check" aria-hidden="true">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  </div>
+                  <p className="join-offer-card-status-text">Payment successful!</p>
+                  <p className="join-offer-card-status-sub">Preparing your access details…</p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && !cardPaymentWaiting && !cardPaymentSuccess && (
           <div className="join-offer-step">
             <button
               type="button"
@@ -1047,14 +1126,6 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                 }}
               />
             )}
-          </div>
-        )}
-
-        {step === 4 && (
-          <div className="join-offer-step join-offer-step--securing">
-            <div className="join-offer-securing-wrap">
-              <p className="join-offer-securing-text">Securing your access…</p>
-            </div>
           </div>
         )}
 

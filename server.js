@@ -751,11 +751,27 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-after-card', async (req, res)
       .single();
     if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
     if (slot.status !== 'available') return res.status(400).json({ error: 'Slot is not available' });
+    const now = new Date().toISOString();
     const { error: updateErr } = await supabaseAdmin
       .from('offer_slots')
-      .update({ status: 'reserved', user_id: user.id, reserved_at: new Date().toISOString() })
+      .update({ status: 'taken', user_id: user.id, reserved_at: now, accepted_at: now })
       .eq('id', slot.id);
     if (updateErr) return res.status(500).json({ error: updateErr.message });
+    const periodEnd = new Date(now);
+    periodEnd.setDate(periodEnd.getDate() + 30);
+    const { data: offerForSub } = await supabaseAdmin.from('offers').select('plan, price').eq('id', offerId).single();
+    const contribution = (offerForSub && offerForSub.price != null) ? Number(Number(offerForSub.price).toFixed(2)) : 0;
+    await supabaseAdmin.from('subscriptions').upsert({
+      user_id: user.id,
+      offer_id: offerId,
+      slot_index: slotIndex,
+      period_start: now,
+      period_end: periodEnd.toISOString(),
+      plan: (offerForSub && offerForSub.plan) || 'premium',
+      contribution_price: contribution,
+      status: 'active',
+      updated_at: now
+    }, { onConflict: 'offer_id,slot_index' });
     const amount_cents = pi.amount_received != null ? Math.max(0, parseInt(pi.amount_received, 10)) : 0;
     const serviceName = offer.service_name || offer.service || 'Subscription';
     let ownerDisplay = 'Host';
@@ -828,7 +844,7 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, re
   const slotIndex = parseInt(req.params.slotIndex, 10);
   if (!offerId || !slotIndex || slotIndex < 1) return res.status(400).json({ error: 'Invalid offer or slot' });
   try {
-    const { data: offer, error: offerErr } = await supabaseAdmin.from('offers').select('id, owner_id, service, service_name, price').eq('id', offerId).single();
+    const { data: offer, error: offerErr } = await supabaseAdmin.from('offers').select('id, owner_id, service, service_name, plan, price').eq('id', offerId).single();
     if (offerErr || !offer) return res.status(404).json({ error: 'Offer not found' });
     const { data: slot, error: slotErr } = await supabaseAdmin
       .from('offer_slots')
@@ -861,13 +877,27 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-with-balance', async (req, re
       p_metadata: metadata
     });
     if (txErr) throw new Error(txErr.message);
+    const now = new Date().toISOString();
     const { error: updateErr } = await supabaseAdmin
       .from('offer_slots')
-      .update({ status: 'reserved', user_id: user.id, reserved_at: new Date().toISOString() })
+      .update({ status: 'taken', user_id: user.id, reserved_at: now, accepted_at: now })
       .eq('id', slot.id);
     if (updateErr) {
       return res.status(500).json({ error: updateErr.message });
     }
+    const periodEnd = new Date(now);
+    periodEnd.setDate(periodEnd.getDate() + 30);
+    await supabaseAdmin.from('subscriptions').upsert({
+      user_id: user.id,
+      offer_id: offerId,
+      slot_index: slotIndex,
+      period_start: now,
+      period_end: periodEnd.toISOString(),
+      plan: offer.plan || 'premium',
+      contribution_price: amountEur,
+      status: 'active',
+      updated_at: now
+    }, { onConflict: 'offer_id,slot_index' });
     try {
       await getOrCreateThreadAndNotifyJoinRequest(supabaseAdmin, offerId, offer.owner_id, user.id, JOIN_REQUEST_SYSTEM_MESSAGE);
     } catch (e) {

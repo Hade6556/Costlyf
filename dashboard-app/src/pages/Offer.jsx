@@ -119,8 +119,10 @@ export default function Offer() {
   const contribution = (offer.contribution_per_month != null) ? Number(offer.contribution_per_month) : 0
   const taken = offer.seats_taken != null ? offer.seats_taken : 0
   const total = offer.max_slots != null ? offer.max_slots : 1
+  const filled = (offer.slots || []).filter((s) => s.status === 'taken' || s.status === 'reserved').length
+  const displayCount = filled > 0 ? filled : taken
   const { amountToOwner } = getPriceBreakdown(offer.service, offer.plan, contribution)
-  const ownerEarningsPerMonth = Math.round(amountToOwner * taken * 100) / 100
+  const ownerEarningsPerMonth = Math.round(amountToOwner * displayCount * 100) / 100
   const logo = LOGO_MAP[offer.service] || '/media/logo.svg'
   const isPrivate = (offer.visibility || 'private') === 'private'
 
@@ -227,7 +229,7 @@ export default function Offer() {
                   : `${contribution === 0 ? '0.00' : contribution.toFixed(2)}${t('dashboard.eurPerMonth')}`
                 }
               </p>
-              {isOwner && taken === 0 && (
+              {isOwner && displayCount === 0 && (
                 <p className="offer-row-meta offer-row-meta--muted">{t('dashboard.whenCoSubscribersJoin')}</p>
               )}
             </div>
@@ -237,7 +239,7 @@ export default function Offer() {
             <button type="button" className="offer-row" id="offer-cosubs-row" onClick={() => setCosubsOpen(true)}>
               <div className="offer-row-main">
                 <h2 className="offer-row-title">{t('dashboard.coSubscribers')}</h2>
-                <p className="offer-row-meta">{taken}/{total}</p>
+                <p className="offer-row-meta">{displayCount}/{total}</p>
               </div>
               <span className="offer-row-avatar" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></span>
               <span className="offer-row-chevron">›</span>
@@ -406,6 +408,8 @@ function OfferCosubsModal({ offer, user, onClose, onAction, fetchWithAuth }) {
   const { t: tf } = useI18n()
   const [loadingState, setLoadingState] = useState(null) // { slotIndex, action: 'reserve' | 'unreserve' }
   const slots = offer?.slots || []
+  const filled = slots.filter((s) => s.status === 'taken' || s.status === 'reserved').length
+  const displayCount = filled > 0 ? filled : (offer?.seats_taken ?? 0)
   const offerId = offer?.id
   const myId = user?.id != null ? String(user.id) : ''
   const ownerId = offer?.owner_id != null ? String(offer.owner_id) : ''
@@ -447,7 +451,7 @@ function OfferCosubsModal({ offer, user, onClose, onAction, fetchWithAuth }) {
       <div className="offer-cosubs-backdrop" onClick={onClose} />
       <div className="offer-cosubs-modal">
         <h2 className="offer-cosubs-title">{tf('dashboard.coSubscribers')}</h2>
-        <p className="offer-cosubs-meta">{offer?.seats_taken ?? 0}/{offer?.max_slots ?? 0} {tf('dashboard.slotsLabel')}</p>
+        <p className="offer-cosubs-meta">{displayCount}/{offer?.max_slots ?? 0} {tf('dashboard.slotsLabel')}</p>
         <div className="offer-cosubs-list">
           {slots.map((slot) => {
             const status = slot.status || 'available'
@@ -460,14 +464,14 @@ function OfferCosubsModal({ offer, user, onClose, onAction, fetchWithAuth }) {
             const canOwnerRemove = isOwner && status === 'taken' && slot.user_id && !reservedByOwner && !slot.removal_effective_at
             const canReserve = status === 'available' && user
             const isSlotLoading = loadingState?.slotIndex === slot.slot_index
-            const showReservedOnly = status === 'reserved'
+            const hasSubscriber = (status === 'taken' || status === 'reserved') && slotUserName
             return (
               <div key={slot.slot_index} className={`offer-cosubs-slot offer-cosubs-slot--${status}`}>
                 <div>
                   <span className="offer-cosubs-slot-label">{tf('dashboard.slotN', { n: slot.slot_index })}</span>
                   <span className="offer-cosubs-slot-status">{statusLabel}</span>
-                  {!showReservedOnly && slotUserName && (status === 'taken') && <div className="offer-cosubs-slot-user">{slotUserName}</div>}
-                  {!showReservedOnly && (status === 'taken') && slotUserName && (
+                  {hasSubscriber && <div className="offer-cosubs-slot-user">{slotUserName}</div>}
+                  {(status === 'taken' && slotUserName) && (
                     <div className="offer-cosubs-slot-taken-meta">
                       {slot.reserved_at ? tf('dashboard.sinceDate', { date: formatDate(slot.reserved_at) }) : ''}
                       {slot.removal_effective_at ? ` · ${tf('dashboard.canceledRemoval', { date: formatDate(slot.removal_effective_at) })}` : ''}

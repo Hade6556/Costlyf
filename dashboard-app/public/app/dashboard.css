@@ -3864,6 +3864,57 @@ img {
   font-size: 1.125rem;
   color: var(--dash-text-muted);
 }
+
+/* Card payment: waiting for confirmation + success popup */
+.join-offer-step--card-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+.join-offer-card-status-wrap {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+.join-offer-card-status-spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 1.25rem;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--dash-primary, #1a1a1a);
+  border-radius: 50%;
+  animation: join-offer-spin 0.8s linear infinite;
+}
+@keyframes join-offer-spin {
+  to { transform: rotate(360deg); }
+}
+.join-offer-card-status-check {
+  margin: 0 auto 1.25rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.join-offer-card-status-check svg {
+  width: 28px;
+  height: 28px;
+}
+.join-offer-card-status-text {
+  margin: 0 0 0.35rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+.join-offer-card-status-sub {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--dash-text-muted);
+}
+
 /* Instant Access step: more spacing */
 .join-offer-step--access .join-offer-title {
   margin-bottom: 0.75rem;
@@ -4129,7 +4180,14 @@ img {
   border-color: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
+/* Higher specificity so input text stays white when share.css overrides .share-input color */
+.share-credentials-encrypted-box .share-input.share-input--dark {
+  color: #fff;
+}
 .share-input--dark::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+.share-credentials-encrypted-box .share-input.share-input--dark::placeholder {
   color: rgba(255, 255, 255, 0.45);
 }
 .share-input--dark:focus {
