@@ -2113,7 +2113,9 @@ img {
 }
 .service-offer-price-bolt {
   flex-shrink: 0;
-  color: var(--dash-primary, #111);
+  width: 32px;
+  height: 32px;
+  color: #eab308;
 }
 
 .service-offer-price-icon {
@@ -2611,7 +2613,9 @@ img {
 }
 .offer-row-bolt {
   flex-shrink: 0;
-  color: var(--dash-primary, #111);
+  width: 36px;
+  height: 36px;
+  color: #eab308;
 }
 .offer-row-value span {
   font-weight: 700;
