@@ -866,7 +866,11 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
         })
       })
       .catch((e) => {
-        setJoinCardError(e.message || 'Something went wrong')
+        const msg = (e && (e.message || e.error && e.error.message)) ? String(e.message || e.error.message) : String(e || 'Something went wrong')
+        const isStripeElementOrNetwork = /could not retrieve data|specified Element|element.*mounted|ready event|Failed to fetch|ERR_BLOCKED|IntegrationError/i.test(msg)
+        setJoinCardError(isStripeElementOrNetwork
+          ? "Payment couldn't be completed. If you're using an ad blocker or privacy extension, try disabling it for this site and try again."
+          : msg)
         setCardPaymentWaiting(false)
       })
       .finally(() => setJoinCardPayLoading(false))
@@ -993,7 +997,14 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                 <p className="join-offer-subtitle">Pay {price} — choose your payment method.</p>
                 <div ref={joinCardExpressCheckoutRef} className="wallet-express-checkout-wrap" style={{ marginBottom: '1rem' }} />
                 <div ref={joinCardPaymentElementRef} className="wallet-payment-element-wrap" style={{ marginBottom: '1rem' }} />
-                {joinCardError && <p className="join-offer-insufficient" role="alert">{joinCardError}</p>}
+                {joinCardError && (
+                  <p className="join-offer-insufficient" role="alert">
+                    {/could not retrieve data|specified Element|element.*mounted|ready event|IntegrationError/i.test(joinCardError)
+                      ? "Payment couldn't be completed. If you're using an ad blocker or privacy extension, try disabling it for this site and try again."
+                      : joinCardError}
+                  </p>
+                )}
+                <p className="join-offer-payment-hint">If the form doesn&apos;t load or payment fails, try disabling ad or tracking blockers for this site.</p>
                 <div className="wallet-modal-actions wallet-modal-actions--step2" style={{ marginTop: '1rem' }}>
                   <button type="button" className="wallet-modal-back" onClick={() => { setJoinCardPaymentActive(false); setJoinCardError(''); joinCardClientSecretRef.current = null; joinCardPublishableKeyRef.current = null; if (joinCardPaymentElementRef.current) joinCardPaymentElementRef.current.innerHTML = ''; if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''; }}>
                     Back

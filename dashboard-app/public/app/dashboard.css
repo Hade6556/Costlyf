@@ -3619,6 +3619,12 @@ img {
   font-weight: 600;
   color: var(--dash-text);
 }
+.join-offer-payment-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--dash-text-muted);
+  line-height: 1.4;
+}
 .join-offer-legal {
   margin: 0 0 1.25rem;
   font-size: 0.75rem;
