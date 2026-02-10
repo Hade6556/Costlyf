@@ -253,7 +253,7 @@ function PersonalPanel({ profile, user, onUpdate, fetchWithAuth, avatarInputRef 
     <>
       <h1 className="profile-main-title">{t('dashboard.profilePersonalInfo')}</h1>
 
-      <div className="profile-card profile-card--avatar">
+      <div className="profile-section-card profile-card profile-card--avatar">
         <p className="profile-card-text">{t('dashboard.profileAvatarReassure')}</p>
         <div className="profile-card-avatar-wrap">
           <button type="button" className="profile-card-avatar-trigger" onClick={() => avatarInputRef.current?.click()} aria-label="Change profile picture">
@@ -286,12 +286,20 @@ function PersonalPanel({ profile, user, onUpdate, fetchWithAuth, avatarInputRef 
         </div>
       </div>
 
-      <ProfileField label={t('dashboard.profileFirstLastName')} value={[profile.first_name, profile.last_name].filter(Boolean).join(' ') || '—'} fieldKey="full_name" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} />
-      <ProfileField label={t('dashboard.profileAlias')} value={profile.alias || '—'} fieldKey="alias" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} />
-      <ProfileField label={t('dashboard.profileDateOfBirth')} value={profile.date_of_birth ? formatDate(profile.date_of_birth) : '—'} fieldKey="date_of_birth" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} isDate />
-      <h2 className="profile-section-title">{t('dashboard.profileContactInfo')}</h2>
-      <ProfileField label={t('dashboard.profileEmailAddress')} value={profile.email || '—'} fieldKey="email" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} inputType="email" />
-      <ProfileField label={t('dashboard.profilePhone')} value={profile.phone || '—'} fieldKey="phone" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} inputType="tel" />
+      <div className="profile-section-card">
+        <h2 className="profile-section-card-title">{t('dashboard.profilePersonalInfo')}</h2>
+        <ProfileField label={t('dashboard.profileFirstLastName')} value={[profile.first_name, profile.last_name].filter(Boolean).join(' ') || '—'} fieldKey="full_name" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} />
+        <ProfileField label={t('dashboard.profileAlias')} value={profile.alias || '—'} fieldKey="alias" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} />
+        <ProfileField label={t('dashboard.profileDateOfBirth')} value={profile.date_of_birth ? formatDate(profile.date_of_birth) : '—'} fieldKey="date_of_birth" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} isDate />
+      </div>
+
+      <div className="profile-section-card">
+        <h2 className="profile-section-card-title">{t('dashboard.profileContactInfo')}</h2>
+        <ProfileField label={t('dashboard.profileEmailAddress')} value={profile.email || '—'} fieldKey="email" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} inputType="email" />
+        <ProfileField label={t('dashboard.profilePhone')} value={profile.phone || '—'} fieldKey="phone" profile={profile} onUpdate={onUpdate} fetchWithAuth={fetchWithAuth} inputType="tel" />
+      </div>
+
+      <button type="button" className="profile-save-btn" disabled>{t('dashboard.save', 'Save')}</button>
     </>
   )
 }
@@ -397,6 +405,7 @@ function ProfileField({ label, value, fieldKey, profile, onUpdate, fetchWithAuth
 
 function PrivacyPanel({ passwordError, passwordSuccess, setPasswordError, setPasswordSuccess, fetchWithAuth }) {
   const { t } = useI18n()
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
@@ -404,6 +413,10 @@ function PrivacyPanel({ passwordError, passwordSuccess, setPasswordError, setPas
     e.preventDefault()
     setPasswordError('')
     setPasswordSuccess(false)
+    if (!currentPassword.trim()) {
+      setPasswordError(t('dashboard.currentPasswordRequired', 'Please enter your current password'))
+      return
+    }
     if (newPassword.length < 6) {
       setPasswordError(t('dashboard.passwordMinLength'))
       return
@@ -412,7 +425,11 @@ function PrivacyPanel({ passwordError, passwordSuccess, setPasswordError, setPas
       setPasswordError(t('dashboard.passwordsDoNotMatch'))
       return
     }
-    fetchWithAuth('/api/auth/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_password: newPassword }) })
+    fetchWithAuth('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    })
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
@@ -420,6 +437,7 @@ function PrivacyPanel({ passwordError, passwordSuccess, setPasswordError, setPas
           return
         }
         setPasswordSuccess(true)
+        setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
         setTimeout(() => setPasswordSuccess(false), 3000)
@@ -431,9 +449,13 @@ function PrivacyPanel({ passwordError, passwordSuccess, setPasswordError, setPas
       <h1 className="profile-main-title">{t('dashboard.privacySecurity')}</h1>
       <p className="profile-panel-desc">{t('dashboard.managePasswordPrivacy')}</p>
 
-      <div className="profile-card">
-        <h2 className="profile-card-title">{t('dashboard.changePassword')}</h2>
+      <div className="profile-section-card">
+        <h2 className="profile-section-card-title">{t('dashboard.security', 'Security')}</h2>
         <form className="profile-form" onSubmit={handleSubmit}>
+          <div className="profile-form-field">
+            <label htmlFor="profile-current-password">{t('dashboard.currentPassword', 'Current password')}</label>
+            <input type="password" id="profile-current-password" placeholder={t('dashboard.currentPasswordPlaceholder', 'Enter your current password')} autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+          </div>
           <div className="profile-form-field">
             <label htmlFor="profile-new-password">{t('dashboard.newPassword')}</label>
             <input type="password" id="profile-new-password" minLength={6} placeholder={t('dashboard.atLeast6Chars')} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
@@ -448,12 +470,14 @@ function PrivacyPanel({ passwordError, passwordSuccess, setPasswordError, setPas
         </form>
       </div>
 
-      <h2 className="profile-privacy-heading">{t('dashboard.privacy')}</h2>
-      <p className="profile-privacy-label">{t('dashboard.costlyfTC')}</p>
-      <a href="/terms" className="profile-cgu-card">
-        <span className="profile-cgu-text">{t('dashboard.signedCGU')}</span>
-        <span className="profile-cgu-chevron" aria-hidden="true">›</span>
-      </a>
+      <div className="profile-section-card">
+        <h2 className="profile-section-card-title">{t('dashboard.privacy')}</h2>
+        <p className="profile-privacy-label">{t('dashboard.costlyfTC')}</p>
+        <a href="/terms" className="profile-cgu-card">
+          <span className="profile-cgu-text">{t('dashboard.signedCGU')}</span>
+          <span className="profile-cgu-chevron" aria-hidden="true">›</span>
+        </a>
+      </div>
     </>
   )
 }

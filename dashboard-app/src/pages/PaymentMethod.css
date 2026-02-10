@@ -34,6 +34,24 @@
   }
 }
 
+/* Mobile: gap above back button; title/subtitle same width as content below */
+@media (max-width: 767px) {
+  .payment-method-page .profile-back-btn {
+    margin-top: 1.25rem;
+  }
+  .payment-method-page .profile-subpage {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .payment-method-page .profile-main-title,
+  .payment-method-page .profile-panel-desc {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 /* Payment method page: fix layout so inputs and Stripe elements are not squished */
 
 .payment-method-page .profile-main-title {

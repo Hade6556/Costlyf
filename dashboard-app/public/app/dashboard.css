@@ -73,18 +73,31 @@ img {
   }
 }
 
-/* Mobile: inbox chat open — full viewport, no bottom nav, chat fills screen, single scroll */
+/* Mobile: inbox chat open — viewport locked, only chat messages scroll */
 @media (max-width: 767px) {
+  html.dashboard-inbox-chat-open,
   body.dashboard-inbox-chat-open {
     overflow: hidden;
     position: fixed;
     width: 100%;
     height: 100%;
+    overscroll-behavior: none;
+  }
+  body.dashboard-inbox-chat-open {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
   }
   .dashboard.dashboard--inbox-chat-open {
     min-height: 100vh;
     height: 100vh;
     height: 100dvh;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   .dashboard.dashboard--inbox-chat-open .bottom-nav {
     display: none;
@@ -120,6 +133,7 @@ img {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
   .dashboard.dashboard--inbox-chat-open .inbox-chat-wrap {
     flex: 1;
@@ -139,7 +153,10 @@ img {
     min-height: 0;
     max-height: none;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
   }
   .dashboard.dashboard--inbox-chat-open .inbox-chat-actions {
     flex-shrink: 0;
@@ -970,21 +987,12 @@ img {
 
 /* Spotify tip */
 .home-tip-card--spotify .home-tip-spotify-head {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 .home-tip-card--spotify .home-tip-spotify-logo {
-  width: 34px;
-  height: 34px;
+  width: 56px;
+  height: 56px;
   display: block;
-}
-.home-tip-card--spotify .home-tip-spotify-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1DB954;
-  letter-spacing: -0.02em;
 }
 .home-tip-card--spotify .home-tip-slogan {
   margin: 0;
@@ -1031,6 +1039,37 @@ img {
 }
 .home-tip-card--cat .home-tip-headline strong {
   font-weight: 800;
+}
+
+/* Mobile: keep tip card within viewport, prevent text from increasing width */
+@media (max-width: 767px) {
+  .dashboard-home {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .home-tip-card-wrap {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .home-tip-card-inner {
+    min-width: 0;
+  }
+  .home-tip-text {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
+  }
+  .home-tip-text p,
+  .home-tip-text .home-tip-main,
+  .home-tip-text .home-tip-sub,
+  .home-tip-text .home-tip-slogan,
+  .home-tip-text .home-tip-main-text,
+  .home-tip-text .home-tip-headline {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+  }
 }
 
 /* Two vertical cards row */
@@ -4030,6 +4069,41 @@ img {
   font-size: 0.875rem;
   color: var(--dash-text-muted);
 }
+.share-credentials-encrypted-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--dash-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.share-credentials-encrypted-box {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.share-credentials-encrypted-box .share-form-group {
+  margin-bottom: 1rem;
+}
+.share-credentials-encrypted-box .share-form-group:last-child {
+  margin-bottom: 0;
+}
+.share-credentials-encrypted-box .share-form-group label {
+  color: rgba(255, 255, 255, 0.85);
+}
+.share-input--dark {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+.share-input--dark::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+.share-input--dark:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+}
 .share-visibility-helper {
   margin: 0.5rem 0 0;
   font-size: 0.875rem;
@@ -4756,6 +4830,118 @@ button.profile-nav-item {
   min-width: 0;
 }
 .profile-field-edit-wrap .profile-field-edit-row input { flex: 1; min-width: 0; }
+
+/* Profile pages: card-based layout (personal info & privacy like reference UI) */
+.profile-section-card {
+  background: #f5f5f5;
+  border-radius: 16px;
+  padding: 0;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  display: block;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.profile-section-card-title {
+  margin: 0;
+  padding: 1.25rem 1.25rem 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+.profile-section-card .profile-field {
+  margin: 0;
+  padding: 0.75rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.profile-section-card .profile-field:last-child {
+  border-bottom: none;
+}
+.profile-section-card .profile-field-label {
+  font-size: 0.8125rem;
+  color: var(--dash-text-muted);
+  margin-bottom: 0.2rem;
+}
+.profile-section-card .profile-field-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+.profile-section-card .profile-field-edit-wrap {
+  margin-top: 0.5rem;
+}
+.profile-save-btn {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: var(--dash-primary);
+  color: #fff;
+  transition: background 0.15s, opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.profile-save-btn:hover:not(:disabled) {
+  background: #1d1d1f;
+}
+.profile-save-btn:disabled {
+  background: #e5e5e7;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+.profile-card--avatar.profile-section-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  flex-direction: row;
+}
+.profile-card--avatar .profile-section-card-title {
+  display: none;
+}
+.profile-card--avatar .profile-card-text {
+  margin: 0;
+  flex: 1;
+  font-size: 0.9375rem;
+  color: var(--dash-text-muted);
+  padding: 0;
+}
+.profile-main--privacy .profile-section-card .profile-form-field input {
+  background: #fff;
+  border-radius: 10px;
+}
+.profile-main--privacy .profile-section-card .profile-btn--primary {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1.25rem;
+}
+.profile-section-card .profile-form {
+  padding: 0 1.25rem 1.25rem;
+}
+.profile-section-card .profile-form-field {
+  margin-bottom: 1rem;
+}
+.profile-section-card .profile-form-field:last-of-type {
+  margin-bottom: 0;
+}
+.profile-section-card .profile-privacy-label,
+.profile-section-card .profile-cgu-card {
+  margin: 0 1.25rem 1rem;
+}
+.profile-section-card .profile-cgu-card {
+  margin-bottom: 1.25rem;
+}
+.profile-section-card .profile-form-error {
+  margin: 0 1.25rem 0.75rem;
+}
+
 .sidebar-user--active {
   background: var(--dash-primary);
   color: #fff;

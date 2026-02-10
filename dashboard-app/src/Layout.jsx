@@ -118,9 +118,17 @@ export default function Layout() {
   const isInboxChatOpen = location.pathname.startsWith('/inbox') && /^#thread-/.test(hash)
 
   useEffect(() => {
-    if (isInboxChatOpen) document.body.classList.add('dashboard-inbox-chat-open')
-    else document.body.classList.remove('dashboard-inbox-chat-open')
-    return () => document.body.classList.remove('dashboard-inbox-chat-open')
+    if (isInboxChatOpen) {
+      document.body.classList.add('dashboard-inbox-chat-open')
+      document.documentElement.classList.add('dashboard-inbox-chat-open')
+    } else {
+      document.body.classList.remove('dashboard-inbox-chat-open')
+      document.documentElement.classList.remove('dashboard-inbox-chat-open')
+    }
+    return () => {
+      document.body.classList.remove('dashboard-inbox-chat-open')
+      document.documentElement.classList.remove('dashboard-inbox-chat-open')
+    }
   }, [isInboxChatOpen])
 
   if (isAuthPage) {

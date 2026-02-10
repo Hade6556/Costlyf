@@ -907,6 +907,27 @@ a.profile-nav-item:focus,
   .dashboard-content--profile .profile-hub {
     padding-top: 1.25rem;
   }
+  /* Payment method & Privacy: gap above back button; title same width as content */
+  .dashboard-content--profile .payment-method-page .profile-back-btn,
+  .profile-subpage:has(.profile-main--privacy) .profile-back-btn {
+    margin-top: 1.25rem;
+  }
+  /* Privacy: align back button with profile-main content width */
+  .profile-subpage:has(.profile-main--privacy) .profile-back-btn {
+    margin-left: var(--dash-padding, 1rem);
+    margin-right: var(--dash-padding, 1rem);
+  }
+  .profile-subpage:has(.profile-main--privacy) {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .profile-subpage:has(.profile-main--privacy) .profile-main-title,
+  .profile-subpage:has(.profile-main--privacy) .profile-panel-desc {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 }
 @media (max-width: 480px) {
   .dashboard-content--profile .profile-hub,

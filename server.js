@@ -2331,16 +2331,22 @@ async function processPayoutsCron(req, res) {
 app.get('/api/cron/process-payouts', processPayoutsCron);
 app.post('/api/cron/process-payouts', processPayoutsCron);
 
-// Change password (Bearer token)
+// Change password (Bearer token); requires current_password for verification
 app.post('/api/auth/change-password', async (req, res) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
-  const { new_password } = req.body || {};
+  const { current_password, new_password } = req.body || {};
+  if (!current_password || String(current_password).length === 0) return res.status(400).json({ error: 'Current password is required' });
   if (!new_password || String(new_password).length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
   try {
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) return res.status(401).json({ error: 'Invalid or expired token' });
+    const email = user.email;
+    if (!email) return res.status(400).json({ error: 'Account has no email; cannot verify current password' });
+    if (!supabaseAuth) return res.status(503).json({ error: 'Auth not configured' });
+    const { error: signInError } = await supabaseAuth.auth.signInWithPassword({ email, password: String(current_password) });
+    if (signInError) return res.status(400).json({ error: 'Current password is incorrect' });
     const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, { password: String(new_password) });
     if (error) return res.status(400).json({ error: error.message });
     return res.status(200).json({ message: 'Password updated' });

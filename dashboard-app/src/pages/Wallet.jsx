@@ -257,7 +257,7 @@ export default function Wallet() {
               <h2 id="wallet-withdraw-title" className="wallet-modal-title">Withdraw to bank</h2>
               {withdrawalDetails && !withdrawalDetails.has_iban ? (
                 <p className="wallet-modal-desc">
-                  Add your bank IBAN on the <Link to="/profile/payment-method" onClick={() => setWithdrawOpen(false)}>Payment method</Link> page in Profile first. Withdrawals are then sent to that account in about 24 hours.
+                  Add your bank IBAN in the <Link to="/profile/payment-method" onClick={() => setWithdrawOpen(false)}>Payment method</Link> page in Profile first. Withdrawals are then sent to that account in about 24 hours.
                 </p>
               ) : (
                 <p className="wallet-modal-desc">

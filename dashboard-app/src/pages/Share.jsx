@@ -289,29 +289,32 @@ export default function Share() {
           <div className="share-step-inner share-step-inner--narrow">
             <h2 className="share-step-title">Secure access {state.serviceName || 'service'} details</h2>
             <p className="share-credentials-helper">Enter the email and password you use to sign in to {state.serviceName || 'the service'}. Co-subscribers will receive these after payment so they can log in. Type the password in full so you can confirm it&apos;s correct.</p>
-            <div className="share-form-group">
-              <label htmlFor="share-login-email">Login email</label>
-              <input
-                type="email"
-                id="share-login-email"
-                className="share-input"
-                placeholder="email@example.com"
-                autoComplete="email"
-                value={state.loginEmail}
-                onChange={(e) => setState((s) => ({ ...s, loginEmail: e.target.value }))}
-              />
-            </div>
-            <div className="share-form-group">
-              <label htmlFor="share-login-password">Password</label>
-              <input
-                type="text"
-                id="share-login-password"
-                className="share-input"
-                placeholder="Subscription password"
-                autoComplete="off"
-                value={state.loginPassword}
-                onChange={(e) => setState((s) => ({ ...s, loginPassword: e.target.value }))}
-              />
+            <p className="share-credentials-encrypted-label">Encrypted</p>
+            <div className="share-credentials-encrypted-box">
+              <div className="share-form-group">
+                <label htmlFor="share-login-email">Login email</label>
+                <input
+                  type="email"
+                  id="share-login-email"
+                  className="share-input share-input--dark"
+                  placeholder="email@example.com"
+                  autoComplete="email"
+                  value={state.loginEmail}
+                  onChange={(e) => setState((s) => ({ ...s, loginEmail: e.target.value }))}
+                />
+              </div>
+              <div className="share-form-group">
+                <label htmlFor="share-login-password">Password</label>
+                <input
+                  type="text"
+                  id="share-login-password"
+                  className="share-input share-input--dark"
+                  placeholder="Subscription password"
+                  autoComplete="off"
+                  value={state.loginPassword}
+                  onChange={(e) => setState((s) => ({ ...s, loginPassword: e.target.value }))}
+                />
+              </div>
             </div>
             <button type="button" className="share-next-btn" onClick={() => showStep(5)} disabled={!state.loginEmail.trim() || !state.loginPassword.trim()}>{t('dashboard.nextLabel')}</button>
           </div>
