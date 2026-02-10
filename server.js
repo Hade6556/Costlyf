@@ -2397,8 +2397,8 @@ app.get('/api/admin/users/:id', async (req, res) => {
   }
 });
 
-// --- 30-day payouts: credit owners (contribution - platform fee) when period ends ---
-const PLATFORM_FEE_PERCENT = 10; // 10% fee; owner receives 90%
+// --- 30-day payouts: credit owners (contribution - 70ct platform fee) when period ends ---
+const PLATFORM_FEE_CENTS = 70; // flat 70ct per subscription per period; owner gets price - 70ct
 
 async function processPayoutsCron(req, res) {
   const cronSecret = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET;
@@ -2424,7 +2424,7 @@ async function processPayoutsCron(req, res) {
       if (!offer || !offer.owner_id) continue;
       const contribution_cents = Math.round(Number(sub.contribution_price) * 100) || 0;
       if (contribution_cents <= 0) continue;
-      const payout_cents = Math.round(contribution_cents * (1 - PLATFORM_FEE_PERCENT / 100));
+      const payout_cents = Math.max(0, contribution_cents - PLATFORM_FEE_CENTS);
       if (payout_cents <= 0) continue;
       const metadata = { offer_id: sub.offer_id, slot_index: sub.slot_index, period_end: sub.period_end, service_name: offer.service_name || null };
       const { error: txErr } = await supabaseAdmin.rpc('apply_balance_transaction', {
