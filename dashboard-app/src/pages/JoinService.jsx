@@ -142,6 +142,7 @@ export default function JoinService() {
   const [loading, setLoading] = useState(true)
   const [planFilter, setPlanFilter] = useState('all')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [instantOnly, setInstantOnly] = useState(false) // mock: does not filter (all offers are instant)
   const [sortBy, setSortBy] = useState('trust')
   const [joinModal, setJoinModal] = useState(null) // { offerId, offer }
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
@@ -249,6 +250,14 @@ export default function JoinService() {
               <span className="service-toggle-label">{t('dashboard.subscriptionVerified')}</span>
               <label className="service-toggle-wrap">
                 <input type="checkbox" className="service-toggle-input" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
+                <span className="service-toggle-slider" />
+              </label>
+            </div>
+            <div className="service-toggle-row">
+              <span className="service-toggle-icon service-toggle-icon--bolt" aria-hidden="true"><img src="/media/icons/ic--round-bolt.svg" alt="" width="24" height="24" /></span>
+              <span className="service-toggle-label">{t('dashboard.instantlyAccepts')}</span>
+              <label className="service-toggle-wrap">
+                <input type="checkbox" className="service-toggle-input" checked={instantOnly} onChange={(e) => setInstantOnly(e.target.checked)} />
                 <span className="service-toggle-slider" />
               </label>
             </div>
@@ -379,6 +388,14 @@ export default function JoinService() {
                 <span className="service-toggle-label">{t('dashboard.subscriptionVerified')}</span>
                 <label className="service-toggle-wrap">
                   <input type="checkbox" className="service-toggle-input" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
+                  <span className="service-toggle-slider" />
+                </label>
+              </div>
+              <div className="service-toggle-row">
+                <span className="service-toggle-icon service-toggle-icon--bolt" aria-hidden="true"><img src="/media/icons/ic--round-bolt.svg" alt="" width="24" height="24" /></span>
+                <span className="service-toggle-label">{t('dashboard.instantlyAccepts')}</span>
+                <label className="service-toggle-wrap">
+                  <input type="checkbox" className="service-toggle-input" checked={instantOnly} onChange={(e) => setInstantOnly(e.target.checked)} />
                   <span className="service-toggle-slider" />
                 </label>
               </div>

@@ -634,7 +634,7 @@ async function getOrCreateThreadAndNotifyJoinRequest(supabase, offerId, ownerId,
   return thread.id;
 }
 
-const JOIN_REQUEST_SYSTEM_MESSAGE = 'The owner should choose whether to accept or to decline the join request. If the owner accepts, he/she should provide the login credentials and wait for the subscriber\'s confirmation that he/she received and everything is working. Those confirmations and buttons are in this chat: the owner sees Accept / Decline, the subscriber sees Confirm or Support.';
+const JOIN_REQUEST_SYSTEM_MESSAGE = 'Welcome! This chat connects the subscription owner and co-subscriber.\n\nUse it only if you need to discuss access, profiles, or subscription-related questions.\n\nEverything is set up — you don\'t need to message unless something comes up 👍';
 
 // Helper: find or create chat thread for (offerId, ownerId, subscriberId), then post a system message.
 async function postSystemMessageToThread(supabase, offerId, ownerId, subscriberId, content) {
