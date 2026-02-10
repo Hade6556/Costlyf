@@ -188,6 +188,13 @@ export default function JoinService() {
   const offerIdFromUrl = searchParams.get('offer')
   const tokenFromUrl = searchParams.get('token')
 
+  // Stripe redirect: show "Waiting for confirmation" immediately so user never sees listing until modal opens
+  const queryParams = new URLSearchParams(location.search)
+  const hashParams = new URLSearchParams((location.hash && location.hash.slice(1)) || '')
+  const redirectStatus = queryParams.get('redirect_status') || hashParams.get('redirect_status')
+  const paymentIntentFromUrl = queryParams.get('payment_intent') || hashParams.get('payment_intent')
+  const showResumePageOverlay = redirectStatus === 'succeeded' && paymentIntentFromUrl && user && !joinModal
+
   useEffect(() => {
     if (!serviceSlug) return
     fetch(`/api/offers?service=${encodeURIComponent(serviceSlug)}&minSeats=1`)
@@ -312,6 +319,15 @@ export default function JoinService() {
 
   return (
     <main className="dashboard-main dashboard-content dashboard-content--service">
+      {showResumePageOverlay && (
+        <div className="join-resume-page-overlay" role="status" aria-live="polite">
+          <div className="join-offer-card-status-wrap">
+            <div className="join-offer-card-status-spinner" aria-hidden="true" />
+            <p className="join-offer-card-status-text">Waiting for confirmation…</p>
+            <p className="join-offer-card-status-sub">This may take a moment. Do not close this window.</p>
+          </div>
+        </div>
+      )}
       <header className="service-header">
         <Link to="/join" className="service-back" aria-label={t('dashboard.back')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
