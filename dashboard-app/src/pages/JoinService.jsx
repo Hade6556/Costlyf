@@ -60,7 +60,7 @@ function JoinModalTopupCard({
       paymentElement.mount(topupPaymentElementRef.current)
       if (topupExpressCheckoutRef?.current) {
         const paymentRequest = stripe.paymentRequest({
-          country: 'DE',
+          country: 'LT',
           currency: 'eur',
           total: { label: 'Join subscription', amount: amountCents },
         })

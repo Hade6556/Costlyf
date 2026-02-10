@@ -174,7 +174,7 @@ export default function Wallet() {
       paymentElement.mount(paymentElementRef.current)
       // Payment Request (Apple Pay / Google Pay) – same Payment Intent
       const paymentRequest = stripe.paymentRequest({
-        country: 'DE',
+        country: 'LT',
         currency: 'eur',
         total: { label: 'Top-up', amount: amountCents },
       })
