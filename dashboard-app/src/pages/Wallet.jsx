@@ -234,13 +234,23 @@ export default function Wallet() {
     setTopupError('')
     setPayLoading(true)
     const returnUrl = `${window.location.origin}${window.location.pathname}`
-    stripe
-      .confirmPayment({
-        elements,
-        clientSecret: secret,
-        confirmParams: { return_url: returnUrl },
+    // Stripe requires elements.submit() before confirmPayment (validates form first)
+    Promise.resolve()
+      .then(() => elements.submit())
+      .then((submitResult) => {
+        if (submitResult && submitResult.error) {
+          setTopupError(submitResult.error.message || 'Please complete the form')
+          setPayLoading(false)
+          return null
+        }
+        return stripe.confirmPayment({
+          elements,
+          clientSecret: secret,
+          confirmParams: { return_url: returnUrl },
+        })
       })
       .then((result) => {
+        if (result === null) return
         if (result.error) throw new Error(result.error.message || 'Payment failed')
         setTopupSuccess('Payment successful. Updating balance…')
         let pollCount = 0

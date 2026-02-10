@@ -706,6 +706,47 @@ app.post('/api/offers/:id/slots/:slotIndex/create-payment-intent', async (req, r
   }
 });
 
+// Reserve a slot after successful card payment (PaymentIntent). Verifies payment with Stripe then reserves.
+app.post('/api/offers/:id/slots/:slotIndex/reserve-after-card', async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });
+  const offerId = req.params.id;
+  const slotIndex = parseInt(req.params.slotIndex, 10);
+  const paymentIntentId = req.body && req.body.payment_intent_id;
+  if (!offerId || !slotIndex || slotIndex < 1 || !paymentIntentId) return res.status(400).json({ error: 'Invalid request' });
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (pi.status !== 'succeeded') return res.status(400).json({ error: 'Payment not completed' });
+    const meta = pi.metadata || {};
+    if (meta.purpose !== 'join' || meta.offer_id !== offerId || String(meta.slot_index) !== String(slotIndex) || String(meta.user_id) !== String(user.id)) {
+      return res.status(400).json({ error: 'Payment does not match this slot' });
+    }
+    const { data: offer, error: offerErr } = await supabaseAdmin.from('offers').select('id, owner_id').eq('id', offerId).single();
+    if (offerErr || !offer) return res.status(404).json({ error: 'Offer not found' });
+    const { data: slot, error: slotErr } = await supabaseAdmin
+      .from('offer_slots')
+      .select('id, offer_id, status, user_id')
+      .eq('offer_id', offerId)
+      .eq('slot_index', slotIndex)
+      .single();
+    if (slotErr || !slot) return res.status(404).json({ error: 'Slot not found' });
+    if (slot.status !== 'available') return res.status(400).json({ error: 'Slot is not available' });
+    const { error: updateErr } = await supabaseAdmin
+      .from('offer_slots')
+      .update({ status: 'reserved', user_id: user.id, reserved_at: new Date().toISOString() })
+      .eq('id', slot.id);
+    if (updateErr) return res.status(500).json({ error: updateErr.message });
+    try {
+      await getOrCreateThreadAndNotifyJoinRequest(supabaseAdmin, offerId, offer.owner_id, user.id, JOIN_REQUEST_SYSTEM_MESSAGE);
+    } catch (e) {
+      // non-fatal
+    }
+    return res.status(200).json({ message: 'Slot reserved' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || 'Reserve failed' });
+  }
+});
+
 // Reserve a slot (auth required). Slot must be available. Creates chat thread and system message to notify owner.
 app.post('/api/offers/:id/slots/:slotIndex/reserve', async (req, res) => {
   const user = await getCurrentUser(req);

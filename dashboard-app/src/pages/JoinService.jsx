@@ -106,12 +106,23 @@ function JoinModalTopupCard({
     setTopupError('')
     setPayLoading(true)
     const returnUrl = window.location.origin + window.location.pathname
-    stripe.confirmPayment({
-      elements,
-      clientSecret: secret,
-      confirmParams: { return_url: returnUrl },
-    })
+    // Stripe requires elements.submit() before confirmPayment (validates form first)
+    Promise.resolve()
+      .then(() => elements.submit())
+      .then((submitResult) => {
+        if (submitResult && submitResult.error) {
+          setTopupError(submitResult.error.message || 'Please complete the form')
+          setPayLoading(false)
+          return null
+        }
+        return stripe.confirmPayment({
+          elements,
+          clientSecret: secret,
+          confirmParams: { return_url: returnUrl },
+        })
+      })
       .then((result) => {
+        if (result === null) return
         if (result.error) throw new Error(result.error.message || 'Payment failed')
         let pollCount = 0
         const poll = () => {
@@ -526,6 +537,16 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const topupStripeRef = useRef(null)
   const topupElementsRef = useRef(null)
   const topupExpressCheckoutRef = useRef(null)
+  const [joinCardPaymentActive, setJoinCardPaymentActive] = useState(false)
+  const [joinCardLoading, setJoinCardLoading] = useState(false)
+  const [joinCardPayLoading, setJoinCardPayLoading] = useState(false)
+  const [joinCardError, setJoinCardError] = useState('')
+  const joinCardClientSecretRef = useRef(null)
+  const joinCardPublishableKeyRef = useRef(null)
+  const joinCardPaymentElementRef = useRef(null)
+  const joinCardExpressCheckoutRef = useRef(null)
+  const joinCardStripeRef = useRef(null)
+  const joinCardElementsRef = useRef(null)
 
   const slots = offer.slots || []
   const available = slots.filter((s) => s.status === 'available')
@@ -554,6 +575,62 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       .then((data) => setBalanceCents(data && data.balance_cents != null ? data.balance_cents : 0))
       .catch(() => setBalanceCents(0))
   }, [step, fetchWithAuth])
+
+  // Mount Stripe Payment Element + Express Checkout when join card payment step is shown
+  useEffect(() => {
+    if (!joinCardPaymentActive || !joinCardClientSecretRef.current || !joinCardPublishableKeyRef.current || !joinCardPaymentElementRef.current) return
+    const key = joinCardPublishableKeyRef.current
+    const secret = joinCardClientSecretRef.current
+    loadStripeScript().then((Stripe) => {
+      if (!joinCardPaymentElementRef.current) return
+      joinCardPaymentElementRef.current.innerHTML = ''
+      if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''
+      const stripe = Stripe(key)
+      joinCardStripeRef.current = stripe
+      const elements = stripe.elements({
+        clientSecret: secret,
+        appearance: { theme: 'stripe' },
+      })
+      joinCardElementsRef.current = elements
+      const paymentElement = elements.create('payment')
+      paymentElement.mount(joinCardPaymentElementRef.current)
+      const paymentRequest = stripe.paymentRequest({
+        country: 'LT',
+        currency: 'eur',
+        total: { label: 'Join subscription', amount: amountCents },
+      })
+      paymentRequest.on('paymentmethod', (ev) => {
+        stripe.confirmCardPayment(secret, { payment_method: ev.paymentMethod.id })
+          .then((result) => {
+            if (result.error) {
+              ev.complete('fail')
+              setJoinCardError(result.error.message || 'Payment failed')
+              return
+            }
+            ev.complete('success')
+            fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/reserve-after-card`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ payment_intent_id: result.paymentIntent?.id }),
+            })
+              .then((r) => {
+                if (r.ok) {
+                  setStep(4)
+                  setTimeout(() => fetchAccessDetailsAndGo(), 2000)
+                } else return r.json().then((d) => { throw new Error(d.error || 'Could not reserve') })
+              })
+              .catch((e) => setJoinCardError(e.message || 'Reserve failed'))
+          })
+          .catch((e) => { ev.complete('fail'); setJoinCardError(e.message || 'Payment failed') })
+      })
+      paymentRequest.canMakePayment().then((result) => {
+        if (result && joinCardExpressCheckoutRef.current) {
+          const prButton = elements.create('paymentRequestButton', { paymentRequest })
+          prButton.mount(joinCardExpressCheckoutRef.current)
+        }
+      })
+    }).catch((e) => setJoinCardError(e.message || 'Failed to load payment form'))
+  }, [joinCardPaymentActive, amountCents, offer.id, slotIndex, fetchWithAuth])
 
   const goToInstantAccess = (email = '', password = '') => {
     setAccessDetails({
@@ -597,23 +674,66 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       return
     }
     if (paymentMethod === 'card' && slotIndex) {
-      setLoading(true)
-      fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/reserve`, { method: 'POST' })
-        .then((r) => {
-          if (r.ok) {
-            setStep(4)
-            setLoading(false)
-            setTimeout(() => fetchAccessDetailsAndGo(), 2000)
-            return
-          }
-          return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
+      setPayError('')
+      setJoinCardError('')
+      setJoinCardLoading(true)
+      fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/create-payment-intent`, { method: 'POST' })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.error) throw new Error(data.error)
+          if (!data.client_secret || !data.publishableKey) throw new Error('Missing Stripe keys')
+          joinCardClientSecretRef.current = data.client_secret
+          joinCardPublishableKeyRef.current = data.publishableKey
+          setJoinCardPaymentActive(true)
         })
-        .catch((e) => { setPayError(e.message || 'Could not join'); setLoading(false) })
+        .catch((e) => { setPayError(e.message || 'Could not start payment'); setJoinCardError(e.message || '') })
+        .finally(() => setJoinCardLoading(false))
     }
   }
 
-  const payButtonDisabled = !paymentMethod || loading
-  const payButtonLabel = loading
+  const doJoinCardPay = () => {
+    const stripe = joinCardStripeRef.current
+    const secret = joinCardClientSecretRef.current
+    const elements = joinCardElementsRef.current
+    if (!stripe || !secret || !elements) return
+    setJoinCardError('')
+    setJoinCardPayLoading(true)
+    const returnUrl = window.location.origin + window.location.pathname
+    Promise.resolve()
+      .then(() => elements.submit())
+      .then((submitResult) => {
+        if (submitResult && submitResult.error) {
+          setJoinCardError(submitResult.error.message || 'Please complete the form')
+          setJoinCardPayLoading(false)
+          return null
+        }
+        return stripe.confirmPayment({
+          elements,
+          clientSecret: secret,
+          confirmParams: { return_url: returnUrl },
+        })
+      })
+      .then((result) => {
+        if (result === null) return
+        if (result.error) throw new Error(result.error.message || 'Payment failed')
+        const paymentIntentId = result.paymentIntent && result.paymentIntent.id
+        if (!paymentIntentId) throw new Error('Payment succeeded but could not complete reservation')
+        return fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/reserve-after-card`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_intent_id: paymentIntentId }),
+        }).then((r) => {
+          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
+          setStep(4)
+          setTimeout(() => fetchAccessDetailsAndGo(), 2000)
+        })
+      })
+      .catch((e) => setJoinCardError(e.message || 'Something went wrong'))
+      .finally(() => setJoinCardPayLoading(false))
+  }
+
+  const payButtonDisabled = !paymentMethod || loading || joinCardLoading
+  const payButtonLabel = loading || joinCardLoading
     ? 'Joining…'
     : paymentMethod === 'card'
       ? `Pay ${price}`
@@ -679,36 +799,73 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
               )}
             </div>
             <p className="join-offer-disclaimer">{t('dashboard.noStringsAttached')}</p>
-            <button type="button" className="join-offer-next" onClick={() => setStep(2)}>Pay & Get Access</button>
+            <button type="button" className="join-offer-next" onClick={() => setStep(2)}>Get instant access</button>
           </div>
         )}
 
         {step === 2 && (
           <div className="join-offer-step">
-            <button type="button" className="join-offer-back" aria-label={t('dashboard.back')} onClick={() => setStep(1)}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></button>
-            <h2 className="join-offer-title">{t('dashboard.join')}</h2>
-            <p className="join-offer-subtitle">Choose the payment method:</p>
-            <p className="join-offer-charge">Charge: {price} €/month</p>
-            <div className="join-offer-payment-options">
-              <label className="join-offer-payment-option">
-                <input type="radio" name="join-payment-method" value="card" className="join-offer-payment-radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-                <span className="join-offer-payment-label">Bank card</span>
-                <span className="join-offer-payment-icon" aria-hidden="true"><svg width="32" height="24" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="30" height="16" rx="2" /><line x1="1" y1="10" x2="31" y2="10" /></svg></span>
-              </label>
-              <label className="join-offer-payment-option">
-                <input type="radio" name="join-payment-method" value="wallet" className="join-offer-payment-radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} />
-                <span className="join-offer-payment-label">Pay with Wallet</span>
-                <span className="join-offer-payment-amount">{balanceCents != null ? (balanceCents / 100).toFixed(2) + '€' : '…'}</span>
-              </label>
-            </div>
-            {paymentMethod === 'wallet' && balanceCents != null && balanceCents < amountCents && (
-              <p className="join-offer-insufficient" role="alert">Insufficient balance. Top up your wallet or pay by card.</p>
-            )}
-            {payError && <p className="join-offer-insufficient" role="alert">{payError}</p>}
-            <p className="join-offer-legal">By clicking Pay, the right of withdrawal (article L. 221-18 of the Consumer Code) does not apply.</p>
-            <button type="button" className="join-offer-pay" disabled={payButtonDisabled} onClick={handlePay}>
-              <span>{payButtonLabel}</span>
+            <button
+              type="button"
+              className="join-offer-back"
+              aria-label={t('dashboard.back')}
+              onClick={() => {
+                if (joinCardPaymentActive) {
+                  setJoinCardPaymentActive(false)
+                  setJoinCardError('')
+                  joinCardClientSecretRef.current = null
+                  joinCardPublishableKeyRef.current = null
+                  if (joinCardPaymentElementRef.current) joinCardPaymentElementRef.current.innerHTML = ''
+                  if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''
+                } else {
+                  setStep(1)
+                }
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
             </button>
+            <h2 className="join-offer-title">{t('dashboard.join')}</h2>
+            {joinCardPaymentActive ? (
+              <>
+                <p className="join-offer-subtitle">Pay {price} — choose your payment method.</p>
+                <div ref={joinCardExpressCheckoutRef} className="wallet-express-checkout-wrap" style={{ marginBottom: '1rem' }} />
+                <div ref={joinCardPaymentElementRef} className="wallet-payment-element-wrap" style={{ marginBottom: '1rem' }} />
+                {joinCardError && <p className="join-offer-insufficient" role="alert">{joinCardError}</p>}
+                <div className="wallet-modal-actions wallet-modal-actions--step2" style={{ marginTop: '1rem' }}>
+                  <button type="button" className="wallet-modal-back" onClick={() => { setJoinCardPaymentActive(false); setJoinCardError(''); joinCardClientSecretRef.current = null; joinCardPublishableKeyRef.current = null; if (joinCardPaymentElementRef.current) joinCardPaymentElementRef.current.innerHTML = ''; if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''; }}>
+                    Back
+                  </button>
+                  <button type="button" className="wallet-modal-pay" onClick={doJoinCardPay} disabled={joinCardPayLoading}>
+                    {joinCardPayLoading ? '…' : `Pay ${price}`}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="join-offer-subtitle">Choose the payment method:</p>
+                <p className="join-offer-charge">Charge: {price} €/month</p>
+                <div className="join-offer-payment-options">
+                  <label className="join-offer-payment-option">
+                    <input type="radio" name="join-payment-method" value="card" className="join-offer-payment-radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
+                    <span className="join-offer-payment-label">Bank card</span>
+                    <span className="join-offer-payment-icon" aria-hidden="true"><svg width="32" height="24" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="30" height="16" rx="2" /><line x1="1" y1="10" x2="31" y2="10" /></svg></span>
+                  </label>
+                  <label className="join-offer-payment-option">
+                    <input type="radio" name="join-payment-method" value="wallet" className="join-offer-payment-radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} />
+                    <span className="join-offer-payment-label">Pay with Wallet</span>
+                    <span className="join-offer-payment-amount">{balanceCents != null ? (balanceCents / 100).toFixed(2) + '€' : '…'}</span>
+                  </label>
+                </div>
+                {paymentMethod === 'wallet' && balanceCents != null && balanceCents < amountCents && (
+                  <p className="join-offer-insufficient" role="alert">Insufficient balance. Top up your wallet or pay by card.</p>
+                )}
+                {payError && <p className="join-offer-insufficient" role="alert">{payError}</p>}
+                <p className="join-offer-legal">By clicking Pay, the right of withdrawal (article L. 221-18 of the Consumer Code) does not apply.</p>
+                <button type="button" className="join-offer-pay" disabled={payButtonDisabled} onClick={handlePay}>
+                  <span>{payButtonLabel}</span>
+                </button>
+              </>
+            )}
           </div>
         )}
 
