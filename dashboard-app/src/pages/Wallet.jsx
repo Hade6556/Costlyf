@@ -63,13 +63,12 @@ export default function Wallet() {
   const [payLoading, setPayLoading] = useState(false)
   const [nextLoading, setNextLoading] = useState(false)
   const stripeRef = useRef(null)
-  const cardNumberRef = useRef(null)
-  const cardExpiryRef = useRef(null)
-  const cardCvcRef = useRef(null)
-  const cardElementRef = useRef(null)
+  const paymentElementRef = useRef(null)
   const elementsRef = useRef(null)
   const clientSecretRef = useRef(null)
   const publishableKeyRef = useRef(null)
+  const expressCheckoutRef = useRef(null)
+  const paymentRequestRef = useRef(null)
 
   const monthLabel = monthDate.toLocaleString(locale || 'en', { month: 'long', year: 'numeric' })
   const prevMonth = () => setMonthDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
@@ -120,7 +119,6 @@ export default function Wallet() {
     publishableKeyRef.current = null
     stripeRef.current = null
     elementsRef.current = null
-    cardElementRef.current = null
   }
 
   const closeTopup = () => {
@@ -130,9 +128,9 @@ export default function Wallet() {
     setTopupSuccess('')
     setPayLoading(false)
     setNextLoading(false)
-    if (cardNumberRef.current) cardNumberRef.current.innerHTML = ''
-    if (cardExpiryRef.current) cardExpiryRef.current.innerHTML = ''
-    if (cardCvcRef.current) cardCvcRef.current.innerHTML = ''
+    if (paymentElementRef.current) paymentElementRef.current.innerHTML = ''
+    if (expressCheckoutRef.current) expressCheckoutRef.current.innerHTML = ''
+    paymentRequestRef.current = null
   }
 
   const goNext = () => {
@@ -155,57 +153,96 @@ export default function Wallet() {
       .finally(() => setNextLoading(false))
   }
 
-  // Mount Stripe card elements when step 2 is shown (refs exist only after step 2 is rendered)
+  // Mount Stripe Payment Element + Express Checkout (Apple Pay / Google Pay) when step 2 is shown
   useEffect(() => {
-    if (topupStep !== 2 || !clientSecretRef.current || !publishableKeyRef.current || !cardNumberRef.current) return
+    if (topupStep !== 2 || !clientSecretRef.current || !publishableKeyRef.current || !paymentElementRef.current) return
     const key = publishableKeyRef.current
+    const amountCents = selectedCents
+    const secret = clientSecretRef.current
     loadStripeScript().then((Stripe) => {
-      if (!cardNumberRef.current || !cardExpiryRef.current || !cardCvcRef.current) return
-      cardNumberRef.current.innerHTML = ''
-      cardExpiryRef.current.innerHTML = ''
-      cardCvcRef.current.innerHTML = ''
+      if (!paymentElementRef.current) return
+      paymentElementRef.current.innerHTML = ''
+      if (expressCheckoutRef.current) expressCheckoutRef.current.innerHTML = ''
       const stripe = Stripe(key)
       stripeRef.current = stripe
-      const elements = stripe.elements()
+      const elements = stripe.elements({
+        clientSecret: secret,
+        appearance: { theme: 'stripe' },
+      })
       elementsRef.current = elements
-      const style = { base: { fontSize: '16px', paddingLeft: '12px', paddingRight: '12px' } }
-      const cardNumber = elements.create('cardNumber', { style, disableLink: true })
-      const cardExpiry = elements.create('cardExpiry', { style })
-      const cardCvc = elements.create('cardCvc', { style })
-      cardElementRef.current = cardNumber
-      cardNumber.mount(cardNumberRef.current)
-      cardExpiry.mount(cardExpiryRef.current)
-      cardCvc.mount(cardCvcRef.current)
+      const paymentElement = elements.create('payment')
+      paymentElement.mount(paymentElementRef.current)
+      // Payment Request (Apple Pay / Google Pay) – same Payment Intent
+      const paymentRequest = stripe.paymentRequest({
+        country: 'DE',
+        currency: 'eur',
+        total: { label: 'Top-up', amount: amountCents },
+      })
+      paymentRequestRef.current = paymentRequest
+      paymentRequest.on('paymentmethod', (ev) => {
+        stripe.confirmCardPayment(secret, { payment_method: ev.paymentMethod.id })
+          .then((result) => {
+            if (result.error) {
+              ev.complete('fail')
+              setTopupError(result.error.message || 'Payment failed')
+              return
+            }
+            ev.complete('success')
+            setTopupSuccess('Payment successful. Updating balance…')
+            let pollCount = 0
+            const poll = () => {
+              loadBalance()
+              loadTransactions()
+              pollCount += 1
+              if (pollCount < 8) setTimeout(poll, 500)
+              else { closeTopup(); loadBalance(); loadTransactions() }
+            }
+            setTimeout(poll, 500)
+          })
+          .catch((e) => {
+            ev.complete('fail')
+            setTopupError(e.message || 'Payment failed')
+          })
+      })
+      paymentRequest.canMakePayment().then((result) => {
+        if (result && expressCheckoutRef.current) {
+          const prButton = elements.create('paymentRequestButton', { paymentRequest })
+          prButton.mount(expressCheckoutRef.current)
+        }
+      })
     }).catch((e) => setTopupError(e.message || 'Failed to load payment form'))
-  }, [topupStep])
+  }, [topupStep, selectedCents])
 
   const goBack = () => {
     setTopupError('')
     setTopupSuccess('')
-    if (cardNumberRef.current) cardNumberRef.current.innerHTML = ''
-    if (cardExpiryRef.current) cardExpiryRef.current.innerHTML = ''
-    if (cardCvcRef.current) cardCvcRef.current.innerHTML = ''
+    if (paymentElementRef.current) paymentElementRef.current.innerHTML = ''
+    if (expressCheckoutRef.current) expressCheckoutRef.current.innerHTML = ''
+    paymentRequestRef.current = null
     stripeRef.current = null
     elementsRef.current = null
     clientSecretRef.current = null
     publishableKeyRef.current = null
-    cardElementRef.current = null
     setTopupStep(1)
   }
 
   const doPay = () => {
     const stripe = stripeRef.current
     const secret = clientSecretRef.current
-    const cardElement = cardElementRef.current
-    if (!stripe || !secret || !cardElement) return
+    const elements = elementsRef.current
+    if (!stripe || !secret || !elements) return
     setTopupError('')
     setPayLoading(true)
+    const returnUrl = `${window.location.origin}${window.location.pathname}`
     stripe
-      .confirmCardPayment(secret, { payment_method: { card: cardElement } })
+      .confirmPayment({
+        elements,
+        clientSecret: secret,
+        confirmParams: { return_url: returnUrl },
+      })
       .then((result) => {
         if (result.error) throw new Error(result.error.message || 'Payment failed')
         setTopupSuccess('Payment successful. Updating balance…')
-        // Poll for updated balance/history (Stripe webhook updates backend asynchronously)
         let pollCount = 0
         const maxPolls = 8
         const pollMs = 500
@@ -393,25 +430,10 @@ export default function Wallet() {
               )}
               {topupStep === 2 && (
                 <div className="wallet-topup-step">
-                  <h2 className="wallet-modal-title">Card details</h2>
-                  <p className="wallet-modal-desc">Pay <span>{selectedCents / 100}</span> € — enter your card details below.</p>
-                  <div className="wallet-card-fields">
-                    <div className="wallet-card-field">
-                      <label className="wallet-card-label">Card number</label>
-                      <div ref={cardNumberRef} className="wallet-stripe-input" />
-                    </div>
-                    <div className="wallet-card-field-row">
-                      <div className="wallet-card-field">
-                        <label className="wallet-card-label">Expiry</label>
-                        <div ref={cardExpiryRef} className="wallet-stripe-input" />
-                      </div>
-                      <div className="wallet-card-field">
-                        <label className="wallet-card-label">CVC</label>
-                        <div ref={cardCvcRef} className="wallet-stripe-input" />
-                      </div>
-                    </div>
-                  </div>
-                  <p className="wallet-modal-hint">Test card: 4242 4242 4242 4242, expiry 12/34, CVC 123</p>
+                  <h2 className="wallet-modal-title">Payment</h2>
+                  <p className="wallet-modal-desc">Pay <span>{selectedCents / 100}</span> € — choose your payment method below.</p>
+                  <div ref={expressCheckoutRef} id="express-checkout-element" className="wallet-express-checkout-wrap" />
+                  <div ref={paymentElementRef} id="payment-element" className="wallet-payment-element-wrap" />
                   {topupError && <p className="wallet-modal-error" role="alert">{topupError}</p>}
                   {topupSuccess && <p className="wallet-modal-error wallet-modal-success" role="status">{topupSuccess}</p>}
                   <div className="wallet-modal-actions wallet-modal-actions--step2">

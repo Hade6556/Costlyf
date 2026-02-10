@@ -30,12 +30,10 @@ function JoinModalTopupCard({
   topupCents,
   topupClientSecretRef,
   topupPublishableKeyRef,
-  topupCardNumberRef,
-  topupCardExpiryRef,
-  topupCardCvcRef,
+  topupPaymentElementRef,
   topupStripeRef,
   topupElementsRef,
-  topupCardElementRef,
+  topupExpressCheckoutRef,
   loadStripeScript,
   topupError,
   setTopupError,
@@ -43,35 +41,76 @@ function JoinModalTopupCard({
 }) {
   const [payLoading, setPayLoading] = useState(false)
   useEffect(() => {
-    if (!topupClientSecretRef.current || !topupPublishableKeyRef.current || !topupCardNumberRef.current) return
+    if (!topupClientSecretRef.current || !topupPublishableKeyRef.current || !topupPaymentElementRef?.current) return
     const key = topupPublishableKeyRef.current
+    const secret = topupClientSecretRef.current
+    const amountCents = topupCents
     loadStripeScript().then((Stripe) => {
-      if (!topupCardNumberRef.current || !topupCardExpiryRef.current || !topupCardCvcRef.current) return
-      topupCardNumberRef.current.innerHTML = ''
-      topupCardExpiryRef.current.innerHTML = ''
-      topupCardCvcRef.current.innerHTML = ''
+      if (!topupPaymentElementRef?.current) return
+      topupPaymentElementRef.current.innerHTML = ''
+      if (topupExpressCheckoutRef?.current) topupExpressCheckoutRef.current.innerHTML = ''
       const stripe = Stripe(key)
       topupStripeRef.current = stripe
-      const elements = stripe.elements()
+      const elements = stripe.elements({
+        clientSecret: secret,
+        appearance: { theme: 'stripe' },
+      })
       topupElementsRef.current = elements
-      const style = { base: { fontSize: '16px', paddingLeft: '12px', paddingRight: '12px' } }
-      const cardNumber = elements.create('cardNumber', { style, disableLink: true })
-      const cardExpiry = elements.create('cardExpiry', { style })
-      const cardCvc = elements.create('cardCvc', { style })
-      topupCardElementRef.current = cardNumber
-      cardNumber.mount(topupCardNumberRef.current)
-      cardExpiry.mount(topupCardExpiryRef.current)
-      cardCvc.mount(topupCardCvcRef.current)
+      const paymentElement = elements.create('payment')
+      paymentElement.mount(topupPaymentElementRef.current)
+      if (topupExpressCheckoutRef?.current) {
+        const paymentRequest = stripe.paymentRequest({
+          country: 'DE',
+          currency: 'eur',
+          total: { label: 'Join subscription', amount: amountCents },
+        })
+        paymentRequest.on('paymentmethod', (ev) => {
+          stripe.confirmCardPayment(secret, { payment_method: ev.paymentMethod.id })
+            .then((result) => {
+              if (result.error) {
+                ev.complete('fail')
+                setTopupError(result.error.message || 'Payment failed')
+                return
+              }
+              ev.complete('success')
+              let pollCount = 0
+              const poll = () => {
+                fetchWithAuth('/api/wallet/balance', {}).then((r) => r.ok ? r.json() : null).then((data) => {
+                  if (data && data.balance_cents != null) onSuccess()
+                })
+                pollCount += 1
+                if (pollCount < 10) setTimeout(poll, 500)
+                else onSuccess()
+              }
+              setTimeout(poll, 500)
+            })
+            .catch((e) => {
+              ev.complete('fail')
+              setTopupError(e.message || 'Payment failed')
+            })
+        })
+        paymentRequest.canMakePayment().then((result) => {
+          if (result && topupExpressCheckoutRef.current) {
+            const prButton = elements.create('paymentRequestButton', { paymentRequest })
+            prButton.mount(topupExpressCheckoutRef.current)
+          }
+        })
+      }
     }).catch((e) => setTopupError(e.message || 'Failed to load payment form'))
-  }, [])
+  }, [topupCents])
   const handlePay = () => {
     const stripe = topupStripeRef.current
     const secret = topupClientSecretRef.current
-    const cardElement = topupCardElementRef.current
-    if (!stripe || !secret || !cardElement) return
+    const elements = topupElementsRef.current
+    if (!stripe || !secret || !elements) return
     setTopupError('')
     setPayLoading(true)
-    stripe.confirmCardPayment(secret, { payment_method: { card: cardElement } })
+    const returnUrl = window.location.origin + window.location.pathname
+    stripe.confirmPayment({
+      elements,
+      clientSecret: secret,
+      confirmParams: { return_url: returnUrl },
+    })
       .then((result) => {
         if (result.error) throw new Error(result.error.message || 'Payment failed')
         let pollCount = 0
@@ -90,23 +129,9 @@ function JoinModalTopupCard({
   }
   return (
     <>
-      <p className="join-offer-subtitle">Pay {topupCents / 100}€ — enter your card details.</p>
-      <div className="wallet-card-fields" style={{ marginBottom: '1rem' }}>
-        <div className="wallet-card-field">
-          <label className="wallet-card-label">Card number</label>
-          <div ref={topupCardNumberRef} className="wallet-stripe-input" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }} />
-        </div>
-        <div className="wallet-card-field-row" style={{ display: 'flex', gap: '0.5rem' }}>
-          <div className="wallet-card-field" style={{ flex: 1 }}>
-            <label className="wallet-card-label">Expiry</label>
-            <div ref={topupCardExpiryRef} className="wallet-stripe-input" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }} />
-          </div>
-          <div className="wallet-card-field" style={{ flex: 1 }}>
-            <label className="wallet-card-label">CVC</label>
-            <div ref={topupCardCvcRef} className="wallet-stripe-input" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }} />
-          </div>
-        </div>
-      </div>
+      <p className="join-offer-subtitle">Pay {topupCents / 100}€ — choose your payment method.</p>
+      <div ref={topupExpressCheckoutRef} id="join-express-checkout-element" className="wallet-express-checkout-wrap" style={{ marginBottom: '1rem' }} />
+      <div ref={topupPaymentElementRef} id="join-payment-element" className="wallet-payment-element-wrap" style={{ marginBottom: '1rem' }} />
       {topupError && <p className="join-offer-insufficient" role="alert">{topupError}</p>}
       <button type="button" className="join-offer-pay" disabled={payLoading} onClick={handlePay}>
         {payLoading ? '…' : `Pay ${(topupCents / 100).toFixed(2)}€`}
@@ -497,12 +522,10 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const [issueSubmitted, setIssueSubmitted] = useState(false)
   const topupClientSecretRef = useRef(null)
   const topupPublishableKeyRef = useRef(null)
-  const topupCardNumberRef = useRef(null)
-  const topupCardExpiryRef = useRef(null)
-  const topupCardCvcRef = useRef(null)
+  const topupPaymentElementRef = useRef(null)
   const topupStripeRef = useRef(null)
   const topupElementsRef = useRef(null)
-  const topupCardElementRef = useRef(null)
+  const topupExpressCheckoutRef = useRef(null)
 
   const slots = offer.slots || []
   const available = slots.filter((s) => s.status === 'available')
@@ -700,9 +723,8 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                 if (topupSubStep === 2) {
                   topupClientSecretRef.current = null
                   topupPublishableKeyRef.current = null
-                  if (topupCardNumberRef.current) topupCardNumberRef.current.innerHTML = ''
-                  if (topupCardExpiryRef.current) topupCardExpiryRef.current.innerHTML = ''
-                  if (topupCardCvcRef.current) topupCardCvcRef.current.innerHTML = ''
+                  if (topupPaymentElementRef.current) topupPaymentElementRef.current.innerHTML = ''
+                  if (topupExpressCheckoutRef.current) topupExpressCheckoutRef.current.innerHTML = ''
                   setTopupSubStep(1)
                 } else {
                   setStep(2)
@@ -778,12 +800,10 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                 topupCents={topupCents}
                 topupClientSecretRef={topupClientSecretRef}
                 topupPublishableKeyRef={topupPublishableKeyRef}
-                topupCardNumberRef={topupCardNumberRef}
-                topupCardExpiryRef={topupCardExpiryRef}
-                topupCardCvcRef={topupCardCvcRef}
+                topupPaymentElementRef={topupPaymentElementRef}
                 topupStripeRef={topupStripeRef}
                 topupElementsRef={topupElementsRef}
-                topupCardElementRef={topupCardElementRef}
+                topupExpressCheckoutRef={topupExpressCheckoutRef}
                 loadStripeScript={loadStripeScript}
                 topupError={topupError}
                 setTopupError={setTopupError}

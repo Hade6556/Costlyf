@@ -6282,6 +6282,14 @@ button.profile-nav-item {
 }
 .wallet-modal-title { margin: 0 0 0.25rem; font-size: 1.25rem; }
 .wallet-modal-desc { margin: 0 0 1rem; color: var(--dash-text-muted); font-size: 0.9rem; }
+.wallet-express-checkout-wrap { min-height: 44px; margin-bottom: 1rem; }
+.wallet-express-checkout-wrap:empty { min-height: 0; margin-bottom: 0; }
+.wallet-payment-element-wrap {
+  width: 100%;
+  min-height: 220px;
+  margin-bottom: 1rem;
+  padding: 0;
+}
 .wallet-modal-hint { margin: 0 0 0.5rem; color: var(--dash-text-muted); font-size: 0.8rem; }
 /* Top-up stepper: minus | amount | plus */
 .wallet-topup-stepper {
