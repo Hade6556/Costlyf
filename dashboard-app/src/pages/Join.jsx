@@ -85,8 +85,46 @@ export default function Join() {
   const offerIdFromUrl = searchParams.get('offer')
   const tokenFromUrl = searchParams.get('token')
   const [offerForModal, setOfferForModal] = useState(null)
+  const [offerModalResumeStep, setOfferModalResumeStep] = useState(null)
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // After Stripe redirect (e.g. 3DS): complete reserve and reopen modal at access step
+  useEffect(() => {
+    const joinOffer = searchParams.get('join_offer')
+    const joinSlot = searchParams.get('join_slot')
+    const hash = location.hash && location.hash.slice(1)
+    if (!joinOffer || joinSlot == null || !hash) return
+    const hashParams = new URLSearchParams(hash)
+    if (hashParams.get('redirect_status') !== 'succeeded' || !hashParams.get('payment_intent')) return
+    if (!user || !fetchWithAuth) return
+
+    let cancelled = false
+    fetchWithAuth(`/api/offers/${encodeURIComponent(joinOffer)}`, {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((full) => {
+        if (cancelled || !full) return
+        return fetchWithAuth(`/api/offers/${encodeURIComponent(joinOffer)}/slots/${joinSlot}/reserve-after-card`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_intent_id: hashParams.get('payment_intent') }),
+        }).then((r) => {
+          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
+          setOfferForModal(full)
+          setOfferModalResumeStep(4)
+        })
+      })
+      .then(() => {
+        if (cancelled) return
+        const nextSearch = new URLSearchParams(searchParams)
+        nextSearch.delete('join_offer')
+        nextSearch.delete('join_slot')
+        const qs = nextSearch.toString()
+        navigate(`${location.pathname}${qs ? '?' + qs : ''}`, { replace: true })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [searchParams, location.hash, location.pathname, user, fetchWithAuth, navigate])
 
   useEffect(() => {
     if (!offerIdFromUrl) return
@@ -128,12 +166,15 @@ export default function Join() {
           offer={offerForModal}
           serviceName={offerForModal.service_name || offerForModal.service || 'Offer'}
           serviceSlug={offerForModal.service || 'netflix'}
-          onClose={() => setOfferForModal(null)}
+          onClose={() => { setOfferForModal(null); setOfferModalResumeStep(null) }}
           onSuccess={(offerId, opts) => {
             setOfferForModal(null)
+            setOfferModalResumeStep(null)
             navigate(opts?.redirect || `/offer?id=${encodeURIComponent(offerId)}`)
           }}
           fetchWithAuth={fetchWithAuth}
+          initialStep={offerModalResumeStep ?? undefined}
+          resumeAfterPayment={offerModalResumeStep != null}
         />
       )}
       <header className="dashboard-header">

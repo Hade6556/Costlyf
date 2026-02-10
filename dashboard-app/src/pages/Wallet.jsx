@@ -509,24 +509,35 @@ export default function Wallet() {
                               : tx.metadata?.service_name
                                 ? tx.metadata.service_name
                                 : 'Subscription join')
-                          : tx.type === 'hold_join'
+                          : tx.type === 'debit_join_card'
                             ? (tx.metadata?.service_name && tx.metadata?.owner_alias
-                                ? `Pending: ${tx.metadata.service_name} – ${tx.metadata.owner_alias}`
+                                ? `${tx.metadata.service_name} – ${tx.metadata.owner_alias} (card)`
                                 : tx.metadata?.service_name
-                                  ? `Pending: ${tx.metadata.service_name}`
-                                  : 'Pending join')
-                            : tx.type === 'refund_hold_join'
+                                  ? `${tx.metadata.service_name} (card)`
+                                  : 'Subscription join (card)')
+                            : tx.type === 'hold_join'
                               ? (tx.metadata?.service_name && tx.metadata?.owner_alias
-                                  ? `Refund: ${tx.metadata.service_name} – ${tx.metadata.owner_alias}`
+                                  ? `Pending: ${tx.metadata.service_name} – ${tx.metadata.owner_alias}`
                                   : tx.metadata?.service_name
-                                    ? `Refund: ${tx.metadata.service_name}`
-                                    : 'Refund (join declined)')
-                              : tx.type === 'withdrawal'
-                                ? 'Withdraw to bank'
-                                : tx.type}
+                                    ? `Pending: ${tx.metadata.service_name}`
+                                    : 'Pending join')
+                              : tx.type === 'refund_hold_join'
+                                ? (tx.metadata?.service_name && tx.metadata?.owner_alias
+                                    ? `Refund: ${tx.metadata.service_name} – ${tx.metadata.owner_alias}`
+                                    : tx.metadata?.service_name
+                                      ? `Refund: ${tx.metadata.service_name}`
+                                      : 'Refund (join declined)')
+                                : tx.type === 'withdrawal'
+                                  ? 'Withdraw to bank'
+                                  : tx.type}
                     </span>
                     <span className="wallet-history-item-amount">
-                      {tx.amount_cents >= 0 ? '+' : ''}{formatEuros(tx.amount_cents)}€
+                      {tx.type === 'debit_join_card'
+                        ? (() => {
+                            const cents = tx.metadata?.amount_cents != null ? Number(tx.metadata.amount_cents) : 0
+                            return `-${formatEuros(cents)}€`
+                          })()
+                        : `${tx.amount_cents >= 0 ? '+' : ''}${formatEuros(tx.amount_cents)}€`}
                     </span>
                   </div>
                 ))}

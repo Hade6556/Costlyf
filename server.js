@@ -721,7 +721,7 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-after-card', async (req, res)
     if (meta.purpose !== 'join' || meta.offer_id !== offerId || String(meta.slot_index) !== String(slotIndex) || String(meta.user_id) !== String(user.id)) {
       return res.status(400).json({ error: 'Payment does not match this slot' });
     }
-    const { data: offer, error: offerErr } = await supabaseAdmin.from('offers').select('id, owner_id').eq('id', offerId).single();
+    const { data: offer, error: offerErr } = await supabaseAdmin.from('offers').select('id, owner_id, service, service_name').eq('id', offerId).single();
     if (offerErr || !offer) return res.status(404).json({ error: 'Offer not found' });
     const { data: slot, error: slotErr } = await supabaseAdmin
       .from('offer_slots')
@@ -736,6 +736,25 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-after-card', async (req, res)
       .update({ status: 'reserved', user_id: user.id, reserved_at: new Date().toISOString() })
       .eq('id', slot.id);
     if (updateErr) return res.status(500).json({ error: updateErr.message });
+    const amount_cents = pi.amount_received != null ? Math.max(0, parseInt(pi.amount_received, 10)) : 0;
+    const serviceName = offer.service_name || offer.service || 'Subscription';
+    let ownerDisplay = 'Host';
+    const { data: ownerProfile } = await supabaseAdmin.from('profiles').select('alias, first_name, last_name').eq('id', offer.owner_id).single();
+    if (ownerProfile) ownerDisplay = ownerProfile.alias || [ownerProfile.first_name, ownerProfile.last_name].filter(Boolean).join(' ').trim() || 'Host';
+    const referenceId = offerId + '_' + slotIndex;
+    const txMetadata = { service_name: serviceName, owner_alias: ownerDisplay, offer_id: offerId, slot_index: slotIndex, amount_cents: amount_cents };
+    const { error: txErr } = await supabaseAdmin.rpc('apply_balance_transaction', {
+      p_user_id: user.id,
+      p_amount_cents: 0,
+      p_type: 'debit_join_card',
+      p_reference_type: 'offer_slot_card',
+      p_reference_id: referenceId,
+      p_metadata: txMetadata
+    });
+    if (txErr) {
+      // non-fatal: slot is already reserved; log and continue
+      console.warn('reserve-after-card: could not record wallet history entry:', txErr.message);
+    }
     try {
       await getOrCreateThreadAndNotifyJoinRequest(supabaseAdmin, offerId, offer.owner_id, user.id, JOIN_REQUEST_SYSTEM_MESSAGE);
     } catch (e) {

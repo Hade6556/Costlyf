@@ -3172,11 +3172,15 @@ img {
   position: relative;
   width: 100%;
   max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 2.5rem 2rem;
   background: #fff;
   border-radius: 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   text-align: center;
+  -webkit-overflow-scrolling: touch;
 }
 .join-offer-modal .join-offer-next,
 .join-offer-modal .join-offer-pay,
@@ -6277,8 +6281,12 @@ button.profile-nav-item {
   border-radius: var(--dash-card-radius);
   padding: 1.5rem;
   max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   width: 100%;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  -webkit-overflow-scrolling: touch;
 }
 .wallet-modal-title { margin: 0 0 0.25rem; font-size: 1.25rem; }
 .wallet-modal-desc { margin: 0 0 1rem; color: var(--dash-text-muted); font-size: 0.9rem; }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, useSearchParams, useLocation, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
 import { getServiceMeta } from '../data/joinServices'
@@ -181,7 +181,9 @@ export default function JoinService() {
   const [instantOnly, setInstantOnly] = useState(false) // mock: does not filter (all offers are instant)
   const [sortBy, setSortBy] = useState('trust')
   const [joinModal, setJoinModal] = useState(null) // { offerId, offer }
+  const [joinModalResumeStep, setJoinModalResumeStep] = useState(null) // 4 = show securing then access after card redirect
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const location = useLocation()
 
   const offerIdFromUrl = searchParams.get('offer')
   const tokenFromUrl = searchParams.get('token')
@@ -212,6 +214,45 @@ export default function JoinService() {
       })
       .catch(() => {})
   }, [offerIdFromUrl, tokenFromUrl, user, navigate, fetchWithAuth])
+
+  // After Stripe redirect (e.g. 3DS): complete reserve and reopen modal at access step
+  useEffect(() => {
+    const joinOffer = searchParams.get('join_offer')
+    const joinSlot = searchParams.get('join_slot')
+    const hash = location.hash && location.hash.slice(1)
+    if (!joinOffer || joinSlot == null || !hash) return
+    const hashParams = new URLSearchParams(hash)
+    const redirectStatus = hashParams.get('redirect_status')
+    const paymentIntentId = hashParams.get('payment_intent')
+    if (redirectStatus !== 'succeeded' || !paymentIntentId) return
+    if (!user || !fetchWithAuth) return
+
+    let cancelled = false
+    fetchWithAuth(`/api/offers/${encodeURIComponent(joinOffer)}`, {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((full) => {
+        if (cancelled || !full) return
+        return fetchWithAuth(`/api/offers/${encodeURIComponent(joinOffer)}/slots/${joinSlot}/reserve-after-card`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_intent_id: paymentIntentId }),
+        }).then((r) => {
+          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
+          setJoinModal(full)
+          setJoinModalResumeStep(4)
+        })
+      })
+      .then(() => {
+        if (cancelled) return
+        const nextSearch = new URLSearchParams(searchParams)
+        nextSearch.delete('join_offer')
+        nextSearch.delete('join_slot')
+        const qs = nextSearch.toString()
+        navigate(`${location.pathname}${qs ? '?' + qs : ''}`, { replace: true })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [searchParams, location.hash, location.pathname, user, fetchWithAuth, navigate])
 
   useEffect(() => {
     const token = typeof localStorage !== 'undefined' && localStorage.getItem('costlyf_access_token')
@@ -466,9 +507,11 @@ export default function JoinService() {
           offer={joinModal}
           serviceName={meta.name}
           serviceSlug={serviceSlug}
-          onClose={() => setJoinModal(null)}
-          onSuccess={(offerId, opts) => { setJoinModal(null); navigate(opts?.redirect || `/offer?id=${encodeURIComponent(offerId)}`); }}
+          onClose={() => { setJoinModal(null); setJoinModalResumeStep(null) }}
+          onSuccess={(offerId, opts) => { setJoinModal(null); setJoinModalResumeStep(null); navigate(opts?.redirect || `/offer?id=${encodeURIComponent(offerId)}`); }}
           fetchWithAuth={fetchWithAuth}
+          initialStep={joinModalResumeStep ?? undefined}
+          resumeAfterPayment={joinModalResumeStep != null}
         />
       )}
     </main>
@@ -514,9 +557,10 @@ const ISSUE_OPTIONS = [
   { id: 'other', label: 'Other issue' },
 ]
 
-export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuccess, fetchWithAuth }) {
+export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuccess, fetchWithAuth, initialStep, resumeAfterPayment }) {
   const { t, locale } = useI18n()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(resumeAfterPayment && (initialStep === 4 || initialStep == null) ? 4 : 1)
+  const resumeDoneRef = useRef(false)
   const [paymentMethod, setPaymentMethod] = useState(null)
   const [loading, setLoading] = useState(false)
   const [balanceCents, setBalanceCents] = useState(null)
@@ -575,6 +619,15 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       .then((data) => setBalanceCents(data && data.balance_cents != null ? data.balance_cents : 0))
       .catch(() => setBalanceCents(0))
   }, [step, fetchWithAuth])
+
+  // After Stripe redirect: show step 4 then fetch access details and go to step 5
+  useEffect(() => {
+    if (!resumeAfterPayment || resumeDoneRef.current || (initialStep !== 4 && initialStep != null)) return
+    if (slotIndex == null) return
+    resumeDoneRef.current = true
+    const t = setTimeout(() => fetchAccessDetailsAndGo(), 2000)
+    return () => clearTimeout(t)
+  }, [resumeAfterPayment, initialStep, slotIndex])
 
   // Mount Stripe Payment Element + Express Checkout when join card payment step is shown
   useEffect(() => {
@@ -698,7 +751,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
     if (!stripe || !secret || !elements) return
     setJoinCardError('')
     setJoinCardPayLoading(true)
-    const returnUrl = window.location.origin + window.location.pathname
+    const returnUrl = `${window.location.origin}${window.location.pathname}?join_offer=${encodeURIComponent(offer.id)}&join_slot=${slotIndex}`
     Promise.resolve()
       .then(() => elements.submit())
       .then((submitResult) => {
