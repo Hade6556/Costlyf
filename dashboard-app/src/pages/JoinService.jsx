@@ -181,19 +181,21 @@ export default function JoinService() {
   const [instantOnly, setInstantOnly] = useState(false) // mock: does not filter (all offers are instant)
   const [sortBy, setSortBy] = useState('trust')
   const [joinModal, setJoinModal] = useState(null) // { offerId, offer }
-  const [joinModalResumeStep, setJoinModalResumeStep] = useState(null) // 4 = show securing then access after card redirect
+  const [joinModalResumeStep, setJoinModalResumeStep] = useState(null)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [resumeResult, setResumeResult] = useState(null) // null | { email, password, offerId } | { error: string }
   const location = useLocation()
 
   const offerIdFromUrl = searchParams.get('offer')
   const tokenFromUrl = searchParams.get('token')
 
-  // Stripe redirect: show "Waiting for confirmation" immediately so user never sees listing until modal opens
   const queryParams = new URLSearchParams(location.search)
   const hashParams = new URLSearchParams((location.hash && location.hash.slice(1)) || '')
   const redirectStatus = queryParams.get('redirect_status') || hashParams.get('redirect_status')
   const paymentIntentFromUrl = queryParams.get('payment_intent') || hashParams.get('payment_intent')
-  const showResumePageOverlay = redirectStatus === 'succeeded' && paymentIntentFromUrl && user && !joinModal
+  const hasRedirectParams = redirectStatus === 'succeeded' && paymentIntentFromUrl
+  // One full-page overlay from redirect until we show success + login details (no modal, no gap)
+  const showResumePageOverlay = (hasRedirectParams && !joinModal) || resumeResult !== null
 
   useEffect(() => {
     if (!serviceSlug) return
@@ -222,33 +224,34 @@ export default function JoinService() {
       .catch(() => {})
   }, [offerIdFromUrl, tokenFromUrl, user, navigate, fetchWithAuth])
 
-  // After Stripe redirect (e.g. 3DS): complete reserve and reopen modal at access step.
-  // Stripe may put payment_intent/redirect_status in query or hash; our join_offer/join_slot may be lost if Stripe overwrites query.
+  // After Stripe redirect: reserve + fetch access-details on the page, one overlay until login details (no modal).
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search)
-    const hashParams = new URLSearchParams((location.hash && location.hash.slice(1)) || '')
-    const redirectStatus = queryParams.get('redirect_status') || hashParams.get('redirect_status')
-    const paymentIntentId = queryParams.get('payment_intent') || hashParams.get('payment_intent')
-    if (redirectStatus !== 'succeeded' || !paymentIntentId) return
-    if (!user || !fetchWithAuth) return
+    if (!hasRedirectParams || !user || !fetchWithAuth) return
 
     let cancelled = false
-    function runReserveAndOpenModal(offerId, slotIdx, piId) {
-      return fetchWithAuth(`/api/offers/${encodeURIComponent(offerId)}`, {})
+    const paymentIntentId = paymentIntentFromUrl
+
+    function runReserveAndShowDetails(offerId, slotIdx, piId) {
+      return fetchWithAuth(`/api/offers/${encodeURIComponent(offerId)}/slots/${slotIdx}/reserve-after-card`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_intent_id: piId }),
+      })
+        .then((r) => {
+          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
+          return fetchWithAuth(`/api/offers/${encodeURIComponent(offerId)}/slots/${slotIdx}/access-details`, {})
+        })
         .then((r) => (r.ok ? r.json() : null))
-        .then((full) => {
-          if (cancelled || !full) return
-          return fetchWithAuth(`/api/offers/${encodeURIComponent(offerId)}/slots/${slotIdx}/reserve-after-card`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payment_intent_id: piId }),
-          }).then((r) => {
-            if (!r.ok) return r.json().then((d) => { throw new Error(d.error || 'Could not reserve slot') })
-            setJoinModal(full)
-            setJoinModalResumeStep(4)
+        .then((d) => {
+          if (cancelled) return
+          setResumeResult({
+            email: d?.login_email ?? "You'll receive login details from the owner in Inbox",
+            password: d?.login_password ?? '—',
+            offerId,
           })
         })
     }
+
     function clearRedirectUrl() {
       const nextSearch = new URLSearchParams(searchParams)
       nextSearch.delete('join_offer')
@@ -263,25 +266,28 @@ export default function JoinService() {
       }
     }
 
-    let joinOffer = searchParams.get('join_offer')
-    let joinSlot = searchParams.get('join_slot')
+    const joinOffer = searchParams.get('join_offer')
+    const joinSlot = searchParams.get('join_slot')
+
+    const done = () => { if (!cancelled) clearRedirectUrl() }
+
     if (!joinOffer || joinSlot == null) {
       fetchWithAuth(`/api/offers/join-from-payment-intent?payment_intent_id=${encodeURIComponent(paymentIntentId)}`, {})
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           if (cancelled || !data || !data.offer_id) return
-          return runReserveAndOpenModal(data.offer_id, data.slot_index, paymentIntentId)
+          return runReserveAndShowDetails(data.offer_id, data.slot_index, paymentIntentId)
         })
-        .then(() => { if (!cancelled) clearRedirectUrl() })
-        .catch(() => {})
+        .then(done)
+        .catch((e) => { if (!cancelled) setResumeResult({ error: e.message || 'Something went wrong' }); done() })
       return () => { cancelled = true }
     }
 
-    runReserveAndOpenModal(joinOffer, joinSlot, paymentIntentId)
-      .then(() => { if (!cancelled) clearRedirectUrl() })
-      .catch(() => {})
+    runReserveAndShowDetails(joinOffer, joinSlot, paymentIntentId)
+      .then(done)
+      .catch((e) => { if (!cancelled) setResumeResult({ error: e.message || 'Something went wrong' }); done() })
     return () => { cancelled = true }
-  }, [searchParams, location.search, location.hash, location.pathname, user, fetchWithAuth, navigate])
+  }, [hasRedirectParams, paymentIntentFromUrl, searchParams, location.pathname, location.hash, user, fetchWithAuth, navigate])
 
   useEffect(() => {
     const token = typeof localStorage !== 'undefined' && localStorage.getItem('costlyf_access_token')
@@ -321,11 +327,44 @@ export default function JoinService() {
     <main className="dashboard-main dashboard-content dashboard-content--service">
       {showResumePageOverlay && (
         <div className="join-resume-page-overlay" role="status" aria-live="polite">
-          <div className="join-offer-card-status-wrap">
-            <div className="join-offer-card-status-spinner" aria-hidden="true" />
-            <p className="join-offer-card-status-text">Waiting for confirmation…</p>
-            <p className="join-offer-card-status-sub">This may take a moment. Do not close this window.</p>
-          </div>
+          {resumeResult && 'error' in resumeResult ? (
+            <div className="join-offer-card-status-wrap">
+              <p className="join-offer-card-status-text join-offer-card-status-text--error">{resumeResult.error}</p>
+              <button type="button" className="join-offer-next" onClick={() => setResumeResult(null)}>{t('dashboard.close')}</button>
+            </div>
+          ) : resumeResult && 'email' in resumeResult ? (
+            <div className="join-resume-success-wrap">
+              <div className="join-offer-card-status-wrap">
+                <div className="join-offer-card-status-check" aria-hidden="true">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+                <p className="join-offer-card-status-text">Payment successful!</p>
+                <p className="join-offer-card-status-sub">Your access details are below.</p>
+              </div>
+              <div className="join-offer-access-details-box join-resume-access-box">
+                <div className="join-offer-access-details">
+                  <div className="join-offer-access-row">
+                    <span className="join-offer-access-label">Login email</span>
+                    <span className="join-offer-access-value join-offer-access-value--plain" data-access="email">{resumeResult.email}</span>
+                    <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(resumeResult.email); }}>Copy</button>
+                  </div>
+                  <div className="join-offer-access-row">
+                    <span className="join-offer-access-label">Password</span>
+                    <span className="join-offer-access-value join-offer-access-value--plain" data-access="password">{resumeResult.password}</span>
+                    <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(resumeResult.password); }}>Copy</button>
+                  </div>
+                </div>
+                <a href={SERVICE_LOGIN_URL[serviceSlug] || SERVICE_LOGIN_URL.default} target="_blank" rel="noopener noreferrer" className="join-offer-open-service">Open {meta.name}</a>
+              </div>
+              <button type="button" className="join-offer-next" onClick={() => { setResumeResult(null); navigate(`/offer?id=${encodeURIComponent(resumeResult.offerId)}`); }}>Go to subscription</button>
+            </div>
+          ) : (
+            <div className="join-offer-card-status-wrap">
+              <div className="join-offer-card-status-spinner" aria-hidden="true" />
+              <p className="join-offer-card-status-text">Waiting for confirmation…</p>
+              <p className="join-offer-card-status-sub">This may take a moment. Do not close this window.</p>
+            </div>
+          )}
         </div>
       )}
       <header className="service-header">

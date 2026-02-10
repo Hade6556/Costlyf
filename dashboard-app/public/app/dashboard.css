@@ -3880,6 +3880,20 @@ img {
   justify-content: center;
   background: var(--dash-bg, #fff);
   z-index: 10000;
+  overflow: auto;
+  padding: 1.5rem;
+}
+.join-resume-page-overlay .join-resume-success-wrap {
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+}
+.join-resume-page-overlay .join-resume-access-box {
+  margin: 1.25rem 0;
+  text-align: left;
+}
+.join-offer-card-status-text--error {
+  color: var(--dash-error, #b91c1c);
 }
 
 /* Card payment: waiting for confirmation + success popup (overlay so Payment Element stays mounted) */
