@@ -606,6 +606,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   const topupElementsRef = useRef(null)
   const topupExpressCheckoutRef = useRef(null)
   const [joinCardPaymentActive, setJoinCardPaymentActive] = useState(false)
+  const [joinCardElementReady, setJoinCardElementReady] = useState(false)
   const [joinCardLoading, setJoinCardLoading] = useState(false)
   const [joinCardPayLoading, setJoinCardPayLoading] = useState(false)
   const [joinCardError, setJoinCardError] = useState('')
@@ -679,6 +680,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
   // Mount Stripe Payment Element + Express Checkout when join card payment step is shown
   useEffect(() => {
     if (!joinCardPaymentActive || !joinCardClientSecretRef.current || !joinCardPublishableKeyRef.current || !joinCardPaymentElementRef.current) return
+    setJoinCardElementReady(false)
     const key = joinCardPublishableKeyRef.current
     const secret = joinCardClientSecretRef.current
     loadStripeScript().then((Stripe) => {
@@ -694,6 +696,9 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       joinCardElementsRef.current = elements
       const paymentElement = elements.create('payment')
       paymentElement.mount(joinCardPaymentElementRef.current)
+      paymentElement.on('ready', () => {
+        if (joinCardPaymentElementRef.current) setJoinCardElementReady(true)
+      })
       const paymentRequest = stripe.paymentRequest({
         country: 'LT',
         currency: 'eur',
@@ -809,6 +814,10 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
     const secret = joinCardClientSecretRef.current
     const elements = joinCardElementsRef.current
     if (!stripe || !secret || !elements) return
+    if (!joinCardElementReady) {
+      setJoinCardError('Payment form is still loading. Please wait a moment.')
+      return
+    }
     setJoinCardError('')
     setJoinCardPayLoading(true)
     setCardPaymentWaiting(true)
@@ -989,8 +998,8 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                   <button type="button" className="wallet-modal-back" onClick={() => { setJoinCardPaymentActive(false); setJoinCardError(''); joinCardClientSecretRef.current = null; joinCardPublishableKeyRef.current = null; if (joinCardPaymentElementRef.current) joinCardPaymentElementRef.current.innerHTML = ''; if (joinCardExpressCheckoutRef.current) joinCardExpressCheckoutRef.current.innerHTML = ''; }}>
                     Back
                   </button>
-                  <button type="button" className="wallet-modal-pay" onClick={doJoinCardPay} disabled={joinCardPayLoading}>
-                    {joinCardPayLoading ? '…' : `Pay ${price}`}
+                  <button type="button" className="wallet-modal-pay" onClick={doJoinCardPay} disabled={!joinCardElementReady || joinCardPayLoading}>
+                    {joinCardPayLoading ? '…' : joinCardElementReady ? `Pay ${price}` : 'Loading…'}
                   </button>
                 </div>
               </>
