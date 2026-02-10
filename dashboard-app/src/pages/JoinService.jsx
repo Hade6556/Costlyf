@@ -798,6 +798,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
       setPayError('')
       setJoinCardError('')
       setJoinCardLoading(true)
+      setCardPaymentWaiting(true)
       fetchWithAuth(`/api/offers/${encodeURIComponent(offer.id)}/slots/${slotIndex}/create-payment-intent`, { method: 'POST' })
         .then((r) => r.json())
         .then((data) => {
@@ -806,8 +807,9 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
           joinCardClientSecretRef.current = data.client_secret
           joinCardPublishableKeyRef.current = data.publishableKey
           setJoinCardPaymentActive(true)
+          setCardPaymentWaiting(false)
         })
-        .catch((e) => { setPayError(e.message || 'Could not start payment'); setJoinCardError(e.message || '') })
+        .catch((e) => { setPayError(e.message || 'Could not start payment'); setJoinCardError(e.message || ''); setCardPaymentWaiting(false) })
         .finally(() => setJoinCardLoading(false))
     }
   }
