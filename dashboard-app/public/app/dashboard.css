@@ -75,29 +75,47 @@ img {
 
 /* Mobile: inbox chat open — viewport locked, only chat messages scroll */
 @media (max-width: 767px) {
-  html.dashboard-inbox-chat-open,
-  body.dashboard-inbox-chat-open {
+  html.dashboard-inbox-chat-open {
     overflow: hidden;
     position: fixed;
     width: 100%;
     height: 100%;
+    height: 100dvh;
     overscroll-behavior: none;
   }
   body.dashboard-inbox-chat-open {
+    overflow: hidden;
+    position: fixed;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
+  }
+  html.dashboard-inbox-chat-open #root,
+  body.dashboard-inbox-chat-open #root {
+    overflow: hidden;
+    height: 100%;
+    position: relative;
   }
   .dashboard.dashboard--inbox-chat-open {
-    min-height: 100vh;
-    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
     height: 100dvh;
-    overflow: hidden;
-    flex: 1;
     min-height: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    z-index: 1;
   }
   .dashboard.dashboard--inbox-chat-open .bottom-nav {
     display: none;
@@ -108,6 +126,7 @@ img {
     min-height: 0;
     flex: 1;
     overflow: hidden;
+    position: relative;
   }
   .dashboard.dashboard--inbox-chat-open .dashboard-main {
     flex: 1;
@@ -116,6 +135,7 @@ img {
     flex-direction: column;
     padding: 0;
     overflow: hidden;
+    position: relative;
   }
   .dashboard.dashboard--inbox-chat-open .inbox-page {
     flex: 1;
@@ -124,11 +144,10 @@ img {
     flex-direction: column;
     padding: 0;
     overflow: hidden;
+    position: relative;
   }
   .dashboard.dashboard--inbox-chat-open .inbox-chat-view {
     position: relative;
-    inset: auto;
-    bottom: auto;
     flex: 1;
     min-height: 0;
     display: flex;
@@ -147,6 +166,7 @@ img {
   }
   .dashboard.dashboard--inbox-chat-open .subscription-chat-header {
     flex-shrink: 0;
+    touch-action: manipulation;
   }
   .dashboard.dashboard--inbox-chat-open .subscription-chat-messages {
     flex: 1;
@@ -160,9 +180,17 @@ img {
   }
   .dashboard.dashboard--inbox-chat-open .inbox-chat-actions {
     flex-shrink: 0;
+    touch-action: manipulation;
   }
   .dashboard.dashboard--inbox-chat-open .subscription-chat-input-bar {
     flex-shrink: 0;
+    touch-action: manipulation;
+  }
+  .dashboard.dashboard--inbox-chat-open .inbox-chat-back,
+  .dashboard.dashboard--inbox-chat-open .subscription-chat-send,
+  .dashboard.dashboard--inbox-chat-open .subscription-chat-attach,
+  .dashboard.dashboard--inbox-chat-open .subscription-chat-emoji {
+    touch-action: manipulation;
   }
 }
 
