@@ -3887,10 +3887,25 @@ img {
   text-align: center;
   max-width: 420px;
   width: 100%;
+  position: relative;
 }
 .join-resume-page-overlay .join-resume-access-box {
   margin: 1.25rem 0;
   text-align: left;
+}
+.join-resume-page-overlay .join-resume-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.join-resume-page-overlay .join-resume-actions .join-offer-issue-btn {
+  margin-top: 0;
+}
+.join-resume-page-overlay .join-resume-back {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
 }
 .join-offer-card-status-text--error {
   color: var(--dash-error, #b91c1c);

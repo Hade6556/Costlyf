@@ -316,7 +316,7 @@ app.get('/api/offers', async (req, res) => {
   }
 });
 
-// List offers I've joined (auth required) – offers where the user has a slot (reserved or taken)
+// List offers I've joined (auth required) – only slots with status 'taken' (payment completed). Excludes 'reserved' so abandoned Revolut/card attempts don't show as Joined.
 app.get('/api/offers/joined', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin) return res.status(401).json({ error: 'Unauthorized' });
@@ -325,7 +325,7 @@ app.get('/api/offers/joined', async (req, res) => {
       .from('offer_slots')
       .select('offer_id, slot_index, status, reserved_at, accepted_at, removal_effective_at')
       .eq('user_id', user.id)
-      .in('status', ['reserved', 'taken']);
+      .eq('status', 'taken');
     if (slotsErr) return res.status(500).json({ error: slotsErr.message });
     if (!mySlots || mySlots.length === 0) return res.status(200).json([]);
     const offerIds = [...new Set(mySlots.map(s => s.offer_id))];
@@ -341,7 +341,7 @@ app.get('/api/offers/joined', async (req, res) => {
       .from('offer_slots')
       .select('offer_id, slot_index, status, reserved_at, accepted_at, removal_effective_at')
       .eq('user_id', user.id)
-      .in('status', ['reserved', 'taken']);
+      .eq('status', 'taken');
     mySlots = mySlotsAfter && mySlotsAfter.length > 0 ? mySlotsAfter : [];
     if (mySlots.length === 0) return res.status(200).json([]);
     const offerIdsAfter = [...new Set(mySlots.map(s => s.offer_id))];
@@ -706,7 +706,7 @@ app.post('/api/offers/:id/slots/:slotIndex/create-payment-intent', async (req, r
   }
 });
 
-// Get offer_id and slot_index from a successful join PaymentIntent (for redirect resume when URL params are lost).
+// Get offer_id and slot_index from a successful join PaymentIntent (for redirect resume when URL params are lost). Only if payment was actually received.
 app.get('/api/offers/join-from-payment-intent', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !stripe) return res.status(401).json({ error: 'Unauthorized' });
@@ -715,6 +715,8 @@ app.get('/api/offers/join-from-payment-intent', async (req, res) => {
   try {
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
     if (pi.status !== 'succeeded') return res.status(400).json({ error: 'Payment not completed' });
+    const amountReceived = pi.amount_received != null ? parseInt(pi.amount_received, 10) : 0;
+    if (!amountReceived) return res.status(400).json({ error: 'Payment not received' });
     const meta = pi.metadata || {};
     if (meta.purpose !== 'join' || String(meta.user_id) !== String(user.id)) return res.status(400).json({ error: 'Invalid payment' });
     const offer_id = meta.offer_id;
@@ -726,7 +728,7 @@ app.get('/api/offers/join-from-payment-intent', async (req, res) => {
   }
 });
 
-// Reserve a slot after successful card payment (PaymentIntent). Verifies payment with Stripe then reserves.
+// Reserve a slot after successful card payment (PaymentIntent). Only gives seat when Stripe confirms payment succeeded AND we have received funds (no seat if user went to Revolut and came back without paying).
 app.post('/api/offers/:id/slots/:slotIndex/reserve-after-card', async (req, res) => {
   const user = await getCurrentUser(req);
   if (!user || !supabaseAdmin || !stripe) return res.status(401).json({ error: 'Unauthorized' });
@@ -737,6 +739,9 @@ app.post('/api/offers/:id/slots/:slotIndex/reserve-after-card', async (req, res)
   try {
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
     if (pi.status !== 'succeeded') return res.status(400).json({ error: 'Payment not completed' });
+    const amountReceived = pi.amount_received != null ? parseInt(pi.amount_received, 10) : 0;
+    const expectedCents = pi.amount != null ? parseInt(pi.amount, 10) : 0;
+    if (!amountReceived || amountReceived < expectedCents) return res.status(400).json({ error: 'Payment not received' });
     const meta = pi.metadata || {};
     if (meta.purpose !== 'join' || meta.offer_id !== offerId || String(meta.slot_index) !== String(slotIndex) || String(meta.user_id) !== String(user.id)) {
       return res.status(400).json({ error: 'Payment does not match this slot' });

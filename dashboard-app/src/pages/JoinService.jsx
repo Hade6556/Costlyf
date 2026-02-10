@@ -183,7 +183,9 @@ export default function JoinService() {
   const [joinModal, setJoinModal] = useState(null) // { offerId, offer }
   const [joinModalResumeStep, setJoinModalResumeStep] = useState(null)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
-  const [resumeResult, setResumeResult] = useState(null) // null | { email, password, offerId } | { error: string }
+  const [resumeResult, setResumeResult] = useState(null) // null | { email, password, offerId, slotIndex } | { error: string }
+  const [resumeIssueStep, setResumeIssueStep] = useState(0) // 0 = success, 1 = issue form, 2 = submitted
+  const [resumeIssueType, setResumeIssueType] = useState('')
   const location = useLocation()
 
   const offerIdFromUrl = searchParams.get('offer')
@@ -248,6 +250,7 @@ export default function JoinService() {
             email: d?.login_email ?? "You'll receive login details from the owner in Inbox",
             password: d?.login_password ?? '—',
             offerId,
+            slotIndex: slotIdx,
           })
         })
     }
@@ -334,29 +337,61 @@ export default function JoinService() {
             </div>
           ) : resumeResult && 'email' in resumeResult ? (
             <div className="join-resume-success-wrap">
-              <div className="join-offer-card-status-wrap">
-                <div className="join-offer-card-status-check" aria-hidden="true">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                </div>
-                <p className="join-offer-card-status-text">Payment successful!</p>
-                <p className="join-offer-card-status-sub">Your access details are below.</p>
-              </div>
-              <div className="join-offer-access-details-box join-resume-access-box">
-                <div className="join-offer-access-details">
-                  <div className="join-offer-access-row">
-                    <span className="join-offer-access-label">Login email</span>
-                    <span className="join-offer-access-value join-offer-access-value--plain" data-access="email">{resumeResult.email}</span>
-                    <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(resumeResult.email); }}>Copy</button>
+              {resumeIssueStep === 0 && (
+                <>
+                  <div className="join-offer-card-status-wrap">
+                    <div className="join-offer-card-status-check" aria-hidden="true">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </div>
+                    <p className="join-offer-card-status-text">Payment successful!</p>
+                    <p className="join-offer-card-status-sub">Your access details are below.</p>
                   </div>
-                  <div className="join-offer-access-row">
-                    <span className="join-offer-access-label">Password</span>
-                    <span className="join-offer-access-value join-offer-access-value--plain" data-access="password">{resumeResult.password}</span>
-                    <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(resumeResult.password); }}>Copy</button>
+                  <div className="join-offer-access-details-box join-resume-access-box">
+                    <div className="join-offer-access-details">
+                      <div className="join-offer-access-row">
+                        <span className="join-offer-access-label">Login email</span>
+                        <span className="join-offer-access-value join-offer-access-value--plain" data-access="email">{resumeResult.email}</span>
+                        <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(resumeResult.email); }}>Copy</button>
+                      </div>
+                      <div className="join-offer-access-row">
+                        <span className="join-offer-access-label">Password</span>
+                        <span className="join-offer-access-value join-offer-access-value--plain" data-access="password">{resumeResult.password}</span>
+                        <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(resumeResult.password); }}>Copy</button>
+                      </div>
+                    </div>
+                    <a href={SERVICE_LOGIN_URL[serviceSlug] || SERVICE_LOGIN_URL.default} target="_blank" rel="noopener noreferrer" className="join-offer-open-service">Open {meta.name}</a>
                   </div>
-                </div>
-                <a href={SERVICE_LOGIN_URL[serviceSlug] || SERVICE_LOGIN_URL.default} target="_blank" rel="noopener noreferrer" className="join-offer-open-service">Open {meta.name}</a>
-              </div>
-              <button type="button" className="join-offer-next" onClick={() => { setResumeResult(null); navigate(`/offer?id=${encodeURIComponent(resumeResult.offerId)}`); }}>Go to subscription</button>
+                  <div className="join-resume-actions">
+                    <button type="button" className="join-offer-next" onClick={() => { setResumeResult(null); setResumeIssueStep(0); setResumeIssueType(''); navigate(`/offer?id=${encodeURIComponent(resumeResult.offerId)}`); }}>Go to subscription</button>
+                    <button type="button" className="join-offer-issue-btn" onClick={() => setResumeIssueStep(1)}>I have an issue</button>
+                  </div>
+                </>
+              )}
+              {resumeIssueStep === 1 && (
+                <>
+                  <button type="button" className="join-offer-back join-resume-back" aria-label={t('dashboard.back')} onClick={() => { setResumeIssueStep(0); setResumeIssueType(''); }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg></button>
+                  <h2 className="join-offer-title">Let&apos;s fix this</h2>
+                  <p className="join-offer-card-status-sub">What&apos;s the issue?</p>
+                  <ul className="join-offer-issue-list">
+                    {ISSUE_OPTIONS.map((opt) => (
+                      <li key={opt.id}>
+                        <button type="button" className={`join-offer-issue-option ${resumeIssueType === opt.id ? 'join-offer-issue-option--active' : ''}`} onClick={() => setResumeIssueType(opt.id)}>{opt.label}</button>
+                      </li>
+                    ))}
+                  </ul>
+                  <button type="button" className="join-offer-next" disabled={!resumeIssueType} onClick={() => {
+                    setResumeIssueStep(2)
+                    fetchWithAuth(`/api/offers/${encodeURIComponent(resumeResult.offerId)}/slots/${resumeResult.slotIndex}/request-removal`, { method: 'POST' }).catch(() => {})
+                  }}>Submit</button>
+                </>
+              )}
+              {resumeIssueStep === 2 && (
+                <>
+                  <p className="join-offer-reassurance">Your payment is protected. You won&apos;t be charged while this is being resolved.</p>
+                  <p className="join-offer-reassurance-sub">We&apos;ve marked this subscription as Pending. Check Inbox for updates.</p>
+                  <button type="button" className="join-offer-next" onClick={() => { setResumeResult(null); setResumeIssueStep(0); setResumeIssueType(''); navigate(`/offer?id=${encodeURIComponent(resumeResult.offerId)}`); }}>Go to subscription management</button>
+                </>
+              )}
             </div>
           ) : (
             <div className="join-offer-card-status-wrap">
