@@ -2103,10 +2103,17 @@ img {
 }
 
 .service-offer-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--dash-text);
   white-space: nowrap;
+}
+.service-offer-price-bolt {
+  flex-shrink: 0;
+  color: var(--dash-primary, #111);
 }
 
 .service-offer-price-icon {
@@ -2594,10 +2601,17 @@ img {
   color: var(--dash-text);
 }
 .offer-row-value {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--dash-text);
+}
+.offer-row-bolt {
+  flex-shrink: 0;
+  color: var(--dash-primary, #111);
 }
 .offer-row-value span {
   font-weight: 700;
@@ -3816,6 +3830,11 @@ img {
 }
 .join-offer-access-details-box .join-offer-access-row:last-child {
   margin-bottom: 0;
+}
+.join-offer-access-safe {
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--dash-text-muted);
 }
 .join-offer-access-details-box .join-offer-open-service {
   display: inline-block;

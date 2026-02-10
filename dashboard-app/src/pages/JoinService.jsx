@@ -142,7 +142,6 @@ export default function JoinService() {
   const [loading, setLoading] = useState(true)
   const [planFilter, setPlanFilter] = useState('all')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
-  const [instantOnly, setInstantOnly] = useState(false)
   const [sortBy, setSortBy] = useState('trust')
   const [joinModal, setJoinModal] = useState(null) // { offerId, offer }
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
@@ -197,7 +196,6 @@ export default function JoinService() {
       const plan = (o.plan || 'premium').toLowerCase()
       if (planFilter !== 'all' && plan !== planFilter) return false
       if (verifiedOnly && !o.verified) return false
-      if (instantOnly && !o.instant) return false
       return true
     })
     .sort((a, b) => {
@@ -251,14 +249,6 @@ export default function JoinService() {
               <span className="service-toggle-label">{t('dashboard.subscriptionVerified')}</span>
               <label className="service-toggle-wrap">
                 <input type="checkbox" className="service-toggle-input" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
-                <span className="service-toggle-slider" />
-              </label>
-            </div>
-            <div className="service-toggle-row">
-              <span className="service-toggle-icon service-toggle-icon--bolt" aria-hidden="true"><img src="/media/icons/ic--round-bolt.svg" alt="" width="24" height="24" /></span>
-              <span className="service-toggle-label">{t('dashboard.instantlyAccepts')}</span>
-              <label className="service-toggle-wrap">
-                <input type="checkbox" className="service-toggle-input" checked={instantOnly} onChange={(e) => setInstantOnly(e.target.checked)} />
                 <span className="service-toggle-slider" />
               </label>
             </div>
@@ -325,7 +315,10 @@ export default function JoinService() {
                       </div>
                     </div>
                     <div className="service-offer-right">
-                      <span className="service-offer-price">{priceStr(o)} <span className="service-offer-period">{t('dashboard.eurPerMonth')}</span></span>
+                      <span className="service-offer-price">
+                        <svg className="service-offer-price-bolt" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10.67 21c-.35 0-.62-.31-.57-.66L11 14H7.5c-.88 0-.33-.75-.31-.78c1.26-2.23 3.15-5.53 5.65-9.93a.577.577 0 0 1 1.07.37l-.9 6.34h3.51c.4 0 .62.19.4.66c-3.29 5.74-5.2 9.09-5.75 10.05c-.1.18-.29.29-.5.29"/></svg>
+                        {priceStr(o)} <span className="service-offer-period">{t('dashboard.eurPerMonth')}</span>
+                      </span>
                       {isOwner ? (
                         <Link to={`/offer?id=${encodeURIComponent(o.id)}`} className="service-offer-join service-offer-join--manage">{t('dashboard.manage')}</Link>
                       ) : isJoined ? (
@@ -386,14 +379,6 @@ export default function JoinService() {
                 <span className="service-toggle-label">{t('dashboard.subscriptionVerified')}</span>
                 <label className="service-toggle-wrap">
                   <input type="checkbox" className="service-toggle-input" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
-                  <span className="service-toggle-slider" />
-                </label>
-              </div>
-              <div className="service-toggle-row">
-                <span className="service-toggle-icon service-toggle-icon--bolt" aria-hidden="true"><img src="/media/icons/ic--round-bolt.svg" alt="" width="24" height="24" /></span>
-                <span className="service-toggle-label">{t('dashboard.instantlyAccepts')}</span>
-                <label className="service-toggle-wrap">
-                  <input type="checkbox" className="service-toggle-input" checked={instantOnly} onChange={(e) => setInstantOnly(e.target.checked)} />
                   <span className="service-toggle-slider" />
                 </label>
               </div>
@@ -824,6 +809,7 @@ export function JoinOfferModal({ offer, serviceName, serviceSlug, onClose, onSuc
                   <button type="button" className="join-offer-copy-btn" onClick={() => { navigator.clipboard?.writeText(accessDetails.password); }}>Copy</button>
                 </div>
               </div>
+              <p className="join-offer-access-safe">Your information is encrypted and safe.</p>
               <a href={SERVICE_LOGIN_URL[serviceSlug] || SERVICE_LOGIN_URL.default} target="_blank" rel="noopener noreferrer" className="join-offer-open-service">Open {offer.service_name || serviceName}</a>
             </div>
             <p className="join-offer-access-instruction">Log in now and check if everything works. This usually takes under 30 seconds.</p>

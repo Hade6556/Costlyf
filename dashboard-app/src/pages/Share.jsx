@@ -396,8 +396,7 @@ function ConfirmStep({ t = (k) => k, state, serviceName, onBack, fetchWithAuth, 
       </button>
       <h2 className="share-step-title">Almost there – fees & security</h2>
       <div className="share-fees-box">
-        <p className="share-fees-line">Connection fee <span className="share-fees-amount">€0.99</span> — applied only when a new co-subscriber joins</p>
-        <p className="share-fees-note">Once per co-subscriber, first month only.</p>
+        <p className="share-fees-line">Connection fee <span className="share-fees-amount">€0.99</span> — One time applied only for a new co-subscriber.</p>
       </div>
       <div className="share-form-group">
         <label htmlFor="share-phone">{t('dashboard.phoneNumber')}</label>
