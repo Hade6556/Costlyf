@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../contexts/I18nContext'
 
+// Same logo map as Join page (join/:service) for consistent service cards
 const LOGO_MAP = {
-  youtube: '/media/brand-logos/youtube.svg',
-  'youtube-premium': '/media/brand-logos/youtube.svg',
-  spotify: '/media/brand-logos/spotify.svg',
   netflix: '/media/brand-logos/netflix.svg',
+  'youtube-premium': '/media/brand-logos/youtube.svg',
+  youtube: '/media/brand-logos/youtube.svg',
+  spotify: '/media/brand-logos/spotify.svg',
   disney: '/media/brand-logos/disney.svg',
   'prime-video': '/media/brand-logos/prime-video.svg',
+  crunchyroll: '/media/brand-logos/disney.svg',
 }
+const DEFAULT_LOGO = '/media/brand-logos/netflix.svg'
 
 const TIP_CARDS = [
   {
@@ -197,7 +200,7 @@ export default function Home() {
           ) : (
             <div className="my-offers-list" id="my-offers-list">
               {offers.map((offer) => {
-                const logo = LOGO_MAP[offer.service] || '/media/logo.svg'
+                const logo = LOGO_MAP[offer.service] || DEFAULT_LOGO
                 const filled = offer.seats_taken || 0
                 const total = offer.max_slots || 1
                 const visLabel = (offer.visibility || 'private') === 'public' ? t('dashboard.public') : t('dashboard.private')
@@ -251,7 +254,7 @@ export default function Home() {
           ) : (
             <div className="my-offers-list" id="my-subscriptions-list">
               {joined.map((sub) => {
-                const logo = LOGO_MAP[sub.service] || '/media/logo.svg'
+                const logo = LOGO_MAP[sub.service] || DEFAULT_LOGO
                 const daysLeft = typeof sub.days_left === 'number' ? Math.max(0, sub.days_left) : 0
                 const isTaken = sub.my_slot_status === 'taken'
                 const statusLine = isTaken ? t('dashboard.activeDaysLeft', { n: daysLeft }) : t('dashboard.active')
