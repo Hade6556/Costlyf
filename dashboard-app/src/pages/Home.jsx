@@ -35,9 +35,7 @@ const TIP_CARDS = [
     class: 'home-tip-card--spotify',
     content: (
       <>
-        <div className="home-tip-spotify-head">
-          <img src="/media/brand-logos/spotify.svg" alt="Spotify" className="home-tip-spotify-logo" width={88} height={88} />
-        </div>
+        <p className="home-tip-spotify-brand">Spotify®</p>
         <p className="home-tip-slogan">You don&apos;t have to pay <strong>full price</strong> for this</p>
       </>
     ),

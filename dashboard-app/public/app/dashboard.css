@@ -1013,22 +1013,13 @@ img {
   letter-spacing: 0.02em;
 }
 
-/* Spotify tip: container sized to logo so both match */
-.home-tip-card--spotify .home-tip-spotify-head {
-  margin-bottom: 0.6rem;
-  width: 88px;
-  height: 88px;
-  flex-shrink: 0;
-}
-.home-tip-card--spotify .home-tip-spotify-head img.home-tip-spotify-logo {
-  display: block;
-  width: 88px !important;
-  height: 88px !important;
-  max-width: 88px;
-  max-height: 88px;
-  object-fit: contain;
-  object-position: center;
-  vertical-align: middle;
+/* Spotify tip */
+.home-tip-card--spotify .home-tip-spotify-brand {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2EBD59;
+  letter-spacing: -0.02em;
 }
 .home-tip-card--spotify .home-tip-slogan {
   margin: 0;
